@@ -1,0 +1,32 @@
+include::./attribute.adoc[]
+
+= 株式分析チュートリアル
+https://github.com/JapanExchangeGroup/J-Quants
+2021-01-29
+:Revision: 1.0.0
+:toc: left
+
+// 章ごとにインクルードしていく（画像パスも上書きすること）
+:imagesdir: Chapter0/images
+include::Chapter0/index.adoc[]
+
+:imagesdir: Chapter01/images
+include::Chapter01/index.adoc[]
+
+:imagesdir: Chapter02/images
+include::Chapter02/index.adoc[]
+
+:imagesdir: Chapter03/images
+include::Chapter03/index.adoc[]
+
+:imagesdir: Chapter04/images
+include::Chapter04/index.adoc[]
+
+:imagesdir: Chapter05/images
+include::Chapter05/index.adoc[]
+
+:imagesdir: ChapterRef/images
+include::ChapterRef/index.adoc[]
+
+:imagesdir: ChapterLicence/images
+include::ChapterLicence/index.adoc[]

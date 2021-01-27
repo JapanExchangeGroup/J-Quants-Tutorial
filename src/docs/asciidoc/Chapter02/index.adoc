@@ -1,0 +1,1751 @@
+include::../attribute.adoc[]
+:eqnums:
+:stem:
+
+== 財務諸表で株価の先行きを予測しよう
+
+=== 概要
+
+本節では、本コンペティションにおける問題の概要及び本コンペティションに参加することで得られる知見について説明します。
+
+==== 本コンペティションの趣旨
+データ分析や株式取引には興味はあるけど、きっかけがないという方に、投資にまつわるデータ・環境を提供し、
+個人投資家の皆様によるデータ利活用の可能性を試してもらいたいという想いでこのコンペは設計されております。
+
+本コンペティションが、皆様にとって、新しいアイデアや学習意欲に繋がり、株式投資の面白さが発見できることを期待しております。
+
+
+==== 課題概要
+
+本コンペティションで取り組んでいただく課題は以下のとおりです。
+
+*課題*
+
+上場企業は1年を4期に分けて3カ月に一度、決算を発表しています。本コンペティションでは、各上場企業が決算情報を発表した後の20営業日の間における当該企業の最高値および最安値の予測について取り組んでいただきます。予測にあたっては、銘柄情報・株価情報・ファンダメンタル情報を用います。データセットの詳細については2.3をご参照ください。
+
+*課題イメージ*
+
+image::outline_of_task.png[outline_of_task]
+
+*データ概要*
+
+[options="header, autowidth"]
+|===
+|*ファイル名* | *説明*
+|stock_list | 各銘柄の情報が記録されたデータ
+|stock_price | 各銘柄の株価情報（始値・高値・安値・終値等）が記録されたデータ
+|stock_fin | 各銘柄のファンダメンタル情報（決算数値データや配当データ等）が記録されたデータ
+|stock_fin_price | データが扱いやすいようにstock_priceおよびstock_finをマージしたデータ
+|stock_labels | 本コンペティションで学習に用いるラベル（目的変数）が記録されたデータ
+|===
+提供データについては、2016年1月初から2020年12月末をcsvファイル形式、2021年１月初からのデータについては、本コンペティション専用のAPIにて提供いたします。APIによるデータ取得につきましては、5章をご参照ください。
+
+
+*スケジュール*
+[options="header, autowidth"]
+|===
+|*日時* | *内容*
+|2021年1月29日（金）| コンペティション開始
+|2021年3月28日（日）| モデル提出締切
+|2021年3月29日（月） 〜 6月11日（金） | モデル評価期間
+|2021年7月頃 | 入賞者の決定
+|===
+
+==== 本コンペティションに参加することで得られる知見
+
+本コンペティションに参加することで、株価や企業業績の推移などの時系列データの解析手法や、さまざまな金融データを用いて市場の動向やリスクの分析についての知見が得られることを期待しています。
+
+==== 評価方法
+
+本コンペティションでは、モデルの予測と真の値（20営業日以内に発生する最高値及び最安値）との順位相関係数による定量評価方法を採用します。高値と安値の両方の順位相関係数を計算し、その平均で評価をするものとします。内部的にはpandasライブラリを利用し、 `corr()` メソッドの引数 `method` に `spearman` を指定して計算しています。
+
+====
+[plantuml, math-sample1, svg]
+----
+@startmath
+rho = 1 - frac{6sum d^2}{n(n^2-1)}
+@endmath
+----
+
+$$d$$ = 対応する$$X$$と$$Y$$の値の順位の差
+
+$$n$$ = 値のペアの数
+
+$$d$$の$$X$$と$$Y$$は、
+
+$$X$$ = 該当期間の決算日に対して出力されたモデルのスコア
+
+$$Y$$ = 20営業日以内に発生した高値、もしくは安値
+
+====
+(式は一部英語Wikipediaスピアマンの順位相関係数より引用 https://ja.wikipedia.org/wiki/%E3%82%B9%E3%83%94%E3%82%A2%E3%83%9E%E3%83%B3%E3%81%AE%E9%A0%86%E4%BD%8D%E7%9B%B8%E9%96%A2%E4%BF%82%E6%95%B0[https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient])
+
+
+順位相関係数を採用する理由としては、以下の説明にもあるとおり、金融商品の価格変動の変化率の分布は必ずしも正規分布になるとは限りません。
+そのため、本コンペティションでは、特定の分布を仮定しない順位相関係数を採用しています。
+
+====
+一定間隔刻みで集計した騰落率の度数（頻度）分布が、騰落率の平均値を中心軸として左右対称の釣り鐘型の形状になる分布 (正規分布＝Normal Distribution) では、「平均値±標準偏差」の範囲に全データの約7割が収まるという確率的な特性を持ちます。ただし、金融商品の価格変動が厳密な意味での正規分布に従うことは実際上ほとんどありません。このため、「平均±標準偏差の範囲に騰落率の約7割が収まる」という考え方は理論的な目安に過ぎなく、発生確率は低いものの標準偏差を大幅に超す価格変動も起こりえます。こうした価格変動のリスクをテールリスクと呼び、とくに、金融市場の混乱期には分布がマイナス方向に偏るケースや、裾が極端に広く厚い"ファット・テール"という現象が確認できます。
+====
+(野村証券証券用語解説集より引用 https://www.nomura.co.jp/terms/japan/hi/A02397.html)
+
+本コンペにおいても、例えば新型コロナウイルス感染症 (COVID-19)のような外部影響を受け、マーケットの変化率の分布が歪む期間が存在すると想定されます。したがって、順位相関係数は相関係数と比較して特定の分布を仮定しないことから、本コンペティションにおいては、より適した評価方法であると考えられます。
+
+順位相関係数は最高値と最安値の両方に対して個別に計算したうえ、以下の式を用いて結合スコアを最終スコアとします。
+
+====
+[plantuml, math-sample2, svg]
+----
+@startmath
+"score" = (P_"high" - 1)^2 + (P_"low" - 1)^2
+@endmath
+----
+
+P_high : 最高値の順位相関係数
+
+P_low : 最安値の順位相関係数
+
+
+====
+
+
+=== 実行環境および必要なライブラリ
+
+==== 実行環境
+
+本チュートリアルの実行環境は、本コンペティションで提出するモデルの実行環境と同一環境とするために以下のpython環境を用います。環境構築方法について、詳しくは https://signate.jp/features/runtime/detail[SIGNATE: Runtime 投稿方法: ローカル開発環境の構築方法は？] をご参照ください。
+
+----
+anaconda3-2019.03
+----
+
+==== 必要なライブラリのインストール
+
+本チュートリアル内では、上記の実行環境に含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。
+[source,bash]
+----
+
+# shap用にg++とgccをインストールします
+apt-get update
+apt-get install -y --no-install-recommends g++ gcc
+
+# 必要なライブラリをインストールします
+pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0
+----
+
+==== ライブラリの読み込み
+
+本チュートリアルでは、下記のライブラリのインポートを行います。
+
+[source,python]
+----
+import os
+import pickle
+import sys
+import warnings
+from glob import glob
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import shap
+import xgboost
+from scipy.stats import spearmanr
+from sklearn.ensemble import (
+    ExtraTreesRegressor,
+    GradientBoostingRegressor,
+    RandomForestRegressor,
+)
+from sklearn.metrics import accuracy_score, mean_squared_error
+from tqdm.auto import tqdm
+
+
+# 表示用の設定を変更します
+%matplotlib inline
+pd.options.display.max_rows = 100
+pd.options.display.max_columns = 100
+pd.options.display.width = 120
+----
+
+==== ライブラリ解説
+
+[options="header, autowidth"]
+|===
+|*ライブラリ名*| *目的* | *公式ドキュメント* |*入門解説* ｑ
+|pandas | データの処理 | https://pandas.pydata.org/docs/[pandas documentation] | https://qiita.com/ysdyt/items/9ccca82fc5b504e7913a[Qiita:データ分析で頻出のPandas基本操作]
+|numpy | データの処理 | https://numpy.org/doc/stable/user/tutorials_index.html[NumPy Tutorials] |https://qiita.com/jyori112/items/a15658d1dd17c421e1e2[Qiita:numpyの使い方]
+|glob | ファイルの検知 | https://docs.python.org/3/library/glob.html[glob — Unix style pathname pattern expansion] |https://qiita.com/HirosuguTakeshita/items/0e0850362c7eb3b10ea1[Qiita:【備忘録】globの使い方]
+|tqdm | 計算の進捗確認 | https://tqdm.github.io/[tqdm] |https://qiita.com/pontyo4/items/76145cb10e030ad8186a[Qiita:tqdmでプログレスバーを表示させる]
+|sklearn | 機械学習モデルを作成 | https://scikit-learn.org/stable/tutorial/index.html[https://scikit-learn.org/stable/tutorial/index.html] |https://qiita.com/ynakayama/items/9c5867b6947aa41e9229[Qiita:scikit-learn から学ぶ機械学習の手法の概要]
+|matplotlib | データの可視化 | https://matplotlib.org/tutorials/index.html[matplotlib tutorials] |https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9[Qiita:早く知っておきたかったmatplotlibの基礎知識、あるいは見た目の調整が捗るArtistの話]
+|scipy | 統計用のライブラリ | https://docs.scipy.org/doc/scipy/reference/tutorial/index.html[SciPy Tutorial] |https://amorphous.tf.chiba-u.jp/lecture.files/chem_computer/11_scipy%E3%81%AE%E5%9F%BA%E6%9C%AC%E3%81%A8%E5%BF%9C%E7%94%A8/11.html[千葉大: コンピュータ処理 ドキュメント 11. scipyの基本と応用]
+|seaborn | データの可視化 | https://seaborn.pydata.org/tutorial.html[User guide and tutorial] |https://qiita.com/hik0107/items/3dc541158fceb3156ee0[Qiita:pythonで美しいグラフ描画 -seabornを使えばデータ分析と可視化が捗る その1]
+| shap | SHAP分析 | https://shap.readthedocs.io/en/latest/[Welcome to the SHAP Documentation] | https://qiita.com/shin_mura/items/cde01198552eda9146b7[Shapを用いた機械学習モデルの解釈説明]
+| xgboost | 機械学習モデル | https://xgboost.readthedocs.io/en/latest/[XGBoost Documentation] | https://qiita.com/triwave33/items/aad60f25485a4595b5c8[XGBoost論文を丁寧に解説する(1)]
+|===
+
+==== 実行環境の確認
+
+pythonのバージョンが3.7.3であることを確認します。
+
+[source,python]
+----
+print(sys.version)
+----
+
+出力
+
+[source,bash]
+----
+3.7.3 (default, Mar 27 2019, 22:11:17)
+[GCC 7.3.0]
+----
+
+
+=== データセットの説明
+
+提供されるデータは以下の5種類です。
+
+[options="header, autowidth"]
+|===
+|*ファイル名* | *説明*
+|stock_list | 各銘柄の情報が記録されたデータ
+|stock_price | 各銘柄の株価情報（始値・高値・安値・終値等）が記録されたデータ
+|stock_fin | 各銘柄のファンダメンタル情報（決算数値データや配当データ等）が記録されたデータ
+|stock_fin_price | データが扱いやすいようにstock_priceおよびstock_finをマージしたデータ
+|stock_labels | 本コンペティションで学習に用いるラベル（目的変数）が記録されたデータ
+|===
+
+==== 銘柄情報: stock_list
+
+stock_listは、銘柄の名前や業種区分などの基本情報が含まれています。発行済株式数は、会社が発行することをあらかじめ定款に定めている株式数（授権株式数）のうち、会社が既に発行した株式数のことです。発行済株式数と株価とかけ合わせて時価総額を計算することができます。時価総額は企業価値を評価する際に用いられる重要な指標です。業種区分情報は、マーケットにおける業種別の平均などを計算する時に役立つ情報です。33業種は証券コード協議会が定めており、17業種はTOPIX-17シリーズとして「投資利便性を考慮して17業種に再編したもの」(JPX東証33業種別株価指数・TOPIX-17シリーズファクトシートより引用 https://www.jpx.co.jp/markets/indices/line-up/index.html) です。
+
+「業種」(JPX用語集より引用 https://www.jpx.co.jp/glossary/ka/112.html)
+
+[cols="2,3,1,1", options="header"]
+|===
+|*変数名* | *説明* | *型* | *例*
+|prediction_target  | 予測対象銘柄 | bool | True
+|Effective Date  | 銘柄情報の基準日 | int64 | 20201030
+|Local Code   | 株式銘柄コード | int64 | 1301
+|Name (English)  | 銘柄名 | object | KYOKUYO CO.,LTD.
+|Section/Products  | 市場・商品区分 | object | First Section (Domestic)
+|33 Sector(Code)  | 銘柄の33業種区分(コード) | int64 | 50
+|33 Sector(name)  | 銘柄の33業種区分(名前) | object | Fishery, Agriculture and Forestry
+|17 Sector(Code)   | 銘柄の17業種区分(コード) | int64 | 1
+|17 Sector(name)  | 銘柄の17業種区分(名前) | object | FOODS
+|Size Code (New Index Series)  | TOPIXニューインデックスシリーズ規模区分(コード) | object | 7
+|Size (New Index Series) | TOPIXニューインデックスシリーズ規模区分 | object | TOPIX Small 2
+|IssuedShareEquityQuote AccountingStandard  | 会計基準 単独:NonConsolidated、連結国内:ConsolidatedJP、連結SEC:ConsolidatedUS、連結IFRS:ConsolidatedIFRS | object | ConsolidatedJP
+|IssuedShareEquityQuote ModifyDate |更新日 | object | 2020/11/06
+|IssuedShareEquityQuote IssuedShare  |発行済株式数 | int64 | 10928283
+|===
+メモリ使用量: 380.3+ KB
+
+(JPX東証上場銘柄一覧より引用 https://www.jpx.co.jp/markets/statistics-equities/misc/01.html) +
+(Quick xignite API Market Data API Catalogより引用 https://www.marketdata-cloud.quick-co.jp/Products/)
+
+image::sample_stock_list.png[sample_stock_list]
+
+
+==== 株価情報 : stock_price
+
+stock_priceには各銘柄の各日付の始値や終値などの株価情報が記録されています。テクニカル分析などで終値ベースの分析を実施する場合は、ExchangeOfficialCloseを利用します。 +
+ここでいうテクニカル分析というのは、マーケットデータから計算される指標に基づいた分析のことです。また、終値ベースの分析とは、マーケットデータの中でも、終値のみを用いた分析を表しています。
+
+株価情報は、「株式分割」や「株式併合」が発生した際に生じる株価の変動を、株式数の変化率に応じて調整されています。特徴量の定義によっては、その日付時点で実際に取引された株価や出来高を取得したい場合がありますが、その場合は累積調整係数を使用して +
+ `[調整前株価] = [調整済株価] * [累積調整係数]` 及び `[調整前出来高] = [調整済出来高] / [累積調整係数]`  +
+ という計算で算出可能です。 +
+「株式分割」(JPX用語集より引用 https://www.jpx.co.jp/glossary/ka/81.html) +
+「株式併合」(JPX用語集より引用 https://www.jpx.co.jp/glossary/ka/83.html)
+
+**ただし、これらの特徴量をモデルに使用する場合には注意が必要です。**
+
+履歴データの累積調整係数は過去のある日時点では知り得ない未来の情報を含んでいることに注意する必要があります。具体的には、過去のある日時点の累積調整係数が2である場合、その日以降に1:2の株式分割が発生していることがわかります。
+
+一般に株式分割は流動性向上を期待できるポジティブなイベントとみなされています。仮に、モデル学習時に累積調整係数をモデルへ入力し、モデルが累積調整係数が大きい銘柄は未来の株価が上がる傾向があるということを学習し、履歴データを使用したバックテストでは良い結果がでたとします。しかし、このモデルに最新データを入力して予測を出力した場合、その予測は期待する結果を得られない可能性があります。なぜなら、最新データの累積調整係数にはまだ発生していない未来の情報は含まれていないためです。
+
+このように、その日付時点では取得できない未来の情報をモデルに入力することをリークといい、時系列データには累積調整係数のようにその日付時点では取得できない情報が含まれていることがあるため、リークにはとくに注意する必要があります。
+
+[cols="2,3,1,1", options="header"]
+|===
+|*変数名* | *説明* | *型* | *例*
+|Local Code                                       |銘柄コード | int64 | 1301
+|EndOfDayQuote Date                               |日付 | object | 2016/01/04
+|EndOfDayQuote Open                               |始値 | float64 | 2800
+|EndOfDayQuote High                               |高値 | float64 | 2820
+|EndOfDayQuote Low                                |安値 | float64 | 2740
+|EndOfDayQuote Close                              |終値。大引け後にセットされる | float64 | 2750
+|EndOfDayQuote ExchangeOfficialClose              |取引所公式終値。最終の特別気配または最終気配を含む終値 | float64 | 2750
+|EndOfDayQuote Volume                             |売買高 | float64 | 32000
+|EndOfDayQuote CumulativeAdjustmentFactor         |累積調整係数 | float64 | 0.1
+|EndOfDayQuote PreviousClose                      |前回の終値 | float64 | 2770
+|EndOfDayQuote PreviousCloseDate                  |前回の終値が発生した日 | object | 2015/12/30
+|EndOfDayQuote PreviousExchangeOfficialClose      |前回の取引所公式終値 | float64 | 2770
+|EndOfDayQuote PreviousExchangeOfficialCloseDate  |前回の取引所公式終値が発生した日 | object | 2015/12/30
+|EndOfDayQuote ChangeFromPreviousClose            |騰落幅。前回終値と直近約定値の価格差 | float64 | -20
+|EndOfDayQuote PercentChangeFromPreviousClose     |騰落率。前回終値からの直近約定値の上昇率または下落率 | float64 | -0.722
+|EndOfDayQuote VWAP                               |売買高加重平均価格(VWAP) | float64 | 2778.25
+|===
+メモリ使用量: 515.8+ MB
+
+(Quick xignite API Market Data API Catalogより引用 https://www.marketdata-cloud.quick-co.jp/Products/)
+
+image::sample_stock_price.png[sample_stock_price]
+
+
+==== ファンダメンタル情報: stock_fin
+
+株式投資における `ファンダメンタル情報` とは、対象銘柄の純資産といった財務状況や当期純利益といった業績状況を表す情報のことです。ファンダメンタル情報を用いて、各銘柄の成長性、収益性、安全性、割安度などの投資判断に活用することができます。ファンダメンタル情報を利用した解析は、さまざまな手法が考案されています。
+
+ファンダメンタル情報のデータセットであるstock_finにおいて、いくつかの変数名は `Forecast` から始まっていますが、これらは各企業が来期の自社の業績・財務状況を予想したデータです。例えば、企業が来期の業績が厳しいことが予め分かっている場合には、予想として早めに開示することがあるため、予想のデータも重要な可能性があります。
+
+[cols="2,3,1,1", options="header"]
+|===
+|*変数名* | *説明* | *型* | *例*
+|base_date                                                   |日付 | object | 2016/01/04
+|Local Code                                                  |銘柄コード | int64 | 2753
+|Result_FinancialStatement AccountingStandard                |会計基準　単独:NonConsolidated、連結国内:ConsolidatedJP、連結SEC:ConsolidatedUS、連結IFRS:ConsolidatedIFRS | object | ConsolidatedJP
+|Result_FinancialStatement FiscalPeriodEnd                   |決算期 | object | 2015/12
+|Result_FinancialStatement ReportType                        |決算種別　第1四半期:Q1、中間決算:Q2、第3四半期:Q3、本決算:Annual | object | Q3
+|Result_FinancialStatement FiscalYear                        |決算年度。本決算の決算期末が属する年。 | float64 | 2016
+|Result_FinancialStatement ModifyDate                        |更新日 | object | 2016/01/04
+|Result_FinancialStatement CompanyType                       |会社区分 一般事業会社:GB、銀行:BK、証券会社:SE、損保会社:IN ※上記に該当しない場合は空文字を設定してます。 | object | GB
+|Result_FinancialStatement ChangeOfFiscalYearEnd             |決算期変更フラグ 決算期変更あり:true、決算期変更なし:false | object | False
+|Result_FinancialStatement NetSales                          |売上高（単位：百万円） 会社区分によって項目名の読替えを行ういます。 銀行：経常収益、証券：営業収益、損保：経常収益 ※未開示の場合は空文字を設定してます。 | float64 | 22354
+|Result_FinancialStatement OperatingIncome                   |営業利益（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 2391
+|Result_FinancialStatement OrdinaryIncome                    |経常利益（単位：百万円） 会計基準が連結SECの場合は、項目名を「税引前利益」に読み替えます。 ※未開示の場合は空文字を設定してます。 | float64 | 2466
+|Result_FinancialStatement NetIncome                         |当期純利益（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 1645
+|Result_FinancialStatement TotalAssets                       |総資産（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 21251
+|Result_FinancialStatement NetAssets                         |純資産（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 16962
+|Result_FinancialStatement CashFlowsFromOperatingActivities  |営業キャッシュフロー（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 12404
+|Result_FinancialStatement CashFlowsFromFinancingActivities  |財務キャッシュフロー（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | -98
+|Result_FinancialStatement CashFlowsFromInvestingActivities  |投資キャッシュフロー（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | -1307
+|Forecast_FinancialStatement AccountingStandard              |予想: 会計基準　単独:NonConsolidated、連結国内:ConsolidatedJP、連結SEC:ConsolidatedUS、連結IFRS:ConsolidatedIFRS | object | ConsolidatedJP
+|Forecast_FinancialStatement FiscalPeriodEnd                 |来期予想情報:　決算期 | object | 2016/03
+|Forecast_FinancialStatement ReportType                      |来期予想情報:　決算種別　第1四半期:Q1、中間決算:Q2、第3四半期:Q3、本決算:Annual | object | Annual
+|Forecast_FinancialStatement FiscalYear                      |来期予想情報:　決算年度。本決算の決算期末が属する年。 | float64 | 2016
+|Forecast_FinancialStatement ModifyDate                      |来期予想情報:　更新日 | object | 2016/01/04
+|Forecast_FinancialStatement CompanyType                     |来期予想情報:　会社区分 一般事業会社:GB、銀行:BK、証券会社:SE、損保会社:IN ※上記に該当しない場合は空文字を設定してます。 | object | GB
+|Forecast_FinancialStatement ChangeOfFiscalYearEnd           |来期予想情報:　決算期変更フラグ 決算期変更あり:true、決算期変更なし:false | object | False
+|Forecast_FinancialStatement NetSales                        |来期予想情報:　売上高（単位：百万円） 会社区分によって項目名の読替えを行います。 銀行：経常収益、証券：営業収益、損保：経常収益 ※未開示の場合は空文字を設定してます。 | float64 | 30500
+|Forecast_FinancialStatement OperatingIncome                 |来期予想情報:　営業利益（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 3110
+|Forecast_FinancialStatement OrdinaryIncome                  |来期予想情報:　経常利益（単位：百万円） 会計基準が連結SECの場合は、項目名を「税引前利益」に読み替えます。 ※未開示の場合は空文字を設定してます。 | float64 | 3200
+|Forecast_FinancialStatement NetIncome                       |来期予想情報:　当期純利益（単位：百万円） ※未開示の場合は空文字を設定してます。 | float64 | 2130
+|Result_Dividend FiscalPeriodEnd                             |配当情報:　決算期 | object | 2015/11
+|Result_Dividend ReportType                                  |配当情報:　決算種別　第1四半期:Q1、中間決算:Q2、第3四半期:Q3、本決算:Annual | object | Annual
+|Result_Dividend FiscalYear                                  |配当情報:　決算年度。本決算の決算期末が属する年。 | float64 | 2015
+|Result_Dividend ModifyDate                                  |配当情報:　更新日 | object | 2016/01/07
+|Result_Dividend RecordDate                                  |配当情報:　配当基準日 | object | 2015/11/30
+|Result_Dividend DividendPayableDate                         |配当情報:　配当支払開始日　※予想の場合は空文字を設定してます。 | object | 2016/02/29
+|Result_Dividend QuarterlyDividendPerShare                   |配当情報:　一株当たり四半期配当金（単位：円）　※未開示の場合は空文字を設定してます。 | float64 | 8
+|Result_Dividend AnnualDividendPerShare                      |配当情報:　一株当たり年間配当金累計（単位：円）※未開示の場合は空文字を設定してます。 | float64 | 15
+|Forecast_Dividend FiscalPeriodEnd                           |予想配当情報:　決算期 | object | 2016/03
+|Forecast_Dividend ReportType                                |予想配当情報:　決算種別　第1四半期:Q1、中間決算:Q2、第3四半期:Q3、本決算:Annual | object | Annual
+|Forecast_Dividend FiscalYear                                |予想配当情報:　決算年度。本決算の決算期末が属する年。 | float64 | 2016
+|Forecast_Dividend ModifyDate                                |予想配当情報:　更新日 | object | 2016/01/04
+|Forecast_Dividend RecordDate                                |予想配当情報:　配当基準日 | object | 2016/03/31
+|Forecast_Dividend QuarterlyDividendPerShare                 |予想配当情報:　一株当たり四半期配当金（単位：円）　※未開示の場合は空文字を設定してます。 | float64 | 45
+|Forecast_Dividend AnnualDividendPerShare                    |予想配当情報:　一株当たり年間配当金累計（単位：円）※未開示の場合は空文字を設定してます。 | float64 | 90
+|===
+メモリ使用量: 27.5+ MB
+
+(Quick xignite API Market Data API Catalogより引用 https://www.marketdata-cloud.quick-co.jp/Products/)
+
+image::sample_stock_fin.png[sample_stock_fin]
+
+==== 財務諸表+株価情報: stock_fin_price
+
+stock_fin_priceは、株価情報である<<株価情報 : stock_price, stock_price>>と財務諸表である<<ファンダメンタル情報: stock_fin, stock_fin>>をデータとして扱いやすいように結合したデータです。変数名や型などについては、同じであるため記載を省略しています。
+
+また、データのサイズが1.8GB以上と非常に大きいため、必要に応じて活用していただきたいと思います。
+
+==== 目的変数: stock_labels
+
+stock_labelsは予測の目的変数のデータであり、各銘柄で決算発表が行われた日の取引所公式終値から、その日の翌営業日以降N営業日間における取引所公式終値の最高値および最安値への変化率を記録したデータです。 +
+各値の計算式は、 `([基準日付の翌日以降N営業日間における高値/安値] / [基準日付の終値]) - 1` です。
+
+[cols="2,3,1,1", options="header"]
+|===
+|*変数名* | *説明* | *型* | *例*
+|base_date           | 基準日付 | object | 2016-01-04
+|Local Code          | 銘柄コード | int64 | 1301
+|label_date_5        | データの基準日から5営業日後の日付。label_high_5算出に使用される終値範囲の基準日 | object | 2016-01-12
+|label_high_5        | データの基準日から5営業日以内の最高値への変化率 | float64 | 0.00364
+|label_low_5         | データの基準日から5営業日以内の最安値への変化率 | float64 | -0.04
+|label_date_10       | データの基準日から10営業日後の日付。label_high_10算出に使用される終値範囲の基準日 | object | 2016-01-19
+|label_high_10       | データの基準日から10営業日以内の最高値への変化率 | float64 | 0.00364
+|label_low_10        | データの基準日から10営業日以内の最安値への変化率 | float64 | -0.05455
+|label_date_20       | データの基準日から20営業日後の日付。label_high_20算出に使用される終値範囲の基準日 | object | 2016-02-02
+|label_high_20       | データの基準日から20営業日以内の最高値への変化率 | float64 | 0.00364
+|label_low_20        | データの基準日から20営業日以内の最安値への変化率 | float64 | -0.08364
+|===
+メモリ使用量: 354.6+ MB
+
+image::sample_stock_labels.png[sample_stock_label]
+
+==== データセットの読み込み
+
+本コンペティション用に提供されているデータセットをダウンロードして、ファイルを解凍した場所を定義します。
+
+[source,python]
+----
+# データセット保存先ディレクトリ（""の中身はご自身の環境に合わせて定義してください。）
+dataset_dir="/path/to"
+----
+
+データを読み込みます。なお、本チュートリアルでは `stock_fin` 及び `stock_price` を使用するため、 `stock_fin_price` は読み込まずに進めます。
+
+[source,python]
+----
+# 読み込むファイルを定義します。
+inputs = {
+    "stock_list": f"{dataset_dir}/stock_list.csv.gz",
+    "stock_price": f"{dataset_dir}/stock_price.csv.gz",
+    "stock_fin": f"{dataset_dir}/stock_fin.csv.gz",
+    # 本チュートリアルでは使用しないため、コメントアウトしています。
+    # "stock_fin_price": f"{dataset_dir}/stock_fin_price.csv.gz",
+    "stock_labels": f"{dataset_dir}/stock_labels.csv.gz",
+}
+
+# ファイルを読み込みます
+dfs = {}
+for k, v in inputs.items():
+    print(k)
+    dfs[k] = pd.read_csv(v)
+----
+
+読み込んだデータを確認します。
+
+[source,python]
+----
+for k in inputs.keys():
+    print(k)
+    print(dfs[k].info())
+    print(dfs[k].head(1).T)
+----
+
+=== データセットの可視化
+
+データセットの各項目の特徴を把握することは、モデルを作成する上で重要な要素の1つです。一般にデータの特徴を把握するためには、各項目の意味を把握し、値の平均や標準偏差などの基本統計量を確認します。可視化もそういった特徴把握の手法の1つで、データをグラフなどで表現することで特性を直感的に理解できるようになります。
+
+Chapter 2.3 データセットの説明では、本コンペで用いるデータセットについて説明しました。ここではそれらのデータを、 `matplotlib` と `seaborn` を用いて可視化します。財務諸表、株価、移動平均、価格変化率、ヒストリカル・ボラティリティを個別で見て、最後に1つのグラフとしてまとめて可視化します。
+
+==== 財務諸表
+
+ファンダメンタル情報は項目が多いため、今回は、売上高、営業利益、純利益、純資産及びその決算期の間の関係について可視化します。サンプルとして、銘柄コード9984の「ソフトバンクグループ」を可視化します。
+
+[source, python]
+----
+# stock_finの読み込み
+fin = dfs["stock_fin"].copy()
+
+# 銘柄コード9984にデータを絞る
+code = 9984
+fin_data = fin[fin["Local Code"] == code].copy()
+
+# 日付列をpd.Timestamp型に変換してindexに設定
+fin_data["datetime"] = pd.to_datetime(fin_data["base_date"])
+fin_data.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+fin_data = fin_data[:"2019"]
+
+# プロット対象を定義
+columns = [
+    "Result_FinancialStatement NetSales",  # 売上高
+    "Result_FinancialStatement OperatingIncome",  # 営業利益
+    "Result_FinancialStatement NetIncome",  # 純利益
+    "Result_FinancialStatement NetAssets",  # 純資産
+    "Result_FinancialStatement ReportType"  # 決算期
+]
+
+# プロット
+sns.pairplot(fin_data[columns], hue="Result_FinancialStatement ReportType", height=5)
+----
+
+image::sample_fin_stock.png[sample fin plot]
+
+上記のプロットについて説明しますと、各色（緑、赤、青、オレンジ）はそれぞれQ1,Q2,Q3,Annualにおける決算の値に対応しており、対角に並んでいるプロットは各軸の特徴量の分布を表しています。また、その他のプロットは、各軸2つの変数の散布図を表しています。 +
+例えば、2行1列目のグラフを見ると、横軸が売上高、縦軸が営業利益になっています。高い売上高は高い営業利益に繋がっています。また、決算期がQ1からQ3,本決算に至るまでに基本的に右肩上がりであることが分かります。このことから財務データの純売上高や営業利益などの変数は、各決算期ごとの値ではなく、各決算期を積み上げ式で記録されていると推測できます。
+
+===== 複数銘柄のファンダメンタル情報の比較
+
+[source, python]
+----
+# stock_finの読み込み
+fin = dfs["stock_fin"].copy()
+
+# 銘柄コード9984と9983を比較する
+codes = [9984, 9983]
+
+multi_df = dict()
+
+# プロット対象を定義
+columns = [
+    "Result_FinancialStatement NetSales",  # 売上高
+    "Result_FinancialStatement OperatingIncome",  # 営業利益
+    "Result_FinancialStatement NetIncome",  # 純利益
+    "Result_FinancialStatement NetAssets",  # 純資産
+    "Result_FinancialStatement ReportType"  # 決算期
+]
+
+# 比較対象の銘柄コード毎に処理
+for code in codes:
+    # 特定の銘柄コードに絞り込み
+    fin_data = fin[fin["Local Code"] == code].copy()
+    # 日付列をpd.Timestamp型に変換してindexに設定
+    fin_data.loc[:, "datetime"] = pd.to_datetime(fin_data["base_date"])
+    fin_data.set_index("datetime", inplace=True)
+    # 2019年までの値を表示
+    fin_data = fin_data[:"2019"]
+    # 重複を排除
+    fin_data.drop_duplicates(
+        subset=[
+            "Local Code",
+            "Result_FinancialStatement FiscalYear",
+            "Result_FinancialStatement ReportType"
+        ],
+        keep="last", inplace=True)
+    # プロット対象のカラムを取得
+    _fin_data = fin_data[columns]
+    # 決算期毎の平均を取得
+    multi_df[code] = _fin_data[columns].groupby("Result_FinancialStatement ReportType").mean()
+
+# 銘柄毎に処理していたものを結合
+multi_df = pd.concat(multi_df)
+# 凡例を調整
+multi_df.set_index(multi_df.index.map(lambda t: f"{t[0]}/{t[1]}"), inplace=True)
+# プロット
+ax = multi_df.T.plot(kind="bar", figsize=(12, 6), grid=True)
+# Y軸のラベルを調整
+ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, p: "{} bYen".format(int(x / 1_000))))
+----
+
+image::sample_comparison.png[sample_comparison]
+
+画像の中にコメントを記載しておりますが、NetSales（売上高）とNetAssets（純資産）の特性の違いがわかります。NetAssetsは一定の数値になっており、決算期の影響をあまり受けていないことがわかります。一方、NetAssetsはQ1からAnnualにかけて数値が積み上がっており、Q1から決算期が進むごとに大きくなる特性を持つことがわかります。
+
+==== 株価
+
+ここでは、サンプルとして銘柄コード9984の「ソフトバンクグループ」の終値の動きを可視化します。
+
+[source, python]
+----
+# stock_priceの読み込み
+price = dfs["stock_price"].copy()
+
+# 特定の銘柄コードに絞り込み
+code = 9984
+price_data = price[price["Local Code"] == code].copy()
+# 日付列をpd.Timestamp型に変換してindexに設定
+price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+price_data.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+price_data = price_data[:"2019"]
+
+# プロット
+fig, ax = plt.subplots(figsize=(20, 8))
+
+ax.plot(price_data["EndOfDayQuote ExchangeOfficialClose"], label=f"securities code : {code}.T")
+ax.set_ylabel("stock_price")
+ax.set_xlabel("datetime")
+ax.grid(True)
+ax.legend()
+----
+
+image::sample_stock_price_close.png[sample_close_price]
+
+==== 移動平均
+
+ここでは移動平均をプロットします。移動平均にもさまざまな種類がありますが、ここでは単純移動平均線を用います。単純移動平均線というのは、例えば、5日線であれば、直近5営業日の価格の平均値です。これを1つずつ期間をスライドしながら計算したものになります。
+
+[source, python]
+----
+# stock_priceの読み込み
+price = dfs["stock_price"].copy()
+
+# 特定の銘柄コードに絞り込み
+code = 9984
+price_data = price[price["Local Code"] == code].copy()
+# 日付列をpd.Timestamp型に変換してindexに設定
+price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+price_data.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+price_data = price_data[:"2019"]
+
+# 5日、25日、75日の移動平均を算出
+periods = [5, 25, 75]
+cols = []
+for period in periods:
+    col = "{} windows simple moving average".format(period)
+    price_data[col] = price_data["EndOfDayQuote ExchangeOfficialClose"].rolling(period, min_periods=1).mean()
+    cols.append(col)
+
+# プロット
+fig, ax = plt.subplots(figsize=(20, 8))
+
+for col in cols:
+    ax.plot(price_data[col], label=col)
+ax.set_ylabel("stock_price")
+ax.set_xlabel("datetime")
+ax.grid(True)
+ax.legend()
+----
+
+image::sample_moving_average.png[sample_SMA]
+
+==== 価格変化率
+
+価格変化率は、価格がその期間でどれくらい変化したかを(%)で表現したものです。相場の勢いや方向性等を判断する際によく使われます。
+
+[source, python]
+----
+# stock_priceの読み込み
+price = dfs["stock_price"].copy()
+
+# 特定の銘柄コードに絞り込み
+code = 9984
+price_data = price[price["Local Code"] == code].copy()
+# 日付列をpd.Timestamp型に変換してindexに設定
+price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+price_data.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+price_data = price_data[:"2019"]
+
+# 5日、25日、75日の価格変化率を算出
+periods = [5, 25, 75]
+cols = []
+for period in periods:
+    col = "{} windows rate of return".format(period)
+    price_data[col] = price_data["EndOfDayQuote ExchangeOfficialClose"].pct_change(period) * 100
+    cols.append(col)
+
+# プロット
+fig, ax = plt.subplots(figsize=(20, 8))
+
+for col in cols:
+    ax.plot(price_data[col], label=col)
+ax.set_ylabel("rate of return (%)")
+ax.set_xlabel("datetime")
+ax.grid(True)
+ax.legend()
+----
+
+image::sample_rate_of_return.png[sample_rr]
+
+
+==== ヒストリカル・ボラティリティ
+
+ここではヒストリカル・ボラティリティを計算します。ここで計算するヒストリカル・ボラティリティは、14日の対数リターンの標準偏差です。ヒストリカル・ボラティリティはリスク指標の一つで、価格がどの程度激しく変動したかを把握するために利用します。一般的にヒストリカル・ボラティリティが大きい銘柄は、小さい銘柄よりも資産として保持するリスクが相対的に高いと考えられます。
+
+[source, python]
+----
+# stock_priceの読み込み
+price = dfs["stock_price"].copy()
+
+# 特定の銘柄コードに絞り込み
+code = 9984
+price_data = price[price["Local Code"] == code].copy()
+# 日付列をpd.Timestamp型に変換してindexに設定
+price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+price_data.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+price_data = price_data[:"2019"]
+# 5日、25日、75日のヒストリカル・ボラティリティを算出
+periods = [5, 25, 75]
+cols = []
+for period in periods:
+    col = "{} windows volatility".format(period)
+    price_data[col] = np.log(price_data["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(period).std()
+    cols.append(col)
+
+# プロット
+fig, ax = plt.subplots(figsize=(20, 8))
+
+for col in cols:
+    ax.plot(price_data[col], label=col)
+ax.set_ylabel("volatility")
+ax.set_xlabel("datetime")
+ax.grid(True)
+ax.legend()
+----
+
+image::sample_volatility.png[sample_volatility]
+
+==== 複数の株価データを同時にプロット
+
+これまで可視化してきた株価に関するデータを同時にプロットすることで、それぞれの値の関連性について考察します。
+
+[source, python]
+----
+# stock_priceの読み込み
+price = dfs["stock_price"].copy()
+
+# 特定の銘柄コードに絞り込み
+code = 9984
+price_data = price[price["Local Code"] == code].copy()
+# 日付列をpd.Timestamp型に変換してindexに設定
+price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+price_data.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+price_data = price_data[:"2019"]
+# 5日、25日、75日を対象に値を算出
+periods = [5, 25, 75]
+ma_cols = []
+# 移動平均線
+for period in periods:
+    col = "{} windows simple moving average".format(period)
+    price_data[col] = price_data["EndOfDayQuote ExchangeOfficialClose"].rolling(period, min_periods=1).mean()
+    ma_cols.append(col)
+
+return_cols = []
+# 価格変化率
+for period in periods:
+    col = "{} windows rate of return".format(period)
+    price_data[col] = price_data["EndOfDayQuote ExchangeOfficialClose"].pct_change(period) * 100
+    return_cols.append(col)
+
+vol_cols = []
+# ヒストリカル・ボラティリティ
+for period in periods:
+    col = "{} windows volatility".format(period)
+    price_data[col] = np.log(price_data["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(period).std()
+    vol_cols.append(col)
+
+# プロット
+fig, ax = plt.subplots(nrows=3 ,figsize=(20, 8))
+
+ax[0].plot(price_data["EndOfDayQuote ExchangeOfficialClose"], label="Close Price")
+
+for col in ma_cols:
+    ax[0].plot(price_data[col], label=col)
+
+for col in return_cols:
+    ax[1].plot(price_data[col], label=col)
+
+for col in vol_cols:
+    ax[2].plot(price_data[col], label=col)
+
+ax[0].set_ylabel("stock_price")
+ax[1].set_ylabel("rate of return (%)")
+ax[2].set_ylabel("volatility (log return)")
+for _ax in ax:
+    _ax.set_xlabel("datetime")
+    _ax.grid(True)
+    _ax.legend()
+----
+
+image::sample_plot_all_features.png[plot_all_features]
+
+ここでは2018年末に起きた株価の下落に着目してみます。複数の特徴量を並べてプロットすると、株価に大きな変動があった時に他の特徴量にどのような影響を与えているかを観測することができます。
+
+移動平均の特徴量は、期間が短いほど敏感に株価の下落に反応し、期間が長い特徴量ほど反応が遅れることがわかります。リターンの特徴量も下落時には同一の傾向が見て取れますが、その後高いリターンが観測されることがわかります。一方、ヒストリカル・ボラティリティの挙動をみると、下落の前にじわじわとボラティリティが上昇していることがわかります。このように一つの株価の下落を見ても、それぞれの特徴量の挙動が微妙に異なっており、複数個の特徴量をモデルに投入することで、これらの挙動のパターンを学習することが想像できます。
+
+=== データセットの前処理
+
+ここまでデータの読み込みおよび可視化について説明してきましたが、ここからはデータの前処理やモデル構築に関して説明していきます。
+大まかな流れは、次の図のとおりです。
+
+image::flow_chart.png[pipeline]
+
+上図のとおり、モデルを構築する際には、データセットをそのまま入力するのではなく、欠損値処理や正規化処理などのデータセットの前処理を実施してから入力することが一般的です。ここではデータセットの前処理について解説していきます。
+
+==== 欠損値処理
+
+機械学習モデルの多くは欠損値をそのまま扱うことができないため、補完するなどして対処する必要があります。欠損値補完の方法としては、平均値埋めやリストワイズ法、多重代入法などが存在します。また、変数に欠損が存在するレコードを単に除外することや、欠損を多く含む変数自体を除外することも考えられます。
+
+==== 欠損値の処理方法
+
+本コンペティションのデータについて、実際に欠損が発生している箇所やパターンを特定するために、欠損の発生状況をプロットして確認してみます。
+
+[source, python]
+----
+# stock_finデータを読み込む
+stock_fin = dfs["stock_fin"].copy()
+
+# 日付列をpd.Timestamp型に変換してindexに設定
+stock_fin["datetime"] = pd.to_datetime(stock_fin["base_date"])
+stock_fin.set_index("datetime", inplace=True)
+# 2019年までの値を表示
+stock_fin = stock_fin[:"2019"]
+
+# データ数の確認
+print(stock_fin.shape)
+
+# データの欠損値数を確認
+print(stock_fin.isna().sum())
+
+# 欠損値の数を年別に集計
+stock_fin = stock_fin.isna()
+stock_fin["year"] = stock_fin.index.year
+
+# データの欠損値をプロット
+fig, ax = plt.subplots(figsize=(20, 5))
+sns.heatmap(stock_fin.groupby("year").agg("sum"), ax=ax)
+----
+
+image::missing_values.png[欠損値]
+
+明るい色で示されている箇所は、欠損値が多く発生していることを表しています。本チュートリアルでは欠損値について以下の対応方針を採用します。 +
+・`Result_FinancialStatement` の `CashFlowsFromOperatingActivities` 、 `CashFlowsFromFinancingActivities` 、 `CashFlowsFromInvestingActivities` に多くの欠損値があります。これらのカラムの値は `Result_FinancialStatement ReportType` が `Annual` の場合にのみ値が入っています。ここでは `0` を代入することで対処します。 +
+・配当支払開始日を表す `Result_Dividend DividendPayableDate` や予想配当基準日を表す `Forecast_Dividend RecordDate` というカラムなどのfloat64型以外のカラムに数多く欠損が発生していることが分かります。そのため、本チュートリアルではfloat64型として読み込まれているカラムのみを使用することとします。 +
+・上記に記載したキャッシュフローに関するカラム以外のfloat64型として読み込まれているカラムの欠損値についても、 `0` を代入することで対処します。ただし、変数によっては、0という数字自体に意味があるケースが有るため、気をつける必要があります。
+
+実際の欠損値処理は、次のように変数の型 (今回は `np.float64` という型を選択) 別に後段処理できる値 (今回は `0`) で欠損値を埋めます。
+
+[source, python]
+----
+# stock_finデータを読み込む
+stock_fin = dfs["stock_fin"].copy()
+
+# 銘柄コード9984にデータを絞る
+code = 9984
+stock_fin = stock_fin[stock_fin["Local Code"] == code]
+
+# 日付列をpd.Timestamp型に変換してindexに設定
+stock_fin["datetime"] = pd.to_datetime(stock_fin["base_date"])
+stock_fin.set_index("datetime", inplace=True)
+
+# float64型の列に絞り込み
+fin_data = stock_fin.select_dtypes(include=["float64"])
+
+# 欠損値を0でフィル
+fin_data = fin_data.fillna(0)
+----
+
+
+=== 特徴量の生成
+
+==== なぜ特徴量の設計が重要なのか
+
+機械学習の手法には**モデルにできるだけ生に近いデータを与えてその関係性を見つける手法**と**ドメイン知識や専門性を活かして、特徴量を設計する手法**があります。
+
+前者の手法はEnd-To-End Learningと呼ばれ、生に近いデータをモデルに与え、そのモデル自体に特徴量を発見させる手法です。音声認識などの分野で活用されています。 +
+本チュートリアルでは、金融データに慣れ親しんでいただくためにも、特徴量の影響を細かく考察しながら汎化性能に貢献する特徴量を設計していくアプローチで、モデルを構築します。
+
+特徴量生成は、仮説を考え、その仮説をモデルが学ぶにはどのような特徴量が必要か、ということを想像することが重要です。
+
+本チュートリアルでは、「直近株価が上がったら、高値もより大きく変動しやすい」という仮説を立て、この仮説を基に特徴量を生成してみます。この仮説をモデルが学ぶためには直近株価が上がったことを示す特徴量が必要です。直近を仮に1ヶ月と仮定すると、20日リターンや20日移動平均乖離率などが候補になります。
+
+また、この仮説が市場においても必ずしも正しいという必要はなく、仮説を思いついたら、その仮説を学ぶことができる特徴量を想像し、実際に実験してみることが重要です。
+
+==== 定常性を意識した特徴量設計
+
+時系列データを扱う際には、定常性を意識して特徴量を設計することが重要です。
+
+**株価をそのまま学習させたケース**と**定常性がある特徴量を利用するケース**について考えてみます。
+
+**株価をそのまま学習させたケース**: 例えば、モデルの訓練期間における株価が、100円〜110円の範囲で動いたとします。もし、この数値をそのままモデルに投入すると、モデルは株価が100円〜110円近辺で動くことを暗黙に学習します。しかし、この暗黙の仮定は実際のマーケットでは成立しておらず、テスト期間で株価が高騰すると、モデルがうまく動かないことがあります。他にも株価に特有の例としては株式分割や株式併合により株価のレンジが大きく変動する場合があります。
+
+**定常性がある特徴量を利用するケース**: 例えば、20日の価格変化率を考えると、これは正規分布ではありませんが、一部のマーケットの混乱期を除けばほぼ0を中心とした正規分布に近い分布になります。特徴量は2%の上昇や4%の下落といった0を中心として時系列となっており、将来に渡っても似たような分布になることが期待でき、株価範囲に対する暗黙の仮定を学ぶ恐れがなくなります。このように将来に渡っても似たような分布を期待できる特徴量は定常性があるということができます。
+
+定常性を意識すると、正規化処理における様々な注意点が見えてきます。たとえば、最小値と最大値を-1から1などにマッピングするMinMax正規化を株価に適用した場合、定常性を期待できるでしょうか？残念ながら株価に対してMinMax正規化を実施しても定常性を期待することはできません。株価をMinMax正規化したときにその最大値・最小値が未来に対しても適用できる保証ができないためです。このように時系列の特徴量の設計をするとき、定常性を意識しながら特徴量を設計していくことが重要です。
+
+==== 特徴量の生成例
+
+ここでは、特徴量の生成を `stock_price` の株価情報を利用して行います。株価情報には、価格や出来高など市場で公開されている株価の四本値(始値、高値、安値、終値)の時系列データが格納されています。本チュートリアルでは、特徴量の例として1ヶ月、2ヶ月、3ヶ月間の「終値の変化率（リターン）」、「ヒストリカル・ボラティリティ」、「移動平均線からの乖離率」を紹介します。 +
+次のコードで具体的な計算については示しますが、定義は以下のとおりです。
+
+[options="header, autowidth"]
+|===
+|*特徴量の計算に使用する関数* | *使用する関数の説明*
+|pct_change(N) | 現在の観測値とN個前の観測値との変化率
+|diff() | 現在の観測値と一つ前の観測値との差
+|rolling(N) | 対象の観測値をN個でグループ化
+|std() | 標準偏差
+|mean() | 算術平均
+|===
+
+
+[source, python]
+----
+# stock_priceデータを読み込む
+price = dfs["stock_price"].copy()
+
+# 銘柄コード9984にデータを絞る
+code = 9984
+price_data = price[price["Local Code"] == code].copy()
+# 日付列をpd.Timestamp型に変換してindexに設定
+price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+price_data.set_index("datetime", inplace=True)
+
+# 終値のみに絞る
+feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
+# 終値の20営業日リターン
+feats["return_1month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(20)
+# 終値の40営業日リターン
+feats["return_2month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(40)
+# 終値の60営業日リターン
+feats["return_3month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(60)
+# 終値の20営業日ボラティリティ
+feats["volatility_1month"] = (
+    np.log(feats["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(20).std()
+)
+# 終値の40営業日ボラティリティ
+feats["volatility_2month"] = (
+    np.log(feats["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(40).std()
+)
+# 終値の60営業日ボラティリティ
+feats["volatility_3month"] = (
+    np.log(feats["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(60).std()
+)
+# 終値と20営業日の単純移動平均線の乖離
+feats["MA_gap_1month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
+    feats["EndOfDayQuote ExchangeOfficialClose"].rolling(20).mean()
+)
+# 終値と40営業日の単純移動平均線の乖離
+feats["MA_gap_2month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
+    feats["EndOfDayQuote ExchangeOfficialClose"].rolling(40).mean()
+)
+# 終値と60営業日の単純移動平均線の乖離
+feats["MA_gap_3month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
+    feats["EndOfDayQuote ExchangeOfficialClose"].rolling(60).mean()
+)
+# 元データのカラムを削除
+feats = feats.dropna().drop(["EndOfDayQuote ExchangeOfficialClose"], axis=1)
+----
+
+==== テクニカル分析を活用した特徴量の生成
+
+他に株価を扱うための特徴量としてRSIやストキャスティクスのようなテクニカル分析の指標などを活用することもあります。pythonの `talib` というライブラリにはたくさんのテクニカル分析が実装されているため、活用を検討する価値があります。ただし、これらに対しては、本章では取り扱わずに、第4章で詳しい解説を行います。
+
+=== バックテスト用のテストデータ作成
+
+ここでは、バックテストを行うためのデータの分割について説明します。
+
+==== バックテストとは
+バックテストとは、モデルの有効性を検証する際に、過去のデータを用いて、一定期間にどの程度のパフォーマンスが得られたかをシミュレーションすることです。モデルの有効性を検証する上で、どのようにバックテストを実施するかは重要なポイントになります。
+
+==== ホールドアウト検証
+
+ここでは、データセットを訓練データとテストデータに切り分けます。まずデータセットを分ける理由を説明し、次に、データセットの分け方及びコツについて解説します。
+
+データセットを分ける理由は、モデルの汎化性能を確認し使用するモデルを決定するためです。
+
+汎化性能とは、モデルが訓練データ以外の未知のデータに対しても機能するという能力です。汎化性能が低いモデルは、訓練データでは高い精度が得られるが、訓練データにない未知のデータについては、低い精度しか得られません。この現象を**過学習**と呼びます。データセットを分割せずに、そのまま全体に対して学習し、同じデータセットに対してモデルによる予測をすると、基本的には高い精度の結果を得ることができます。 +
+しかし、未知のデータに対して予測すると、予測がまったく当たらないということが起こり得ます。そのため、データセットを分割して、学習に使用していないデータをモデルの検証用として用意しておくことで、作成したモデルが過学習していないことを確認することが出来ます。
+
+基本的な時系列データの分割手法(*ホールドアウト検証*)に関して解説します。
+----
+1.全体のデータセットを、訓練期間(TRAIN)/検証期間(VAL)/テスト期間(TEST)で分けます。
+2.TRAINデータでモデルを学習させ、VALデータでモデルを評価します。これをモデルのさまざまなパラメーターで何度か行い、一番結果が良かったパラメーターを選びます。
+3.そして最後にTESTデータでモデルの予測結果を最終評価します。
+----
+
+本チュートリアルでは、次の期間でデータを分割します。
+
+[cols="1h,3d",width=50%]
+|===
+|訓練期間 | 2016-01-01 - 2017-12-31
+|評価期間 | 2018-02-01 - 2018-12-01
+|テスト期間 | 2019-01-01 - 2019-12-31
+|===
+
+----
+※データの分割に際し、各期間に間隔（1か月）を空けている理由は、未来の情報を含ませないようにするためです。例えば、2017年12月31日の目的変数には5営業日、10営業日、20営業日後の株価リターンの情報が入っているため、2017年12月31日のデータを使って学習したモデルは未来の情報（2018年1月のリターン）を知っていることになってしまいます。したがって、2018年1月のデータを検証データに含めてしまうとリークが発生し、適切なモデルの評価ができなくなってしまいます。
+----
+
+以下のように変数を定義しておきます。
+[source,python]
+----
+TRAIN_END = "2017-12-31"
+VAL_START = "2018-02-01"
+VAL_END = "2018-12-01"
+TEST_START = "2019-01-01"
+----
+
+
+==== その他の検証方法
+
+・k-fold 交差検証(k-fold CV): データをまず訓練データとテストデータに分け、その後その訓練データをk個のグループに分割し、k-1個のグループに含まれるものを訓練データ、残りの1個のグループに含まれるものを評価データとすると、このような分割方法はk通り考えられます。 +
+そこで、それぞれの分割方法したがってk回訓練と評価を行い、それぞれの試行結果の平均などを使用して、モデルやそのモデルのパラメータを評価します。なお、時系列データでは、将来の情報を含まないように注意する必要があります。交差検証する際に起き得るデータリークについては、第4章で詳しい解説を行います。
+
+=== モデルの構築
+ここでは、モデルの学習に用いるためのデータを準備します。
+
+モデル作成のステップは、以下のとおりに行います。
+----
+1. 銘柄を一つ選ぶ
+2. その銘柄に対して、財務データおよびマーケットデータから特徴量を作る
+3. 全銘柄に対して同じことを繰り返す
+4. 作成したデータを結合する
+5. 全データを訓練データ、評価データ、テストデータに分ける
+6. 訓練データで予測モデルを学習させる
+----
+・**入力用データの作成方法**
+
+前回までのマーケットデータを用いた特徴量生成方法、および財務諸表データの欠損値処理を行った後のデータ処理について解説し、今回はそれらのデータを結合させ、モデルが学習できるフォーマットに直すことが目的です。
+
+==== 特徴量の生成
+
+ここでは、特徴量生成のコードを示しています。コードのおおまかな流れとしては、以下の3ステップに分けられます。
+
+----
+1. 財務データの取得及び前処理（Chapter2.5.2と同様）
+2. マーケットデータの取得及び特徴量定義（Chapter2.6.3と同様）
+3. 財務データと生成した特徴量を結合
+----
+
+[source, python]
+----
+def get_features_for_predict(dfs, code):
+    """
+    Args:
+        dfs (dict)  : dict of pd.DataFrame include stock_fin, stock_price
+        code (int)  : A local code for a listed company
+    Returns:
+        feature DataFrame (pd.DataFrame)
+    """
+    # おおまかな手順の1つ目
+    # stock_finデータを読み込み
+    stock_fin = dfs["stock_fin"].copy()
+
+    # 特定の銘柄コードのデータに絞る
+    fin_data = stock_fin[stock_fin["Local Code"] == code].copy()
+    # 日付列をpd.Timestamp型に変換してindexに設定
+    fin_data["datetime"] = pd.to_datetime(fin_data["base_date"])
+    fin_data.set_index("datetime", inplace=True)
+    # fin_dataのnp.float64のデータのみを取得
+    fin_data = fin_data.select_dtypes(include=["float64"])
+    # 欠損値処理
+    fin_feats = fin_data.fillna(0)
+
+    # おおまかな手順の2つ目
+    # stock_priceデータを読み込む
+    price = dfs["stock_price"].copy()
+    # 特定の銘柄コードのデータに絞る
+    price_data = price[price["Local Code"] == code].copy()
+    # 日付列をpd.Timestamp型に変換してindexに設定
+    price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
+    price_data.set_index("datetime", inplace=True)
+    # 終値のみに絞る
+    feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
+    # 終値の20営業日リターン
+    feats["return_1month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(20)
+    # 終値の40営業日リターン
+    feats["return_2month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(40)
+    # 終値の60営業日リターン
+    feats["return_3month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(60)
+    # 終値の20営業日ボラティリティ
+    feats["volatility_1month"] = (
+        np.log(feats["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(20).std()
+    )
+    # 終値の40営業日ボラティリティ
+    feats["volatility_2month"] = (
+        np.log(feats["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(40).std()
+    )
+    # 終値の60営業日ボラティリティ
+    feats["volatility_3month"] = (
+        np.log(feats["EndOfDayQuote ExchangeOfficialClose"]).diff().rolling(60).std()
+    )
+    # 終値と20営業日の単純移動平均線の乖離
+    feats["MA_gap_1month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
+        feats["EndOfDayQuote ExchangeOfficialClose"].rolling(20).mean()
+    )
+    # 終値と40営業日の単純移動平均線の乖離
+    feats["MA_gap_2month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
+        feats["EndOfDayQuote ExchangeOfficialClose"].rolling(40).mean()
+    )
+    # 終値と60営業日の単純移動平均線の乖離
+    feats["MA_gap_3month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
+        feats["EndOfDayQuote ExchangeOfficialClose"].rolling(60).mean()
+    )
+
+    # おおまかな手順の3つ目
+    # 元データのカラムを削除
+    feats = feats.dropna().drop(["EndOfDayQuote ExchangeOfficialClose"], axis=1)
+
+    # 財務データの特徴量とマーケットデータの特徴量のインデックスを合わせる
+    feats = feats.loc[feats.index.isin(fin_feats.index)]
+    fin_feats = fin_feats.loc[fin_feats.index.isin(feats.index)]
+
+    # データを結合
+    feats = pd.concat([feats, fin_feats], axis=1).dropna()
+
+    # 欠損値処理を行います。
+    feats = feats.replace([np.inf, -np.inf], 0)
+
+    # 銘柄コードを設定
+    feats["code"] = code
+
+    return feats
+----
+
+ここで、`np.inf` を0に置換していますが、価格変化率の計算の際に発散してしまったものを、0と定義し直しています。このように、特徴量を定義する際に、特徴量変換により発散してしまった時やnanになった時の処理を、あらかじめ考慮しておくことがスムーズにデータセットを構築する上で重要です。
+
+次にここまでの処理の結果を確認します。
+
+[source, python]
+----
+df = get_features_for_predict(dfs, 9984)
+df.T
+----
+
+==== 目的変数の対応付け及び訓練データ、評価データ、テストデータの分割
+
+次に目的変数を定義します。目的変数は、データセットの `stock_labels` 内にあり、利用する際は先ほど定義した特徴量のデータセットに対して、行（日付）を一致させる必要があります。
+
+データセットの訓練期間、評価期間、テスト期間への分割処理も合わせて実施します。
+
+[source, python]
+----
+def get_features_and_label(dfs, codes, feature, label):
+    """
+    Args:
+        dfs (dict[pd.DataFrame]): loaded data
+        codes  (array) : target codes
+        feature (pd.DataFrame): features
+        labels (array) : labels which is used in prediction model
+    Returns:
+        train_X (pd.DataFrame): training data
+        train_y (pd.DataFrame): label for train_X
+        val_X (pd.DataFrame): validation data
+        val_y (pd.DataFrame): label for val_X
+        test_X (pd.DataFrame): test data
+        test_y (pd.DataFrame): label for test_X
+    """
+    # 分割データ用の変数を定義
+    trains_X, vals_X, tests_X = [], [], []
+    trains_y, vals_y, tests_y = [], [], []
+
+    # 銘柄コード毎に特徴量を作成
+    for code in tqdm(codes):
+        # 特徴量取得
+        feats = feature[feature["code"] == code]
+
+        # stock_labelデータを読み込み
+        stock_labels = dfs["stock_labels"].copy()
+        # 特定の銘柄コードのデータに絞る
+        stock_labels = stock_labels[stock_labels["Local Code"] == code]
+        # 日付列をpd.Timestamp型に変換してindexに設定
+        stock_labels["datetime"] = pd.to_datetime(stock_labels["base_date"])
+        stock_labels.set_index("datetime", inplace=True)
+
+        # 特定の目的変数に絞る
+        labels = stock_labels[label]
+
+        if feats.shape[0] > 0 and labels.shape[0] > 0:
+            # 特徴量と目的変数のインデックスを合わせる
+            labels = labels.loc[labels.index.isin(feats.index)]
+            feats = feats.loc[feats.index.isin(labels.index)]
+            labels.index = feats.index
+
+            # データを分割（ホールドアウト法）
+            _train_X = feats[: TRAIN_END].copy()
+            _val_X = feats[VAL_START : VAL_END].copy()
+            _test_X = feats[TEST_START :].copy()
+
+            _train_y = labels[: TRAIN_END].copy()
+            _val_y = labels[VAL_START : VAL_END].copy()
+            _test_y = labels[TEST_START :].copy()
+
+            # データを配列に格納 (後ほど結合するため)
+            trains_X.append(_train_X)
+            vals_X.append(_val_X)
+            tests_X.append(_test_X)
+
+            trains_y.append(_train_y)
+            vals_y.append(_val_y)
+            tests_y.append(_test_y)
+
+    # 銘柄毎に作成した説明変数データを結合します。
+    train_X = pd.concat(trains_X)
+    val_X = pd.concat(vals_X)
+    test_X = pd.concat(tests_X)
+    # 銘柄毎に作成した目的変数データを結合します。
+    train_y = pd.concat(trains_y)
+    val_y = pd.concat(vals_y)
+    test_y = pd.concat(tests_y)
+
+    return train_X, train_y, val_X, val_y, test_X, test_y
+----
+
+次に、ここまでの結果を確認します。
+
+[source, python]
+----
+# 対象銘柄コードを定義
+codes = [9984]
+# 対象の目的変数を定義
+label = "label_high_20"
+# 特徴量を取得
+feat = get_features_for_predict(dfs, codes[0])
+# 特徴量と目的変数を入力し、分割データを取得
+ret = get_features_and_label(dfs, codes, feat, label)
+for v in ret:
+    print(v.T)
+----
+
+ここまでは一つの銘柄に対して処理をしてきましたが、ここからは全ての予測対象銘柄に対して上記の処理を実施するために、予測対象の銘柄コードを以下のように取得します。
+
+[source, python]
+----
+def get_codes(dfs):
+    """
+    Args:
+        dfs (dict[pd.DataFrame]): loaded data
+    Returns:
+        array: list of stock codes
+    """
+    stock_list = dfs["stock_list"].copy()
+    # 予測対象の銘柄コードを取得
+    codes = stock_list[stock_list["prediction_target"] == True][
+        "Local Code"
+    ].values
+    return codes
+----
+
+次に、目的変数毎にデータセットを作成します。今回は全ての目的変数に同一の特徴量を使用していますが、目的変数に応じて特徴量をチューニングすることでより精度の高いモデルを作成することができます。
+
+[source, python]
+----
+# 対象の目的変数を定義
+labels = {
+    "label_high_5",
+    "label_high_10",
+    "label_high_20",
+    "label_low_5",
+    "label_low_10",
+    "label_low_20",
+}
+# 目的変数毎にデータを保存するための変数
+train_X, val_X, test_X = {}, {}, {}
+train_y, val_y, test_y = {}, {}, {}
+
+# 予測対象銘柄を取得
+codes = get_codes(dfs)
+
+# 特徴量を作成
+buff = []
+for code in tqdm(codes):
+    feat = get_features_for_predict(dfs, code)
+    buff.append(feat)
+feature = pd.concat(buff)
+
+# 目的変数毎に処理
+for label in tqdm(labels):
+    # 特徴量と目的変数を取得
+    _train_X, _train_y, _val_X, _val_y, _test_X, _test_y = get_features_and_label(dfs, codes, feature, label)
+    # 目的変数をキーとして値を保存
+    train_X[label] = _train_X
+    val_X[label] = _val_X
+    test_X[label] = _test_X
+    train_y[label] = _train_y
+    val_y[label] = _val_y
+    test_y[label] = _test_y
+----
+
+==== *モデル学習の実行方法*
+
+データの準備が完了したので、いよいよモデルの学習を実行します。ここでは、sklearnライブラリのRandomForestRegressorモデルを使用します。モデルに設定する各種パラメータは、ここではとくに指定せずにライブラリのデフォルトパラメータを使用します。
+
+RandomForestの回帰モデルであるRandomForestRegressorモデルを利用する理由は、予測する目的変数が連続値であるからです。RandomForestモデルは決定木をベースとするモデルであるため、以下の理由から最初に選択するモデルとして扱いやすいです。
+
+- RandomForest内部で利用する決定木は、特徴量の大小関係のみに着目しており、値自体には意味がないので正規化処理の必要がありません
+- 特徴量の重要度を取得することができ、次に実施することの道筋を立てやすい
+
+[source, python]
+----
+# 目的変数を指定
+label = "label_high_20"
+# モデルの初期化
+pred_model = RandomForestRegressor(random_state=0)
+# モデルの学習
+pred_model.fit(train_X[label], train_y[label])
+----
+
+一方、サポートベクターマシンやニューラルネットワークを利用する際は、データの前処理における注意点が増えます。選択するモデルの特性に応じた正規化処理と特徴量設計が重要です。
+
+=== モデルの推論
+ここでは構築したモデルから予測結果を出力し、可視化などによる分析を実施します。
+
+==== 予測結果の出力方法
+
+ここまで、それぞれの目的変数に対して、訓練データ、評価データ、テストデータに分割しました。ここからは、モデルの学習完了後に、テストデータを入力として予測を出力し、pandas.DataFrame形式に変換します。
+
+[source, python]
+----
+# モデルを定義
+models = {
+    "rf": RandomForestRegressor,
+}
+
+# モデルを選択
+model = "rf"
+
+# 目的変数を指定
+label = "label_high_20"
+
+# 学習用データセット定義
+# ファンダメンタル
+fundamental_cols = dfs["stock_fin"].select_dtypes("float64").columns
+fundamental_cols = fundamental_cols[fundamental_cols != "Result_Dividend DividendPayableDate"]
+fundamental_cols = fundamental_cols[fundamental_cols != "Local Code"]
+# 価格変化率
+returns_cols = [x for x in train_X[label].columns if "return" in x]
+# テクニカル
+technical_cols = [x for x in train_X[label].columns if (x not in fundamental_cols) and (x != "code")]
+
+columns = {
+    "fundamental_only": fundamental_cols,
+    "return_only": returns_cols,
+    "technical_only": technical_cols,
+    "fundamental+technical": list(fundamental_cols) + list(technical_cols),
+}
+# 学習用データセットを指定
+col = "fundamental_only"
+
+# 学習
+pred_model = models[model](random_state=0)
+pred_model.fit(train_X[label][columns[col]].values, train_y[label])
+
+# 予測
+result = {}
+result[label] = pd.DataFrame(
+    pred_model.predict(val_X[label][columns[col]]), columns=["predict"]
+)
+
+# 予測結果に日付と銘柄コードを追加
+result[label]["datetime"] = val_X[label][columns[col]].index
+result[label]["code"] = val_X[label]["code"].values
+
+# 予測の符号を取得
+result[label]["predict_dir"] = np.sign(result[label]["predict"])
+
+# 実際の値を追加
+result[label]["actual"] = val_y[label].values
+----
+
+==== 予測結果の可視化方法
+
+予測結果の確認として、実際の将来リターン(actual)と予測スコア(predict)の散布図を見ます。ここで散布図を選択する理由は、予測対象に対して予測スコアがどのような分布をとっているかを見ることが、モデルの挙動を理解するわかりやすい可視化であることが挙げられます。
+
+[source, python]
+----
+sns.jointplot(data=result[label], x="predict", y="actual")
+----
+
+image::actual_pred.png[scatter_plot_actual_predict]
+
+この図では、横軸が予測値で、縦軸が真の値です。予測と真の値には、正の相関(0.169081)が見受けられるので、ある程度の相関関係が発生しています。一般的なデータで0.169という数字が出てもほぼ無相関に見えますが、金融データでは0.169というスコアは高い部類に入ります。このように視覚化すると、予測値と真の値の関係性を可視化できます。
+
+=== 予測結果に対する分析の道筋
+
+予測精度を向上させるためには、特徴量とモデルの分析を集中的に行う必要があります。特徴量の分析では、さまざまな手法がありますが、ここでは特徴量の重要度の分析とSHAPという手法を紹介します。
+
+==== 特徴量の重要度
+
+特徴量の重要度は、Random ForestやGradient Boostingなどのいくつかの機械学習モデルで取得でき、モデル内でどの程度それぞれの説明変数が、目的変数に対して重要であるかを判断するために参考になる指標です。
+
+重要度が極端に低いものは、そもそも説明変数から除外したり、重要度が高いものは更に分析することで、性能の向上が期待できないか、など分析の道筋をつける上でも役に立ちます。
+
+ここではファンダメンタル情報を用いて、モデルの訓練データ(2016年初から2017年末まで)における特徴量の重要度を調査します。
+
+次の方法に従って、特徴量の重要度をプロットします。
+
+[source, python]
+----
+# 学習済みモデルを指定
+rf = pred_model
+
+# 重要度順を取得
+sorted_idx = rf.feature_importances_.argsort()
+# プロット
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.barh(fundamental_cols[sorted_idx], rf.feature_importances_[sorted_idx])
+ax.set_xlabel("Random Forest Feature Importance")
+----
+
+image::feature_importance.png[ファンダメンタルの特徴量重要度]
+
+上記の可視化により、 一番上にある `NetSales(売上高)` にモデルが注目していることがわかります。売上高は会社の売上規模であり、次に登場する `TotalAssets(総資産)` は、流動資産や固定資産、繰延資産など、会社の全ての資産を合算したものを示す指標です。 +
+この2つは会社の規模を示す代表的な指標となっています。 +
+Random Forestモデルの内部で、この2つを利用した分岐が多数存在していることを示しており、売上規模や会社規模が重要な指標である可能性を示唆しています。
+
+
+==== SHAP
+
+SHAPは、学習済みモデルにおいて、各特徴量がモデルの出力する予測値に与えた影響度を算出してくれるものです。
+
+ここでは、サンプルモデルとしてXGBoostモデルを利用し、 `label_high_20` という目的変数に対して、どの特徴量が学習に効果的な特徴量なのかを見てみます。
+
+[source, python]
+----
+# モデルを定義します
+sample_model = xgboost.train({"learning_rate": 0.01}, xgboost.DMatrix(train_X["label_high_20"], label=train_y["label_high_20"]), 100)
+----
+
+次にshap値を求めます。
+
+[source, python]
+----
+shap.initjs()
+explainer = shap.TreeExplainer(model=sample_model, feature_perturbation='tree_path_dependent', model_output='margin')
+# SHAP値
+shap_values = explainer.shap_values(X=train_X["label_high_20"])
+# プロット
+shap.summary_plot(shap_values, train_X["label_high_20"], plot_type="bar")
+----
+
+image::shap_bar.png[shap importance]
+
+次にshapのsummary_plotを確認します。これは特徴量を少し変化させた時の学習のインパクトを表しています。
+
+[source, python]
+----
+shap.summary_plot(shap_values, train_X["label_high_20"])
+----
+
+image::shap_graph.png[shap summary plot]
+
+この図の見方ですが、上にある特徴量ほどモデルにとって重要であることを意味します。色が赤いのがその特徴量が高い時、青いのがその特徴量が低い時のSHAP値になります。図からは例えば以下のようなことが読み取れます。
+
+- `volatility_1month` と `volatility_2month` がモデルに大きな影響を与える特徴量であることがわかります。この2つの特徴量は赤い時にプラス方向(高値が大きくなる)の影響が大きいことがわかります。これはボラティリティが上昇すると高値が高くなるということを意味するので直感に合致します。また `volatility_3month` がこの2つと比較すると影響が低いことがわかります。
+
+- `Net Assets` が3番目にモデルに影響を与える特徴量であることがわかります。プラス方向、マイナス方向に関わらず青い色が多いので、モデルが `Net Assets` が小さい場合に活用していることがわかります。 `Total Assets` も同様の傾向が観測されます
+
+- `MA_gap_1_month` が大きい時にプラス方向(高値が大きくなる)に影響を与えています。移動平均乖離率が大きいときは移動平均線がその時点の株価よりも上にいる期間なので、その時に高値が伸びるのは上昇トレンドが形成されている可能性が高いのかもしれません。
+
+上記のような考察を行いながら、さまざまな特徴量を考え、モデルを改善していくことが重要です。
+
+=== モデルの評価
+
+==== 複数モデルの学習および結果をまとめる
+ここでは、複数モデルを用いて、予測および結果の比較を行いたいと思います。
+
+今回はシンプルなモデルを複数用います。
+
+[options="header, autowidth"]
+|===
+| *モデル名* | *パラメーター*
+|RandomForestRegressor| random_state = 0
+|ExtraTreesRegressor | random_state = 0
+|GradientBoostingRegressor| random_state = 0
+|===
+
+次は学習用のデータセットも複数用意します。
+
+[options="header, autowidth"]
+|===
+| *学習用データセット名* | *説明*
+|fundamental_only| 財務諸表データのみ
+|return_only | 価格変化率のデータのみ
+|technical_only| テクニカル指標のみ
+|fundamental+technical| 財務諸表とテクニカル指標の両方
+|===
+
+[source, python]
+----
+# モデルを定義
+models = {
+    "rf": RandomForestRegressor,
+    "extraTree": ExtraTreesRegressor,
+    "gbr": GradientBoostingRegressor,
+}
+
+# 学習用データセット定義
+columns = {
+    "fundamental_only": fundamental_cols,
+    "return_only": returns_cols,
+    "technical_only": technical_cols,
+    "fundamental+technical": list(fundamental_cols) + list(technical_cols),
+}
+
+# 結果保存用
+all_results = dict()
+# モデル毎に処理
+for model in tqdm(models.keys()):
+    all_results[model] = dict()
+    # データセット毎に処理
+    for col in columns.keys():
+        result = dict()
+        # 目的変数毎に処理
+        for label in tqdm(labels):
+            if len(test_X[label][columns[col]]) > 0:
+                # モデル取得
+                pred_model = models[model](random_state=0)
+                # 学習
+                pred_model.fit(train_X[label][columns[col]].values, train_y[label])
+                # 結果データ作成
+                result[label] = test_X[label][["code"]].copy()
+                result[label]["datetime"] = test_X[label][columns[col]].index
+                # 予測
+                result[label]["predict"] = pred_model.predict(test_X[label][columns[col]])
+                result[label]["predict_dir"] = np.sign(result[label]["predict"])
+                # 実際の結果
+                result[label]["actual"] = test_y[label].values
+                result[label]["actual_dir"] = np.sign(result[label]["actual"])
+                result[label].dropna(inplace=True)
+
+        all_results[model][col] = result
+----
+
+次にデータをまとめます。
+
+[source, python]
+----
+results = []
+for model in all_results.keys():
+    for col in all_results[model]:
+        tmp = pd.concat(all_results[model][col])
+        tmp["model"] = model
+        tmp["feature"] = col
+        results.append(tmp)
+results = pd.concat(results)
+results["label"] = [x[0] for x in results.index]
+results.head(5)
+----
+
+image::multiple_data_results.png[データのフォーマット]
+
+では、次に評価していきます。
+
+==== モデルの性能を示す評価関数の紹介
+
+まずは、今回用いる評価関数のリストを紹介します。
+
+[options="header, autowidth"]
+|===
+| *評価関数* | *説明*
+|RMSE| 二乗平均平方根
+|accuracy| 目的変数の符号と予測した目的変数の符号の精度
+|spreaman_corr| スピアマンの順位相関
+|corr| ピアソンの相関係数
+|R^2 score| 単回帰した時の直線と観測値のバラつき
+|===
+
+[source, python]
+----
+# 結果保存用変数
+all_metrics = []
+
+# データセット毎に処理
+for feature in columns:
+    matrix = dict()
+    # モデル毎に処理
+    for model in models:
+        # 目的変数毎に処理
+        for label in labels:
+            # 処理対象データに絞り込み
+            tmp_df = results[(results["model"] == model) & (results["label"] == label) & (results["feature"] == feature)]
+            # RMSE
+            rmse = np.sqrt(mean_squared_error(tmp_df["predict"], tmp_df["actual"]))
+            # 精度
+            accuracy = accuracy_score(tmp_df["predict_dir"], tmp_df["actual_dir"])
+            # 相関係数
+            corr = np.corrcoef(tmp_df["actual"], tmp_df["predict"])[0, 1]
+            # 順位相関
+            spearman_corr = spearmanr(tmp_df["actual"], tmp_df["predict"])[0]
+            # 結果を保存
+            matrix[label] = [rmse, accuracy, spearman_corr,corr, corr**2, feature, model, tmp_df.shape[0]]
+        res = pd.DataFrame.from_dict(matrix).T
+        res.columns = ["RMSE","accuracy","spearman_corr","corr","R^2 score","feature", "model", "# of samples"]
+        all_metrics.append(res)
+all_metrics = pd.concat(all_metrics)
+all_metrics.reset_index()
+----
+
+このままだと出力が多すぎるため、集計します。
+
+[source, python]
+----
+numeric_cols = ["RMSE","accuracy","spearman_corr","corr","R^2 score"]
+for col in numeric_cols:
+    all_metrics[col] = all_metrics[col].astype(float)
+# indexとデータセット毎に平均を計算
+agg = all_metrics.reset_index().groupby(["index","feature"]).agg("mean")
+agg
+----
+
+image::agg_mutiple_models.png[]
+
+この表のテクニカル分析（technical_only）とファンダメンタルデータ（fundamental_only）にそれぞれ着目すると、テクニカル分析のみを用いた特徴量の方が、ファンダメンタルデータよりも精度（accuracy）という観点で若干優れていることが分かります。 +
+また、テクニカル分析とファンダメンタルデータの両方を特徴量を用いた場合の結果に関しては、テクニカル分析よりも若干全体正解率が高くなっていますが、誤差の範囲内です。スピアマンの順位相関（spearman_corr）に関し、テクニカル分析とファンダメンタルデータを両方用いた場合は、用いていない場合に比べて、かなり優れていることが分かります。
+
+このように特徴量を選択しながら複数のモデルをつくり、複数の評価関数で評価を行うことで、テクニカル分析とファンダメンタルデータを組み合わせたアプローチのポテンシャルが高いことがわかります。
+
+=== モデルの提出
+
+本コンペティションでは、モデルの予測の提出方法はモデル提出方式になります。以下ではこの方式について簡単に説明しますが、詳しくは https://signate.jp/features/runtime/detail[SIGNATE: Runtime 投稿方法]をご参照ください。
+
+==== Runtimeの概要
+
+[quote, Runtime 機能でできること,'https://signate.jp/features/runtime/detail[SIGNATE: Runtime 投稿方法]' ]
+____
+学習済モデルを投稿すると、アルゴリズム (推論プログラム) が実行され、推論時間・推論結果が出力されます。
+出力された推論結果は、評価関数（既存の投稿機能）に自動で投稿されます。
+____
+
+==== 提出ファイルの作成
+
+===== 1.提出ファイルのテンプレートをダウンロード
+
+https://signate-prd-public.s3.ap-northeast-1.amazonaws.com/features/runtime/archive.zip[こちら]からダウンロード
+
+===== 2.ディレクトリの構造を確認する
+
+アップロードするディレクトリ構造は次のとおりです。
+
+----
+.
+├── model                  必須 学習済モデルを置くディレクトリ
+│   └── ...
+├── src                    必須 Python のプログラムを置くディレクトリ
+│   ├── predictor.py       必須 最初のプログラムが呼び出すファイル
+│   └── ...                その他のファイル (ディレクトリ作成可能)
+└── requirements.txt       任意
+----
+
+===== 3.学習済みモデルの作成
+
+以下の環境でモデルを構築してください。
+
+- Python3 Anaconda3-2019.03 インストールガイドは次のとおりです。
+
+
+*一般的なケース*
+
+----
+https://repo.continuum.io/archive/ からバージョン2019.03をダウンロードしてください
+----
+
+*pyenv*
+----
+pyenv install anaconda3-2019.03
+----
+
+*Docker*
+----
+docker pull continuumio/anaconda3:2019.03
+----
+
+ここで、学習済みモデルの保存方法について説明します。
+学習済みモデルは `pickle` で保存します。保存場所は2.13.2で説明したディレクトリ構造の学習済みモデルの配置先である `model` ディレクトリになります。任意のファイル名を設定可能なので、モデルの対象としている目的変数がわかるように `my_model_{label}.pkl` という名前で保存します。以下のコードを実行して、指定した保存先に学習済みモデルが保存されていることを確認します。
+
+[source, python]
+----
+model = [保存対象の学習済みモデル]
+# モデル保存先ディレクトリのパスを定義
+model_path = '../model'
+label = "label_high_20"
+
+include::../../../../handson/Chapter02/archive/src/predictor.py[tag=save_model_partial,indent=0]
+----
+
+===== 4.predictor.py を記述する
+
+ここでは、提出する予測モデルを読み込み、当該モデルを用いて予測を出力させるコードの書き方について説明します。
+`predictor.py` ファイルには、以下のクラスおよびメソッドを作成する必要があります。
+
+----
+ScoringService
+推論実行のためのクラスです。
+以下のメソッドを実装してください。
+
+get_model
+モデルを取得するメソッドです。以下の条件があります。
+- クラスメソッドであること
+- 引数 model_path (str 型) を指定すること
+- 正常終了時は返り値を true (bool 型) とすること
+
+predict
+推論を実行するメソッドです。以下の条件があります。
+- クラスメソッドであること
+- 引数 input (dict[str] 型) を指定すること
+※ 詳しくはテンプレート内の、同名ファイルをご確認ください。
+----
+
+本コンペティションにおけるpredictメソッドの返り値の定義は以下となります。詳細は以下に記載したコードをご参照ください。
+```
+結果を以下のcsv形式の文字列として出力する。
+１列目:datetimeとcodeをつなげたもの(Ex 2016-05-09-1301)
+２列目:label_high_20　終値→最高値への変化率
+３列目:label_low_20　終値→最安値への変化率
+headerはなし、B列C列はfloat64
+```
+
+以下は、本チュートリアルで説明した内容を規約に合わせて記載したpredictor.pyです。
+
+[source, python]
+----
+include::../../../../handson/Chapter02/archive/src/predictor.py[]
+----
+
+====== モジュールの追加
+https://docs.anaconda.com/anaconda/packages/py3.7_linux-64/
+この表の [In Installer] にチェックが入っているものが、すでにインストールされています（ただしバージョンは異なります）。
+
+Runtime環境にモジュールを追加するためには `requirements.txt` に追記します。requirements.txtに記載したモジュールは実行時にpipでインストールされます。
+
+モジュールを追加する際はRuntime環境でインストールおよび使用可能かをご確認ください。本チュートリアルで評価のために使用したSHAPのように、一部のモジュールはインストール時にビルドが必要となるものもあります。そのためRuntime環境では使用することのできないモジュールもあります。以下のように実行環境のdocker container内でインストールすることで確認可能です。
+
+[source,bash]
+----
+$ docker run --rm -it continuumio/anaconda3:2019.03 bash
+# pip install tensorflow==2.4.0
+----
+
+`requirements.txt` には以下のようにモジュールのバージョンを指定して記載します。これは、モデルを提出してから全ての評価が完了するまで数ヶ月かかるためその間にモジュールの最新バージョンがリリースされても影響を受けないようにするためです。
+
+----
+tensorflow==2.4.0
+----
+
+`requirements.txt` の作成には `pip freeze` コマンドを使用すると便利です。
+
+[source,bash]
+----
+$ docker run --rm -it continuumio/anaconda3:2019.03 bash
+# pip install [インストールするモジュール]
+# pip freeze
+----
+
+====== デバッグ方法
+
+通常
+----
+$ pip install -r requirements.txt   # モジュールが必要な場合は pip でインストールします
+$ cd src    # ソースディレクトリに移動
+$ python    # python の実行
+Python 3.7.3 (default, Mar 27 2019, 16:54:48)
+[Clang 4.0.1 (tags/RELEASE_401/final)] :: Anaconda, Inc. on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> DATASET_DIR= "/path/to" # データ保存先ディレクトリ
+>>> from predictor import ScoringService  # モジュール読み込み
+>>> inputs = ScoringService.get_inputs(DATASET_DIR)  # 推論入力データ取得
+>>> ScoringService.get_model()  # モデルの取得
+True
+>>> ScoringService.predict(inputs)  # 推論の実行
+'[推論結果]'
+----
+
+pyenvを使用
+----
+$ pyenv local anaconda3-2019.03
+----
+以降 通常のインストールの場合と同様のデバッグ方法です。
+
+Docker を使用
+----
+$ docker run -it -v $(pwd):/opt/ml continuumio/anaconda3:2019.03 /bin/bash
+$ cd /opt/ml
+----
+以降は、通常のインストールの場合と同様のデバッグ方法になります。
+
+
+===== 5.zip で圧縮して提出する。
+
+指定されたディレクトリ構成で学習済みモデルを保存した上で、predictor.pyを作成したら、以下のようにzipで圧縮して提出します。
+
+----
+$ ls
+model  requirements.txt  src
+$ zip -v submit.zip requirements.txt src/*.py model/*.pkl
+updating: requirements.txt	(in=0) (out=0) (stored 0%)
+updating: src/predictor.py	(in=11408) (out=2417) (deflated 79%)
+updating: model/my_model_label_high_20.pkl .	(in=18919345) (out=5071005) (deflated 73%)
+updating: model/my_model_label_low_20.pkl .	(in=18704305) (out=5006613) (deflated 73%)
+total bytes=37635058, compressed=10080035 -> 73% savings
+----

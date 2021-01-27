@@ -1,0 +1,78 @@
+plugins {
+    id 'org.asciidoctor.jvm.convert' version '3.2.0'
+    id 'org.asciidoctor.jvm.pdf' version '3.2.0'
+    id 'org.asciidoctor.jvm.gems' version '3.2.0'
+}
+
+repositories {
+    mavenCentral()
+    ruby.gems()
+}
+
+dependencies {
+    asciidoctorGems files('gradle/repos/gem/prawn_svg_font_patch-0.1.0.gem')
+    asciidoctorGems 'rubygems:asciidoctor-pdf-linewrap-ja:0.7.0'
+}
+
+asciidoctor {
+    dependsOn asciidoctorGemsPrepare
+    baseDir file('src/docs/asciidoc')
+    sources {
+        include 'index.adoc'
+    }
+    resources {
+        from('src/docs/asciidoc') {
+            include 'Chapter*/images/*'
+        }
+    }
+    asciidoctorj {
+        attributes 'stylesdir': '@style',
+            'stylesheet': 'asciidoctor.css'
+    }
+}
+
+asciidoctorPdf {
+    dependsOn asciidoctorGemsPrepare
+    baseDir file('src/docs/asciidoc')
+    fontsDir file('src/docs/asciidoc/@font')
+    sources {
+        include 'index.adoc'
+    }
+    asciidoctorj {
+        attributes 'pdf-stylesdir': "@style",
+            'pdf-style': 'pdf'
+    }
+}
+
+asciidoctorj {
+    modules {
+        diagram.use()
+        diagram.version '2.0.2'
+        pdf.version '1.5.3'
+    }
+    requires = [
+        'asciidoctor-diagram',
+        'asciidoctor-pdf-linewrap-ja',
+        'prawn_svg_font_patch'
+    ]
+    attributes 'source-highlighter': 'coderay'
+}
+
+task cleanDocs(type: Delete) {
+    delete fileTree('docs/') {
+        include '**/*'
+    }
+}
+
+task docs(dependsOn: [asciidoctor, asciidoctorPdf, cleanDocs]) doLast {
+    copy {
+        from 'build/docs/asciidoc/index.html'
+        from 'build/docs/asciidocPdf/index.pdf'
+        into 'docs/'
+    }
+    copy {
+        from 'src/docs/asciidoc/'
+        include 'Chapter*/images/*'
+        into 'docs'
+    }
+}

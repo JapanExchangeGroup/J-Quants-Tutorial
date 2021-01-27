@@ -1,0 +1,30 @@
+== 参考文献
+
+本文書の手順の実装であるビルドスクリプトやテーマでは次のプロダクトと技術資料が使われています。
+
+NOTE: プロダクト名の隣にライセンスを併記しました。商用利用等で制限のあるプロダクトはありませんが、それぞれライセンスを確認してください。
+
+Template::
+* AsciidoctorとGradleでつくる文書執筆環境 - MIT License -
+    https://h1romas4.github.io/asciidoctor-gradle-template/index.html
+Font::
+    * 源真ゴシック - SIL Open Font License 1.1  - http://jikasei.me/font/genshin/
+    * 源様明朝 - SIL Open Font License 1.1 - https://github.com/ButTaiwan/genyo-font
+    * Ricty Diminished - SIL Open Font License 1.1 - https://github.com/edihbrandon/RictyDiminished
+Asciidoc::
+    * Asciidoctor - MIT License - https://asciidoctor.org/
+    * Asciidoctorj - Apache License 2.0 - https://github.com/asciidoctor/asciidoctorj
+    * Asciidoctor.js - MIT License - https://asciidoctor.org/docs/asciidoctor.js/
+    * Asciidoctor PDF - MIT License - https://asciidoctor.org/docs/asciidoctor-pdf/
+    * Asciidoctor Gradle Plugin Suite - Apache License 2.0 - https://github.com/asciidoctor/asciidoctor-gradle-plugin
+    * asciidoctor-pdf-linewrap-ja - MIT License - https://github.com/fuka/asciidoctor-pdf-linewrap-ja
+Build Tool::
+    * SDKMAN - Apache License 2.0 - https://sdkman.io/
+    * Gradle - Apache License 2.0 - https://gradle.org/
+Text Editor::
+    * Visual Studio Code - Microsoft - https://code.visualstudio.com/
+    * asciidoctor-vscode - MIT License - https://github.com/asciidoctor/asciidoctor-vscode
+Guide::
+    * asciidoctor-pdfでかっこいいPDFを作る - https://qiita.com/kuboaki/items/67774c5ebd41467b83e2
+
+

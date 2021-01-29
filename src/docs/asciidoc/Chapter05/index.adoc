@@ -2,10 +2,10 @@ include::../attribute.adoc[]
 == J-QuantsAPI
 
 === 概要
-ここでは、各種データをダウンロードできるJ-QuantsAPIについてご紹介します。APIの詳細な仕様はこちら("https://jpx-jquants.com/apidoc.html")をご確認ください。
+この章では、各種データをダウンロードできるJ-QuantsAPIについてご紹介します。APIの詳細な仕様はこちら(https://jpx-jquants.com/apidoc.html )をご確認ください。
 
 === APIの利用
-APIを利用するには、SIGNATEでのコンペティションへのご登録("https://signate.jp/competitions/423")とJ-QuantsAPIの利用登録("https://jpx-jquants.com/")が必要となります。
+APIを利用するには、SIGNATEでのコンペティションへのご登録( https://signate.jp/competitions/423 )とJ-QuantsAPIの利用登録( https://jpx-jquants.com/ )が必要となります。
 
 === 必要なパッケージのインポート
 [source, python]
@@ -25,7 +25,9 @@ import base64
 |===
 
 === Refresh API
-初めにidTokenをリフレッシュするRefresh API("/refresh")をご紹介します。J-Quantsのログイン後の画面でご確認いただくことができるrefreshTokenを使用します。Refresh APIを使うためのサンプルコードは以下のようになります。
+はじめに、idTokenをリフレッシュするRefresh API("/refresh")をご紹介します。このAPIでは、J-Quantsのログイン後の画面でご確認いただくことができるrefreshTokenを使用します。
+
+Refresh APIを使うためのサンプルコードは以下のようになります。
 [source, python]
 ----
 def call_refresh_api(refreshtoken: str):
@@ -58,7 +60,7 @@ def call_refresh_api(refreshtoken: str):
 refreshtoken = <Your refreshtoken>
 call_refresh_api(refreshtoken)
 ----
-以下のようなレスポンスが返ります。なお、以下のレスポンスからもわかるとおり、idtokenの有効期限は１時間（3600sec）となっております。
+以下のようなレスポンスが返ります。なお、idtokenの有効期限は１時間（3600sec）となっております。
 
 [source, json]
 ----
@@ -68,7 +70,9 @@ call_refresh_api(refreshtoken)
 
 
 === 共通で使用するメソッド
-TDnetのファイルダウンロードAPI以外は共通のメソッドで使用することができます。サンプルコードは以下の通りです。引数"apitype"に各APIを指定することでコールできます。
+ここでは、API共通の関数を用意しております。
+
+サンプルコードは以下の通りです。引数"apitype"に各APIを指定することで呼び出すことができます。
 
 [source, json]
 ----
@@ -127,8 +131,10 @@ def call_jquants_api(params: dict, idtoken: str, apitype: str, code: str = None)
     return resjson
 ----
 
-=== Stock List API
+=== Stock Lists API
 銘柄一覧を取得するAPIについて紹介いたします。
+
+
 このAPIでは、企業名や業種区分などの基本情報を取得することができます。全銘柄の一覧を取得する"/lists"と銘柄コードを指定した"/lists/{code}"が利用できます。
 
 [source, python]
@@ -157,10 +163,11 @@ call_jquants_api(paramdict, idtk, "lists", "8697")
     "Local Code": "8697"}]}
 ----
 
-=== Price API
+=== Prices API
 株価情報を取得するPrice APIをご紹介します。
-検索期間や銘柄コードを指定することで、四本値、売買高、前日比変化率などを取得することができます。銘柄コードを指定する場合は"/prices/{code}"でAPIをご利用ください。"includeDetails"をTrueにした場合は、全てのデータ系列を取得します。詳細は、
-https://jpx-jquants.com/apidoc.html をご確認ください。
+
+
+検索期間や銘柄コードを指定することで、四本値、売買高、前日比変化率などを取得することができます。銘柄コードを指定する場合は"/prices/{code}"でAPIをご利用ください。"includeDetails"をTrueにした場合は、全てのデータ系列を取得します。
 
 [source, python]
 ----
@@ -217,8 +224,10 @@ call_jquants_api(paramdict, idtk, "prices", "8697")
     ...]}
 ----
 
-=== Stock Fin API
-最後に各銘柄の財務諸表データを取得するAPIをご紹介します。
+=== Stock Fins API
+各銘柄の財務諸表データを取得するAPIをご紹介します。
+
+
 特定の日の全銘柄の情報を取得する"/stockfins"と１銘柄の情報を取得する"/stockfins/{code}"がございます。
 
 [source, python]
@@ -269,8 +278,11 @@ call_jquants_api(paramdict, idtk, "stockfins", "8697")
     "Result_FinancialStatement OperatingIncome": 48176.0}]}
 ----
 
-=== Stock Labels
-基準日から一定期間の株価の最大上昇率、最大下落率を取得するAPIをご紹介します。Stock Labels APIは期間や銘柄コードを指定することで該当する株価騰落率のデータを取得できます。
+=== Stock Labels API
+基準日から5日、10日、20日の株価の最大上昇率、最大下落率を取得するAPIをご紹介します。
+
+
+Stock Labels APIは期間や銘柄コードを指定することで該当する株価騰落率のデータを取得できます。
 [source, python]
 ----
 # Codeを指定しない場合
@@ -316,8 +328,8 @@ call_jquants_api(paramdict, idtk, "stocklabels", "1301")
 ----
 
 === News API
-News APIは現在公開しておりません。
-ヘッドライン、キーワード、期間などで該当するニュース記事データを検索できる予定です。
+日経新聞の記事情報を取得するAPIはまだ公開しておりません。
+
 
 レスポンスのサンプルは以下の通りになる予定です。
 
@@ -337,8 +349,10 @@ News APIは現在公開しておりません。
 
 
 === TDnet API
-適時開示を取得できるTDnetAPIは現在公開しておりません。
-レスポンスのサンプルは以下のようになる予定です。このAPIを利用することでbase64形式のデータをファイルに書き出すことも可能です。
+適時開示を取得できるTDnetAPIはまだ公開しておりません。
+
+
+レスポンスのサンプルは以下の通りになる予定です。
 
 [source, json]
 ----
@@ -370,5 +384,3 @@ News APIは現在公開しておりません。
     "title": "Consolidated financial results for the nine months ended December 31, 2019"},
     ...]}
 ----
-
-

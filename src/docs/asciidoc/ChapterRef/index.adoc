@@ -1,8 +1,8 @@
-== 参考文献
+== チュートリアル作成環境の参考文献
 
-本文書の手順の実装であるビルドスクリプトやテーマでは次のプロダクトと技術資料が使われています。
+本文書の執筆では次のプロダクトと技術資料が使われています。
 
-NOTE: プロダクト名の隣にライセンスを併記しました。商用利用等で制限のあるプロダクトはありませんが、それぞれライセンスを確認してください。
+NOTE: プロダクト名の隣にライセンスを併記しております。
 
 Template::
 * AsciidoctorとGradleでつくる文書執筆環境 - MIT License -
@@ -26,5 +26,5 @@ Text Editor::
     * asciidoctor-vscode - MIT License - https://github.com/asciidoctor/asciidoctor-vscode
 Guide::
     * asciidoctor-pdfでかっこいいPDFを作る - https://qiita.com/kuboaki/items/67774c5ebd41467b83e2
-
-
+OGP::
+    * Socialify - https://github.com/wei/socialify

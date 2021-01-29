@@ -1,10 +1,17 @@
 include::./attribute.adoc[]
 
 = 株式分析チュートリアル
-https://github.com/JapanExchangeGroup/J-Quants
-2021-01-29
 :Revision: 1.0.0
 :toc: left
+本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。
+
+====
+
+本チュートリアルに関してのご質問は、SIGNATEにて開催中のコンペティションサイト( https://signate.jp/competitions/423 )のフォーラムにおきまして、チュートリアル質問用のスレッドに投稿いただくか、タイトル冒頭に `[tutorial]` とご記載の上、ご質問していただけますと幸いです。
+
+また、本チュートリアルに関してのご要望があれば、Githubリポジトリ( https://github.com/JapanExchangeGroup/J-Quants-Tutorial )の `Issues` からご意見をいただけますと幸いです。 (なお、投稿の際には、過去に同じご要望がないかご確認ください。)
+
+====
 
 // 章ごとにインクルードしていく（画像パスも上書きすること）
 :imagesdir: Chapter0/images

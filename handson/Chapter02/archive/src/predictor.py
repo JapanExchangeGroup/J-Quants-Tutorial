@@ -11,13 +11,13 @@ from tqdm.auto import tqdm
 
 class ScoringService(object):
     # 訓練期間終了日
-    TRAIN_END = "2017-12-31"
+    TRAIN_END = "2018-12-31"
     # 評価期間開始日
-    VAL_START = "2018-02-01"
+    VAL_START = "2019-02-01"
     # 評価期間終了日
-    VAL_END = "2018-12-01"
+    VAL_END = "2019-12-01"
     # テスト期間開始日
-    TEST_START = "2019-01-01"
+    TEST_START = "2020-01-01"
     # 目的変数
     TARGET_LABELS = ["label_high_20", "label_low_20"]
 
@@ -81,7 +81,7 @@ class ScoringService(object):
             dfs (dict[pd.DataFrame]): loaded data
             codes  (array) : target codes
             feature (pd.DataFrame): features
-            labels (array) : labels which is used in prediction model
+            label (str) : label column name
         Returns:
             train_X (pd.DataFrame): training data
             train_y (pd.DataFrame): label for train_X
@@ -109,6 +109,8 @@ class ScoringService(object):
 
             # 特定の目的変数に絞る
             labels = stock_labels[label]
+            # nanを削除
+            labels.dropna(inplace=True)
 
             if feats.shape[0] > 0 and labels.shape[0] > 0:
                 # 特徴量と目的変数のインデックスを合わせる
@@ -145,11 +147,12 @@ class ScoringService(object):
         return train_X, train_y, val_X, val_y, test_X, test_y
 
     @classmethod
-    def get_features_for_predict(cls, dfs, code):
+    def get_features_for_predict(cls, dfs, code, start_dt="2016-01-01"):
         """
         Args:
             dfs (dict)  : dict of pd.DataFrame include stock_fin, stock_price
             code (int)  : A local code for a listed company
+            start_dt (str): specify date range
         Returns:
             feature DataFrame (pd.DataFrame)
         """
@@ -166,6 +169,12 @@ class ScoringService(object):
         # 欠損値処理
         fin_feats = fin_data.fillna(0)
 
+        # 特徴量の作成には過去60営業日のデータを使用しているため、
+        # 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します
+        n = 90
+        # 特徴量の生成対象期間を指定
+        fin_feats = fin_feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
+
         # stock_priceデータを読み込む
         price = dfs["stock_price"].copy()
         # 特定の銘柄コードのデータに絞る
@@ -175,6 +184,9 @@ class ScoringService(object):
         price_data.set_index("datetime", inplace=True)
         # 終値のみに絞る
         feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
+        # 特徴量の生成対象期間を指定
+        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
+
         # 終値の20営業日リターン
         feats["return_1month"] = feats[
             "EndOfDayQuote ExchangeOfficialClose"
@@ -220,8 +232,10 @@ class ScoringService(object):
         feats["MA_gap_3month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
             feats["EndOfDayQuote ExchangeOfficialClose"].rolling(60).mean()
         )
+        # 欠損値処理
+        feats = feats.fillna(0)
         # 元データのカラムを削除
-        feats = feats.dropna().drop(["EndOfDayQuote ExchangeOfficialClose"], axis=1)
+        feats = feats.drop(["EndOfDayQuote ExchangeOfficialClose"], axis=1)
 
         # 財務データの特徴量とマーケットデータの特徴量のインデックスを合わせる
         feats = feats.loc[feats.index.isin(fin_feats.index)]
@@ -236,10 +250,13 @@ class ScoringService(object):
         # 銘柄コードを設定
         feats["code"] = code
 
+        # 生成対象日以降の特徴量に絞る
+        feats = feats.loc[pd.Timestamp(start_dt) :]
+
         return feats
 
     @classmethod
-    def create_model(cls, dfs, codes, label, model_path="../model"):
+    def create_model(cls, dfs, codes, label):
         """
         Args:
             dfs (dict)  : dict of pd.DataFrame include stock_fin, stock_price
@@ -287,6 +304,7 @@ class ScoringService(object):
 
         Args:
             model_path (str): Path to the trained model directory.
+            labels (arrayt): list of prediction target labels
 
         Returns:
             bool: The return value. True for success, False otherwise.
@@ -308,13 +326,16 @@ class ScoringService(object):
             return False
 
     @classmethod
-    def train_and_save_model(cls, inputs, labels=None, codes=None):
+    def train_and_save_model(
+        cls, inputs, labels=None, codes=None, model_path="../model"
+    ):
         """Predict method
 
         Args:
             inputs (str)   : paths to the dataset files
             labels (array) : labels which is used in prediction model
             codes  (array) : target codes
+            model_path (str): Path to the trained model directory.
         Returns:
             Dict[pd.DataFrame]: Inference for the given input.
         """
@@ -328,16 +349,17 @@ class ScoringService(object):
         for label in labels:
             print(label)
             model = cls.create_model(cls.dfs, codes=codes, label=label)
-            cls.save_model(model, label)
+            cls.save_model(model, label, model_path=model_path)
 
     @classmethod
-    def predict(cls, inputs, labels=None, codes=None):
+    def predict(cls, inputs, labels=None, codes=None, start_dt=TEST_START):
         """Predict method
 
         Args:
             inputs (dict[str]): paths to the dataset files
             labels (list[str]): target label names
             codes (list[int]): traget codes
+            start_dt (str): specify date range
         Returns:
             str: Inference for the given input.
         """
@@ -356,7 +378,7 @@ class ScoringService(object):
         # 特徴量を作成
         buff = []
         for code in codes:
-            buff.append(cls.get_features_for_predict(cls.dfs, code))
+            buff.append(cls.get_features_for_predict(cls.dfs, code, start_dt))
         feats = pd.concat(buff)
 
         # 結果を以下のcsv形式で出力する
@@ -368,13 +390,14 @@ class ScoringService(object):
         # 日付と銘柄コードに絞り込み
         df = feats.loc[:, ["code"]].copy()
         # codeを出力形式の１列目と一致させる
-        df.loc[:, "code"] = df.index.strftime("%Y-%m-%d-") + df.loc[:, "code"].astype(str)
+        df.loc[:, "code"] = df.index.strftime("%Y-%m-%d-") + df.loc[:, "code"].astype(
+            str
+        )
 
         # 出力対象列を定義
         output_columns = ["code"]
 
         # 目的変数毎に予測
-        ret = {}
         for label in labels:
             # 予測実施
             df[label] = cls.models[label].predict(feats)

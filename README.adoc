@@ -7,6 +7,8 @@
 コンペ期間中も適宜アップデートをしていきます。
 
 チュートリアルは下記よりご確認ください。
+
+
 https://japanexchangegroup.github.io/J-Quants-Tutorial/
 
 === 注意点

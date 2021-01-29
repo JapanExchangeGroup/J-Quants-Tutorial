@@ -6,9 +6,6 @@
 
 コンペ期間中も適宜アップデートをしていきます。
 
-チュートリアルは下記よりご確認ください。
-https://japanexchangegroup.github.io/J-Quants-Tutorial/
-
 === 注意点
 チュートリアルに関してのご質問は、SIGNATE社のコンペのフォーラムにてお願いします。
 その他の事項に関しては、CONTRIBUTINGをご確認ください。

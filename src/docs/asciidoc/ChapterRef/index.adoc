@@ -28,3 +28,9 @@ Guide::
     * asciidoctor-pdfでかっこいいPDFを作る - https://qiita.com/kuboaki/items/67774c5ebd41467b83e2
 OGP::
     * Socialify - https://github.com/wei/socialify
+
+=== 商標
+- Windows、PowerShellは、Microsoft Corporation の登録商標または商標です。
+- Docker は、Docker Inc.の登録商標または商標です。
+- CoLaboratory™ は、Google Inc. の登録商標または商標です。
+- GitHub は、GitHub Inc.の登録商標または商標です

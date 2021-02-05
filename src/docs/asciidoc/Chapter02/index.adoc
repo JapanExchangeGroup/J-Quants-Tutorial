@@ -16,7 +16,7 @@ include::../attribute.adoc[]
 |2021年7月頃 | 入賞者の決定
 |===
 
-本コンペティションでは、東証上場企業（普通株式のみ。ETF及びREITは除きます。）が、決算短信（四半期決算短信を含みます。）を発表した後の20営業日の間における、当該企業の株価の最高値及び最安値を、銘柄情報・株価情報・ファンダメンタル情報等を用いて予測いただきます。
+本コンペティションでは、東証上場企業（普通株式のみ。ETF及びREITは除きます。）が、決算短信（本資料では、四半期決算短信や訂正開示等を総称し、決算短信と表記します。）を発表した後の20営業日の間における、当該企業の株価の最高値及び最安値を、銘柄情報・株価情報・ファンダメンタル情報等を用いて予測いただきます。
 
 *コンペティションの概要*
 [options="header, autowidth"]
@@ -33,11 +33,10 @@ include::../attribute.adoc[]
 
 |===
 
-本章の構成は、まず、2.1節にて、本コンペティションにおける予測対象等の詳細について説明し、2.2節にて、本コンペティションで使用するライブラリについて説明します。その後、2.3節にて、本コンペティションで提供するデータセットの仕様について説明します。そして、2.4節以降で、本コンペティションのベースラインモデルの開発からモデル提出までの一連のフローを説明します。
+本章の構成は、まず、2.1節にて、本コンペティションにおける予測対象等の詳細について説明し、2.2節にて、本コンペティションで提供するデータセットの仕様について説明します。そして、2.3節以降で、本コンペティションのベースラインモデルの開発からモデル提出までの一連のフローを説明します。
 
 === 予測対象
-本コンペティションの予測対象は、東証上場企業が、決算短信を発表した後の20営業日の期間における、当該企業の株価の最高値及び最安値です。
-上場企業は四半期に一回、四半期決算期末後45日以内に、決算短信と呼ばれる書類の開示が義務付けられています。決算短信には財務諸表と呼ばれる書類が添付されており、財務諸表は企業のファンダメンタル情報を含む複数の表で構成されています。
+本コンペティションの予測対象は、東証上場企業が、決算短信を発表した後の20営業日の期間における、当該企業の株価の最高値及び最安値です。 上場企業は決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。決算の内容として開示される決算短信には財務諸表が添付されており、財務諸表は企業のファンダメンタル情報を含む複数の表で構成されています。
 
 
 2.1.1項では予測対象の銘柄について、2.1.2項では予測対象の決算短信について、2.1.3項では本コンペティションの評価方法について、2.1.4項では本コンペティションのリーダーボードの仕様について、2.1.5項では決算短信と財務諸表の概要について、それぞれ説明します。
@@ -62,51 +61,49 @@ D)	2020年12月末日時点で、上場後2年を経過していること
 
 
 ==== 予測対象の決算短信
-本コンペティションでは、2021年3月27日から同年5月15日の期間中に開示された決算短信を対象に、その決算短信の開示日から起算して20営業日を経過した期間における、各銘柄の最高値及び最安値を予測します。厳密には、本コンペティションで予測対象となる決算短信は、次に挙げる条件を全て満たします。
+本コンペティションでは、2021年3月27日から同年5月15日の期間中に開示された決算短信を対象に、その開示日から起算して20営業日を経過した期間における、各銘柄の最高値及び最安値を予測します。厳密には、本コンペティションで予測対象となる決算短信は、次に挙げる条件を全て満たします。
 
-A)	直近の四半期決算期末または決算期末の決算短信であること
+A)	直近の決算期末または四半期期末に係る決算短信であること
 
 
 B)	2021年3月27日から同年5月15日までの期間に開示されていること
 
 
-C)	開示日から起算して20営業日を経過した日までの期間、訂正開示等が行われていないこと
+C)	開示日及び同日から起算して20営業日を経過した日までの期間、訂正開示等が行われていないこと
 
 
-D)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
+D)	開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
 
-条件Cに示す「訂正開示等」とは、決算発表資料の訂正、業績予想の修正、配当予想の修正を指します。これらの詳細については、上場会社向けナビゲーションシステムの下記リンク先をご参照ください。
+条件Cに示す「訂正開示等」とは、決算発表資料の訂正、業績予想の修正・予想値と決算値との差異等、配当予想・配当予想の修正にかかる開示を指します。これらの詳細については、以下のとおりです。
 
-- 決算短信
+- 決算発表資料の訂正 +
+決算短信等を開示した後に、開示した内容について、変更又は訂正すべき事情が生じた場合に義務付けられている訂正開示をいいます。
 
-https://faq.jpx.co.jp/disclo/tse/web/knowledge7142.html
+- 業績予想の修正・予想値と決算値との差異等 +
+売上高や営業利益、経常利益、当期純利益等について、公表がされた直近の予想値等と比較して、新たに算出した予想値または決算における数値に一定以上の差異が生じた場合に義務付けられている開示をいいます。
 
-- 業績予想の修正、予想値と決算値との差異等
+- 配当予想・配当予想の修正 +
+公表がされた直近の配当の予想値と比較して、新たに算出した予想値に差異が生じた場合を含め、剰余金の配当について予想値を算出した場合に義務付けられている開示をいいます。
 
-https://faq.jpx.co.jp/disclo/tse/web/knowledge6851.html
-
-- 配当予想、配当予想の修正
-
-https://faq.jpx.co.jp/disclo/tse/web/knowledge6852.html
 
 
 また、決算短信の訂正開示等が、次に挙げる条件を全て満たす場合、これも予測対象に含まれます。
 
-E)	直近の四半期決算期末または決算期末の決算短信に対する訂正開示であること
+E)	直近の決算期末または四半期期末に係る決算短信に対する訂正開示等であること
 
 
 F)	2021年3月27日から同年5月15日までの期間に開示されていること
 
 
-G)	開示日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと
+G)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと
 
 
-H)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
+H)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
 
 なお、ある同一銘柄について、これらの条件を満たす決算短信が複数存在する場合は、最も新しく開示されたもののみを予測の対象とします。
 
 
-以上を踏まえ、各決算短信等が予測対象に該当するかどうかの事例を、図に示します。
+以上を踏まえ、各決算短信等（訂正開示等を含みます。）が予測対象に該当するかどうかの事例を、図に示します。
 
 image::predict_target.png[predict_target]
 
@@ -133,7 +130,7 @@ $$d$$の$$X$$と$$Y$$は、
 
 $$X$$ = 該当期間の決算日に対して出力されたモデルのスコア（予測値）
 
-$$Y$$ = 決算短信開示の開示後から起算して20営業日以内に発生した最高値もしくは最安値への変化率
+$$Y$$ = 決算短信の開示後から起算して20営業日以内に発生した最高値もしくは最安値への変化率
 
 ====
 (式は一部英語Wikipediaスピアマンの順位相関係数より引用 https://ja.wikipedia.org/wiki/%E3%82%B9%E3%83%94%E3%82%A2%E3%83%9E%E3%83%B3%E3%81%AE%E9%A0%86%E4%BD%8D%E7%9B%B8%E9%96%A2%E4%BF%82%E6%95%B0[https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient])
@@ -194,17 +191,17 @@ P_low : 最安値の順位相関係数
 |*項目* | *Public LB* | *Private LB*
 |用途| モデルが正常に投稿できることを確認するための環境 | 本コンペティションの最終的なランキングを表示
 |予測対象となる決算短信の開示日の期間| 2020年1月1日（水）〜2020年11月30日（月） | 2021年3月27日（土）〜2021年5月15日（土）
-|予測対象となる決算短信の開示日の期間| 各銘柄の各四半期ごとに一番開示日が新しい開示　| 2.1.2項に示すとおり
+|予測対象となる決算短信の開示日の条件| 各銘柄の各四半期ごとに一番開示日が新しい開示　| 2.1.2項に示すとおり
 |予測内容 | 決算短信の開示日から起算して20営業日を経過した期間における、各銘柄の最高値及び最安値  | 同左
-|評価方法 | 2.1.3項に示す評価方法 | 2.1.3項に示す評価方法を、5回の決算短信開示期間に分けて実施
+|評価方法 | 2.1.3項に示す評価方法 | 2.1.3項に示す評価方法を、5回の決算短信開示期間に応じて実施
 |===
 
 
 ==== 決算短信・財務諸表
-上場企業の株価は、各社の経営状態等を反映して日々刻々と変化します。そのため、金融商品市場において公正な価格形成と円滑な流通を確保するためには公平で適時、適切な情報開示が必要不可欠なものとなっております。
+上場企業の株価は、各社の経営状態等を反映して日々刻々と変化します。そのため、金融商品市場において公正な価格形成と円滑な流通を確保するためには公平で適時、適切な情報開示が必要不可欠なものとなっています。
 
 
-東京証券取引所では、上場企業に対して、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けています。この制度を通じて、上場企業は、報道機関またはTDnet（適時開示情報伝達システム）（ https://www.release.tdnet.info/ ）等を通じて、各社の重要な情報を投資者に対して、直接に、広く、かつタイムリーに伝達することが義務付けられています。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。下図に投資家における適時開示資料の代表的な用途を示します。
+東京証券取引所では、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けており、上場企業は、報道機関等を通じてあるいはTDnet（適時開示情報伝達システム）により直接に、広く、かつタイムリーに伝達することという特徴があります。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。適時開示資料とそのメタデータ（タイトル、開示日時等）を総称して適時開示情報と呼び、適時開示情報は「適時開示情報閲覧サービス（リンク）」で開示されます。下図に投資家における適時開示資料の代表的な用途を示します。
 
 *投資家における適時開示資料の代表的な用途*
 
@@ -212,17 +209,20 @@ image::structure.png[structure]
 (開示資料と翻訳より引用 https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf)
 
 
-上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、四半期に一回、四半期決算期末後45日以内に、決算短信の開示が義務付けられています。
+上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。また、東証は上場企業に対し、四半期決算期末後45日以内の決算内容の開示を要請しています。決算短信の作成要領等は、下記Webサイトで公開されています。
+
+決算短信作成要領・四半期決算短信作成要領 | 日本取引所グループ +
+https://www.jpx.co.jp/equities/listed-co/format/summary/index.html
 
 
-決算短信は、大きく、サマリー情報と添付資料で構成されます。 +
+決算の内容として開示される決算短信は、大きく、サマリー情報と添付資料で構成されます。 +
 
-サマリー情報は、投資者の投資判断に重要な影響を与える上場会社の決算の内容について、その要点の一覧性及び比較可能性を確保する観点から、簡潔に取りまとめたものとして、特定の様式に基づいて東証が作成を要請している資料です。 +
+サマリー情報は、投資者の投資判断に重要な影響を与える上場会社の決算の内容について、その要点の一覧性及び比較可能性を確保する観点から、簡潔に取りまとめたものとして、参考様式に基づいて東証が作成を要請している資料です。 +
 
 添付資料とは、サマリー情報に記載される主要な決算数値を投資者が適切に理解できるようにする目的で作成される、経営成績・財政状態の概況、今後の見通し、財務諸表、主な注記等を記載した資料です。
 
 
-前述のとおり、決算短信には、財務諸表と呼ばれる書類が添付されています。財務諸表とは、財政状態、経営成績及びキャッシュ・フローの状況を外部の情報利用者に明らかにするためのもので、有価証券届出書や有価証券報告書等に記載される財務計算に関する書類のうち、貸借対照表、損益計算書、株主資本等変動計算書、キャッシュ・フロー計算書、附属明細表の総称を指します。これらの内、貸借対照表、損益計算書、キャッシュ・フロー計算書の3つは、総称して「財務三表」と呼ばれており、上場企業に対する投資判断において特に重要視されています。財務三表の読み方については、下記Webサイトが参考になります。
+前述のとおり、決算短信には、財務諸表が添付されています。財務諸表とは、財政状態、経営成績及びキャッシュ・フローの状況を外部の情報利用者に明らかにするためのもので、有価証券届出書や有価証券報告書等に記載される財務計算に関する書類のうち、貸借対照表、損益計算書、株主資本等変動計算書、キャッシュ・フロー計算書の総称を指します。これらの内、貸借対照表、損益計算書、キャッシュ・フロー計算書の3つは、総称して「財務三表」と呼ばれており、上場企業に対する投資判断において特に重要視されています。財務三表の読み方については、下記Webサイトが参考になります。
 
 - 投資に不可欠な財務三表の見方 | 東証マネ部！
 https://money-bu-jpx.com/news/article022723/
@@ -236,128 +236,9 @@ https://www.jpx.co.jp/listing/event-schedules/financial-announcement/index.html
 以上のとおり、本コンペティションで予測対象の起点となる決算短信には、各上場企業の重要な決算内容が記されています。本コンペティションでは、決算短信に含まれる財務諸表から抽出したファンダメンタル情報をコンペティションページ若しくは専用のAPIにおいて配信しており、これを用いることで株価の先行きを予測していただきます。
 
 
-=== 実行環境及び必要なライブラリ
-
-==== 実行環境
-
-本チュートリアルの実行環境は、本コンペティションで提出するモデルの実行環境と同一環境とするために以下のpython環境を用います。環境構築方法について、詳しくは https://signate.jp/features/runtime/detail[SIGNATE: Runtime 投稿方法: ローカル開発環境の構築方法は？] をご参照ください。
-
-----
-anaconda3-2019.03
-----
-
-==== Dockerを用いた実行環境構築方法
-
-本チュートリアルのリポジトリを `git clone` していただき、以下の手順を実行していただくことで実行環境のdockerコンテナ内でjupyter notebookを起動可能となっています。`Chapter02` ディレクトリ内には、本チュートリアルのコードを記載した ipynb ファイルを配置しておりますので必要に応じてご活用ください。 +
-※ docker のインストールについては http://docs.docker.jp/get-docker.html をご参照ください。
-
-[source,bash]
-----
-cd handson/
-
-# データ配置先のディレクトリを作成
-mkdir data_dir
-# その後作成したhandson/data_dirに、コンペティションサイトよりデータをダウンロードし配置します。
-
-# dockerでjupyter notebookを起動します。(初回実行時は約2GB程度コンテナイメージをダウンロードします。)
-# データ配置先のディレクトリを /path/to としてマウントしています。
-# 学習済みモデル提出用のディレクトリ (handson/Chapter02/archive) を /opt/ml としてマウントしています。
-# jupyter notebook作業用に handson ディレクトリを /notebook としてマウントしています。
-# jupyter notebook は port 8888でtokenとpasswordを空にして、vscode のjupyter pluginからアクセスできるように xsrf 対策を無効化しています。
-docker run --name tutorial -v $(pwd)/data_dir:/path/to -v $(pwd)/Chapter02/archive:/opt/ml -v $(pwd):/notebook -e PYTHONPATH=/opt/ml/src -v $(pwd):/notebook -p8888:8888 --rm -it continuumio/anaconda3:2019.03 jupyter notebook --ip 0.0.0.0 --allow-root --no-browser --no-mathjax --NotebookApp.disable_check_xsrf=True  --NotebookApp.token='' --NotebookApp.password='' /notebook
-
-# ブラウザで以下のURLにアクセスしてjupyter notebookの画面が表示されていて、本チュートリアル用のnotebookが表示されていることを確認します。
-http://localhost:8888/
-----
-
-==== 必要なライブラリのインストール
-
-本チュートリアル内では、上記の実行環境に含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。
-[source,bash]
-----
-
-# shap用にg++とgccをインストールします
-apt-get update
-apt-get install -y --no-install-recommends g++ gcc
-
-# 必要なライブラリをインストールします
-pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0
-----
-
-==== ライブラリの読み込み
-
-本チュートリアルでは、下記のライブラリのインポートを行います。
-
-[source,python]
-----
-import os
-import pickle
-import sys
-import warnings
-from glob import glob
-
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import shap
-import xgboost
-from scipy.stats import spearmanr
-from sklearn.ensemble import (
-    ExtraTreesRegressor,
-    GradientBoostingRegressor,
-    RandomForestRegressor,
-)
-from sklearn.metrics import accuracy_score, mean_squared_error
-from tqdm.auto import tqdm
-
-
-# 表示用の設定を変更します
-%matplotlib inline
-pd.options.display.max_rows = 100
-pd.options.display.max_columns = 100
-pd.options.display.width = 120
-----
-
-==== ライブラリ解説
-
-[options="header, autowidth"]
-|===
-|*ライブラリ名*| *目的* | *公式ドキュメント* |*入門解説* ｑ
-|pandas | データの処理 | https://pandas.pydata.org/docs/[pandas documentation] | https://qiita.com/ysdyt/items/9ccca82fc5b504e7913a[Qiita:データ分析で頻出のPandas基本操作]
-|numpy | データの処理 | https://numpy.org/doc/stable/user/tutorials_index.html[NumPy Tutorials] |https://qiita.com/jyori112/items/a15658d1dd17c421e1e2[Qiita:numpyの使い方]
-|glob | ファイルの検知 | https://docs.python.org/3/library/glob.html[glob — Unix style pathname pattern expansion] |https://qiita.com/HirosuguTakeshita/items/0e0850362c7eb3b10ea1[Qiita:【備忘録】globの使い方]
-|tqdm | 計算の進捗確認 | https://tqdm.github.io/[tqdm] |https://qiita.com/pontyo4/items/76145cb10e030ad8186a[Qiita:tqdmでプログレスバーを表示させる]
-|sklearn | 機械学習モデルを作成 | https://scikit-learn.org/stable/tutorial/index.html[https://scikit-learn.org/stable/tutorial/index.html] |https://qiita.com/ynakayama/items/9c5867b6947aa41e9229[Qiita:scikit-learn から学ぶ機械学習の手法の概要]
-|matplotlib | データの可視化 | https://matplotlib.org/tutorials/index.html[matplotlib tutorials] |https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9[Qiita:早く知っておきたかったmatplotlibの基礎知識、あるいは見た目の調整が捗るArtistの話]
-|scipy | 統計用のライブラリ | https://docs.scipy.org/doc/scipy/reference/tutorial/index.html[SciPy Tutorial] |https://amorphous.tf.chiba-u.jp/lecture.files/chem_computer/11_scipy%E3%81%AE%E5%9F%BA%E6%9C%AC%E3%81%A8%E5%BF%9C%E7%94%A8/11.html[千葉大: コンピュータ処理 ドキュメント 11. scipyの基本と応用]
-|seaborn | データの可視化 | https://seaborn.pydata.org/tutorial.html[User guide and tutorial] |https://qiita.com/hik0107/items/3dc541158fceb3156ee0[Qiita:pythonで美しいグラフ描画 -seabornを使えばデータ分析と可視化が捗る その1]
-| shap | SHAP分析 | https://shap.readthedocs.io/en/latest/[Welcome to the SHAP Documentation] | https://qiita.com/shin_mura/items/cde01198552eda9146b7[Shapを用いた機械学習モデルの解釈説明]
-| xgboost | 機械学習モデル | https://xgboost.readthedocs.io/en/latest/[XGBoost Documentation] | https://qiita.com/triwave33/items/aad60f25485a4595b5c8[XGBoost論文を丁寧に解説する(1)]
-|===
-
-==== 実行環境の確認
-
-pythonのバージョンが3.7.3であることを確認します。
-
-[source,python]
-----
-print(sys.version)
-----
-
-出力
-
-[source,bash]
-----
-3.7.3 (default, Mar 27 2019, 22:11:17)
-[GCC 7.3.0]
-----
-
-
 === データセットの説明
 
-提供されるデータは以下の5種類です。
+ここでは、コンペティションで提供している各データについて説明します。提供されるデータは以下の5種類です。
 
 *データ概要*
 
@@ -422,6 +303,10 @@ stock_priceには各銘柄の各日付の始値や終値などの株価情報が
 一般に株式分割は流動性向上を期待できるポジティブなイベントとみなされています。仮に、モデル学習時に累積調整係数をモデルへ入力し、モデルが累積調整係数が大きい銘柄は未来の株価が上がる傾向があるということを学習し、履歴データを使用したバックテストでは良い結果がでたとします。しかし、このモデルに最新データを入力して予測を出力した場合、その予測は期待する結果を得られない可能性があります。なぜなら、最新データの累積調整係数にはまだ発生していない未来の情報は含まれていないためです。
 
 このように、その日付時点では取得できない未来の情報をモデルに入力することをリークといい、時系列データには累積調整係数のようにその日付時点では取得できない情報が含まれていることがあるため、リークにはとくに注意する必要があります。
+
+**データの特性**
+
+マーケットが開いている日に取引が成立しなかった銘柄は、売買高が0となり、四本値 (始値、高値、安値、終値) 全てが0と表示されます。
 
 [cols="2,3,1,1", options="header"]
 |===
@@ -538,7 +423,128 @@ stock_labelsは予測の目的変数のデータであり、各銘柄で決算�
 
 image::sample_stock_labels.png[sample_stock_label]
 
-==== データセットの読み込み
+=== 実行環境及び必要なライブラリ
+
+==== 実行環境
+
+本チュートリアルの実行環境は、本コンペティションで提出するモデルの実行環境と同一環境とするために以下のpython環境を用います。環境構築方法について、詳しくは https://signate.jp/features/runtime/detail[SIGNATE: Runtime 投稿方法: ローカル開発環境の構築方法は？] をご参照ください。
+
+----
+anaconda3-2019.03
+----
+
+==== Dockerを用いた実行環境構築方法
+
+本チュートリアルのリポジトリを `git clone` していただき、以下の手順を実行していただくことで実行環境のdockerコンテナ内でjupyter notebookを起動可能となっています。 `Chapter02` ディレクトリ内には、本チュートリアルのコードを記載した ipynb ファイルを配置しておりますので必要に応じてご活用ください。
+
+Windows環境の場合、コマンド実行には「PowerShell」などをご使用ください。なお、PowerShellの利用に当たっては、最新のセキュリティ事情を踏まえご自身でご判断ください。
+
+docker のインストールについては http://docs.docker.jp/get-docker.html をご参照ください。docker の制約としてマウントするパスにはアルファベット、数字、「_」、「.」、「-」以外の文字を使用するとエラーとなることがあるようです。その場合は、パスが前述の文字のみで構成されているディレクトリをご使用ください。
+
+[source,bash]
+----
+cd handson/
+
+# データ配置先のディレクトリを作成
+mkdir data_dir
+# その後作成したhandson/data_dirに、コンペティションサイトよりデータをダウンロードし配置します。
+
+# dockerでjupyter notebookを起動します。(初回実行時は約2GB程度コンテナイメージをダウンロードします。)
+# データ配置先のディレクトリを /path/to としてマウントしています。
+# 学習済みモデル提出用のディレクトリ (handson/Chapter02/archive) を /opt/ml としてマウントしています。
+# jupyter notebook作業用に handson ディレクトリを /notebook としてマウントしています。
+# jupyter notebook は port 8888でtokenとpasswordを空にして、vscode のjupyter pluginからアクセスできるように xsrf 対策を無効化しています。
+docker run --name tutorial -v ${PWD}/data_dir:/path/to -v ${PWD}/Chapter02/archive:/opt/ml -v ${PWD}:/notebook -e PYTHONPATH=/opt/ml/src -p8888:8888 --rm -it continuumio/anaconda3:2019.03 jupyter notebook --ip 0.0.0.0 --allow-root --no-browser --no-mathjax --NotebookApp.disable_check_xsrf=True  --NotebookApp.token='' --NotebookApp.password='' /notebook
+
+# ブラウザで以下のURLにアクセスしてjupyter notebookの画面が表示されていて、本チュートリアル用のnotebookが表示されていることを確認します。
+http://localhost:8888/
+----
+
+==== 必要なライブラリのインストール
+
+本チュートリアル内では、上記の実行環境に含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。
+[source,bash]
+----
+
+# shap用にg++とgccをインストールします
+apt-get update
+apt-get install -y --no-install-recommends g++ gcc
+
+# 必要なライブラリをインストールします
+pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0
+----
+
+==== ライブラリの読み込み
+
+本チュートリアルでは、下記のライブラリのインポートを行います。
+
+[source,python]
+----
+import os
+import pickle
+import sys
+import warnings
+from glob import glob
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import shap
+import xgboost
+from scipy.stats import spearmanr
+from sklearn.ensemble import (
+    ExtraTreesRegressor,
+    GradientBoostingRegressor,
+    RandomForestRegressor,
+)
+from sklearn.metrics import accuracy_score, mean_squared_error
+from tqdm.auto import tqdm
+
+
+# 表示用の設定を変更します
+%matplotlib inline
+pd.options.display.max_rows = 100
+pd.options.display.max_columns = 100
+pd.options.display.width = 120
+----
+
+==== ライブラリ解説
+
+[options="header, autowidth"]
+|===
+|*ライブラリ名*| *目的* | *公式ドキュメント* |*入門解説* ｑ
+|pandas | データの処理 | https://pandas.pydata.org/docs/[pandas documentation] | https://qiita.com/ysdyt/items/9ccca82fc5b504e7913a[Qiita:データ分析で頻出のPandas基本操作]
+|numpy | データの処理 | https://numpy.org/doc/stable/user/tutorials_index.html[NumPy Tutorials] |https://qiita.com/jyori112/items/a15658d1dd17c421e1e2[Qiita:numpyの使い方]
+|glob | ファイルの検知 | https://docs.python.org/3/library/glob.html[glob — Unix style pathname pattern expansion] |https://qiita.com/HirosuguTakeshita/items/0e0850362c7eb3b10ea1[Qiita:【備忘録】globの使い方]
+|tqdm | 計算の進捗確認 | https://tqdm.github.io/[tqdm] |https://qiita.com/pontyo4/items/76145cb10e030ad8186a[Qiita:tqdmでプログレスバーを表示させる]
+|sklearn | 機械学習モデルを作成 | https://scikit-learn.org/stable/tutorial/index.html[https://scikit-learn.org/stable/tutorial/index.html] |https://qiita.com/ynakayama/items/9c5867b6947aa41e9229[Qiita:scikit-learn から学ぶ機械学習の手法の概要]
+|matplotlib | データの可視化 | https://matplotlib.org/tutorials/index.html[matplotlib tutorials] |https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9[Qiita:早く知っておきたかったmatplotlibの基礎知識、あるいは見た目の調整が捗るArtistの話]
+|scipy | 統計用のライブラリ | https://docs.scipy.org/doc/scipy/reference/tutorial/index.html[SciPy Tutorial] |https://amorphous.tf.chiba-u.jp/lecture.files/chem_computer/11_scipy%E3%81%AE%E5%9F%BA%E6%9C%AC%E3%81%A8%E5%BF%9C%E7%94%A8/11.html[千葉大: コンピュータ処理 ドキュメント 11. scipyの基本と応用]
+|seaborn | データの可視化 | https://seaborn.pydata.org/tutorial.html[User guide and tutorial] |https://qiita.com/hik0107/items/3dc541158fceb3156ee0[Qiita:pythonで美しいグラフ描画 -seabornを使えばデータ分析と可視化が捗る その1]
+| shap | SHAP分析 | https://shap.readthedocs.io/en/latest/[Welcome to the SHAP Documentation] | https://qiita.com/shin_mura/items/cde01198552eda9146b7[Shapを用いた機械学習モデルの解釈説明]
+| xgboost | 機械学習モデル | https://xgboost.readthedocs.io/en/latest/[XGBoost Documentation] | https://qiita.com/triwave33/items/aad60f25485a4595b5c8[XGBoost論文を丁寧に解説する(1)]
+|===
+
+==== 実行環境の確認
+
+pythonのバージョンが3.7.3であることを確認します。
+
+[source,python]
+----
+print(sys.version)
+----
+
+出力
+
+[source,bash]
+----
+3.7.3 (default, Mar 27 2019, 22:11:17)
+[GCC 7.3.0]
+----
+
+=== データセットの読み込み
 
 本コンペティション用に提供されているデータセットをダウンロードして、ファイルを解凍した場所を定義します。
 
@@ -583,7 +589,7 @@ for k in inputs.keys():
 
 データセットの各項目の特徴を把握することは、モデルを作成する上で重要な要素の1つです。一般にデータの特徴を把握するためには、各項目の意味を把握し、値の平均や標準偏差などの基本統計量を確認します。可視化もそういった特徴把握の手法の1つで、データをグラフなどで表現することで特性を直感的に理解できるようになります。
 
-Chapter 2.3 データセットの説明では、本コンペで用いるデータセットについて説明しました。ここではそれらのデータを、 `matplotlib` と `seaborn` を用いて可視化します。財務諸表、株価、移動平均、価格変化率、ヒストリカル・ボラティリティを個別で見て、最後に1つのグラフとしてまとめて可視化します。
+Chapter 2.2 データセットの説明では、本コンペで用いるデータセットについて説明しました。ここではそれらのデータを、 `matplotlib` と `seaborn` を用いて可視化します。財務諸表、株価、移動平均、価格変化率、ヒストリカル・ボラティリティを個別で見て、最後に1つのグラフとしてまとめて可視化します。
 
 ==== 財務諸表
 
@@ -1135,8 +1141,8 @@ TEST_START = "2019-01-01"
 ここでは、特徴量生成のコードを示しています。コードのおおまかな流れとしては、以下の3ステップに分けられます。
 
 ----
-1. 財務データの取得及び前処理（Chapter2.5.2と同様）
-2. マーケットデータの取得及び特徴量定義（Chapter2.6.3と同様）
+1. 財務データの取得及び前処理（Chapter 2.6.2と同様）
+2. マーケットデータの取得及び特徴量定義（Chapter 2.7.2と同様）
 3. 財務データと生成した特徴量を結合
 ----
 
@@ -1778,7 +1784,7 @@ docker pull continuumio/anaconda3:2019.03
 ----
 
 ここで、学習済みモデルの保存方法について説明します。
-学習済みモデルは `pickle` で保存します。保存場所は2.12.2で説明したディレクトリ構造の学習済みモデルの配置先である `model` ディレクトリになります。任意のファイル名を設定可能なので、今回はモデルの対象としている目的変数がわかるように `my_model_{label}.pkl` という名前で保存します。具体的にはモデルの保存は以下のように行います。
+学習済みモデルは `pickle` で保存します。保存場所はChapter 2.13.2で説明したディレクトリ構造の学習済みモデルの配置先である `model` ディレクトリになります。任意のファイル名を設定可能なので、今回はモデルの対象としている目的変数がわかるように `my_model_{label}.pkl` という名前で保存します。具体的にはモデルの保存は以下のように行います。
 
 [source, python]
 ----

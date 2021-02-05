@@ -3,6 +3,17 @@ include::../attribute.adoc[]
 == tips集
 本章では、本コンペティションに関連する金融・データ解析一般についてのtipsを紹介します。
 
+
+=== コンペティションフォーラムの紹介
+J-Quantsでは、コンペティションに関連して執筆された記事の投稿やチュートリアルへのご質問をフォーラム（ "https://signate.jp/competitions/423/discussions" ）にて募集しております（コンペの登録が必要）。また、下記内容以外にも有志の方による素晴らしいスレッドがありますので、ぜひご確認ください。
+[options="header, autowidth"]
+|===
+|*タイトル* | *URL*
+|参考書籍・記事・知見共有スレッド|https://signate.jp/competitions/423/discussions/jpx-1
+|Web記事投稿スレッド|https://signate.jp/competitions/423/discussions/jpx-web
+|チュートリアル質問用スレッド|https://signate.jp/competitions/423/discussions/jpx
+|===
+
 === 金融用語集
 
 本コンペティションで必要となる専門用語を解説してくれているサイトをご紹介します。 +

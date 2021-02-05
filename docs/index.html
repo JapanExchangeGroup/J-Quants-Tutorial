@@ -5,8 +5,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.12">
+<meta property=“og:image” content=“https://jquants-tutorial.s3-ap-northeast-1.amazonaws.com/J-Quants-ogp.png”>
 <meta name="author" content="本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。">
-<title>株式分析チュートリアル</title>
+<title>株式分析チュートリアル | 日本取引所グループ</title>
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
 /* Uncomment @import statement below to use as custom stylesheet */
@@ -528,7 +529,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </head>
 <body class="book toc2 toc-left">
 <div id="header">
-<h1>株式分析チュートリアル</h1>
+<h1>株式分析チュートリアル | 日本取引所グループ</h1>
 <div class="details">
 <span id="author" class="author">本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。</span><br>
 </div>
@@ -539,33 +540,35 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <li><a href="#_財務諸表で株価の先行きを予測しよう">2. 財務諸表で株価の先行きを予測しよう</a>
 <ul class="sectlevel2">
 <li><a href="#_予測対象">2.1. 予測対象</a></li>
-<li><a href="#_実行環境及び必要なライブラリ">2.2. 実行環境及び必要なライブラリ</a></li>
-<li><a href="#_データセットの説明">2.3. データセットの説明</a></li>
-<li><a href="#_データセットの可視化">2.4. データセットの可視化</a></li>
-<li><a href="#_データセットの前処理">2.5. データセットの前処理</a></li>
-<li><a href="#_特徴量の生成">2.6. 特徴量の生成</a></li>
-<li><a href="#_バックテスト用のテストデータ作成">2.7. バックテスト用のテストデータ作成</a></li>
-<li><a href="#_モデルの構築">2.8. モデルの構築</a></li>
-<li><a href="#_モデルの推論">2.9. モデルの推論</a></li>
-<li><a href="#_予測結果に対する分析の道筋">2.10. 予測結果に対する分析の道筋</a></li>
-<li><a href="#_モデルの評価">2.11. モデルの評価</a></li>
-<li><a href="#_モデルの提出">2.12. モデルの提出</a></li>
+<li><a href="#_データセットの説明">2.2. データセットの説明</a></li>
+<li><a href="#_実行環境及び必要なライブラリ">2.3. 実行環境及び必要なライブラリ</a></li>
+<li><a href="#_データセットの読み込み">2.4. データセットの読み込み</a></li>
+<li><a href="#_データセットの可視化">2.5. データセットの可視化</a></li>
+<li><a href="#_データセットの前処理">2.6. データセットの前処理</a></li>
+<li><a href="#_特徴量の生成">2.7. 特徴量の生成</a></li>
+<li><a href="#_バックテスト用のテストデータ作成">2.8. バックテスト用のテストデータ作成</a></li>
+<li><a href="#_モデルの構築">2.9. モデルの構築</a></li>
+<li><a href="#_モデルの推論">2.10. モデルの推論</a></li>
+<li><a href="#_予測結果に対する分析の道筋">2.11. 予測結果に対する分析の道筋</a></li>
+<li><a href="#_モデルの評価">2.12. モデルの評価</a></li>
+<li><a href="#_モデルの提出">2.13. モデルの提出</a></li>
 </ul>
 </li>
 <li><a href="#_ニュースでポートフォリオを構築しよう">3. ニュースでポートフォリオを構築しよう</a></li>
 <li><a href="#_tips集">4. tips集</a>
 <ul class="sectlevel2">
-<li><a href="#_金融用語集">4.1. 金融用語集</a></li>
-<li><a href="#_東証マネ部">4.2. 東証マネ部</a></li>
-<li><a href="#_参考になる書籍">4.3. 参考になる書籍</a></li>
-<li><a href="#_参考になるコンペティション">4.4. 参考になるコンペティション</a></li>
-<li><a href="#_ファンダメンタルズ分析の活用方法">4.5. ファンダメンタルズ分析の活用方法</a></li>
-<li><a href="#_テクニカル分析の活用方法">4.6. テクニカル分析の活用方法</a></li>
-<li><a href="#_ファクター分析の活用方法">4.7. ファクター分析の活用方法</a></li>
-<li><a href="#_複数個のモデルの出力をアンサンブルするアプローチ">4.8. 複数個のモデルの出力をアンサンブルするアプローチ</a></li>
-<li><a href="#_プライベート期間の性能の向上のために考慮すべきこと">4.9. プライベート期間の性能の向上のために考慮すべきこと</a></li>
-<li><a href="#_本コンペでは利用できないがモデルを将来的に発展させるために検討する価値のある外部データ">4.10. 本コンペでは利用できないが、モデルを将来的に発展させるために検討する価値のある外部データ</a></li>
-<li><a href="#_モデルの再学習の運用について">4.11. モデルの再学習の運用について</a></li>
+<li><a href="#_コンペティションフォーラムの紹介">4.1. コンペティションフォーラムの紹介</a></li>
+<li><a href="#_金融用語集">4.2. 金融用語集</a></li>
+<li><a href="#_東証マネ部">4.3. 東証マネ部</a></li>
+<li><a href="#_参考になる書籍">4.4. 参考になる書籍</a></li>
+<li><a href="#_参考になるコンペティション">4.5. 参考になるコンペティション</a></li>
+<li><a href="#_ファンダメンタルズ分析の活用方法">4.6. ファンダメンタルズ分析の活用方法</a></li>
+<li><a href="#_テクニカル分析の活用方法">4.7. テクニカル分析の活用方法</a></li>
+<li><a href="#_ファクター分析の活用方法">4.8. ファクター分析の活用方法</a></li>
+<li><a href="#_複数個のモデルの出力をアンサンブルするアプローチ">4.9. 複数個のモデルの出力をアンサンブルするアプローチ</a></li>
+<li><a href="#_プライベート期間の性能の向上のために考慮すべきこと">4.10. プライベート期間の性能の向上のために考慮すべきこと</a></li>
+<li><a href="#_本コンペでは利用できないがモデルを将来的に発展させるために検討する価値のある外部データ">4.11. 本コンペでは利用できないが、モデルを将来的に発展させるために検討する価値のある外部データ</a></li>
+<li><a href="#_モデルの再学習の運用について">4.12. モデルの再学習の運用について</a></li>
 </ul>
 </li>
 <li><a href="#_j_quantsapi">5. J-QuantsAPI</a>
@@ -583,7 +586,11 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <li><a href="#_tdnet_api">5.11. TDnet API</a></li>
 </ul>
 </li>
-<li><a href="#_チュートリアル作成環境の参考文献">6. チュートリアル作成環境の参考文献</a></li>
+<li><a href="#_チュートリアル作成環境の参考文献">6. チュートリアル作成環境の参考文献</a>
+<ul class="sectlevel2">
+<li><a href="#_商標">6.1. 商標</a></li>
+</ul>
+</li>
 <li><a href="#_ライセンス">7. ライセンス</a></li>
 </ul>
 </div>
@@ -611,7 +618,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="listingblock">
 <div class="content">
 <pre>2021-01-29: 初版リリース
-2021-02-05: 次回更新予定日</pre>
+2021-02-05: 誤字や表記の修正を中心に改良
+2021-02-12: 次回リリース予定</pre>
 </div>
 </div>
 </div>
@@ -716,7 +724,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </tbody>
 </table>
 <div class="paragraph">
-<p>本コンペティションでは、東証上場企業（普通株式のみ。ETF及びREITは除きます。）が、決算短信（四半期決算短信を含みます。）を発表した後の20営業日の間における、当該企業の株価の最高値及び最安値を、銘柄情報・株価情報・ファンダメンタル情報等を用いて予測いただきます。</p>
+<p>本コンペティションでは、東証上場企業（普通株式のみ。ETF及びREITは除きます。）が、決算短信（本資料では、四半期決算短信や訂正開示等を総称し、決算短信と表記します。）を発表した後の20営業日の間における、当該企業の株価の最高値及び最安値を、銘柄情報・株価情報・ファンダメンタル情報等を用いて予測いただきます。</p>
 </div>
 <div class="paragraph">
 <p><strong>コンペティションの概要</strong></p>
@@ -758,13 +766,12 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </tbody>
 </table>
 <div class="paragraph">
-<p>本章の構成は、まず、2.1節にて、本コンペティションにおける予測対象等の詳細について説明し、2.2節にて、本コンペティションで使用するライブラリについて説明します。その後、2.3節にて、本コンペティションで提供するデータセットの仕様について説明します。そして、2.4節以降で、本コンペティションのベースラインモデルの開発からモデル提出までの一連のフローを説明します。</p>
+<p>本章の構成は、まず、2.1節にて、本コンペティションにおける予測対象等の詳細について説明し、2.2節にて、本コンペティションで提供するデータセットの仕様について説明します。そして、2.3節以降で、本コンペティションのベースラインモデルの開発からモデル提出までの一連のフローを説明します。</p>
 </div>
 <div class="sect2">
 <h3 id="_予測対象">2.1. 予測対象</h3>
 <div class="paragraph">
-<p>本コンペティションの予測対象は、東証上場企業が、決算短信を発表した後の20営業日の期間における、当該企業の株価の最高値及び最安値です。
-上場企業は四半期に一回、四半期決算期末後45日以内に、決算短信と呼ばれる書類の開示が義務付けられています。決算短信には財務諸表と呼ばれる書類が添付されており、財務諸表は企業のファンダメンタル情報を含む複数の表で構成されています。</p>
+<p>本コンペティションの予測対象は、東証上場企業が、決算短信を発表した後の20営業日の期間における、当該企業の株価の最高値及び最安値です。 上場企業は決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。決算の内容として開示される決算短信には財務諸表が添付されており、財務諸表は企業のファンダメンタル情報を含む複数の表で構成されています。</p>
 </div>
 <div class="paragraph">
 <p>2.1.1項では予測対象の銘柄について、2.1.2項では予測対象の決算短信について、2.1.3項では本コンペティションの評価方法について、2.1.4項では本コンペティションのリーダーボードの仕様について、2.1.5項では決算短信と財務諸表の概要について、それぞれ説明します。</p>
@@ -790,73 +797,59 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="sect3">
 <h4 id="_予測対象の決算短信">2.1.2. 予測対象の決算短信</h4>
 <div class="paragraph">
-<p>本コンペティションでは、2021年3月27日から同年5月15日の期間中に開示された決算短信を対象に、その決算短信の開示日から起算して20営業日を経過した期間における、各銘柄の最高値及び最安値を予測します。厳密には、本コンペティションで予測対象となる決算短信は、次に挙げる条件を全て満たします。</p>
+<p>本コンペティションでは、2021年3月27日から同年5月15日の期間中に開示された決算短信を対象に、その開示日から起算して20営業日を経過した期間における、各銘柄の最高値及び最安値を予測します。厳密には、本コンペティションで予測対象となる決算短信は、次に挙げる条件を全て満たします。</p>
 </div>
 <div class="paragraph">
-<p>A)	直近の四半期決算期末または決算期末の決算短信であること</p>
+<p>A)	直近の決算期末または四半期期末に係る決算短信であること</p>
 </div>
 <div class="paragraph">
 <p>B)	2021年3月27日から同年5月15日までの期間に開示されていること</p>
 </div>
 <div class="paragraph">
-<p>C)	開示日から起算して20営業日を経過した日までの期間、訂正開示等が行われていないこと</p>
+<p>C)	開示日及び同日から起算して20営業日を経過した日までの期間、訂正開示等が行われていないこと</p>
 </div>
 <div class="paragraph">
-<p>D)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと</p>
+<p>D)	開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと</p>
 </div>
 <div class="paragraph">
-<p>条件Cに示す「訂正開示等」とは、決算発表資料の訂正、業績予想の修正、配当予想の修正を指します。これらの詳細については、上場会社向けナビゲーションシステムの下記リンク先をご参照ください。</p>
+<p>条件Cに示す「訂正開示等」とは、決算発表資料の訂正、業績予想の修正・予想値と決算値との差異等、配当予想・配当予想の修正にかかる開示を指します。これらの詳細については、以下のとおりです。</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>決算短信</p>
+<p>決算発表資料の訂正<br>
+決算短信等を開示した後に、開示した内容について、変更又は訂正すべき事情が生じた場合に義務付けられている訂正開示をいいます。</p>
 </li>
-</ul>
-</div>
-<div class="paragraph">
-<p><a href="https://faq.jpx.co.jp/disclo/tse/web/knowledge7142.html" class="bare">https://faq.jpx.co.jp/disclo/tse/web/knowledge7142.html</a></p>
-</div>
-<div class="ulist">
-<ul>
 <li>
-<p>業績予想の修正、予想値と決算値との差異等</p>
+<p>業績予想の修正・予想値と決算値との差異等<br>
+売上高や営業利益、経常利益、当期純利益等について、公表がされた直近の予想値等と比較して、新たに算出した予想値または決算における数値に一定以上の差異が生じた場合に義務付けられている開示をいいます。</p>
 </li>
-</ul>
-</div>
-<div class="paragraph">
-<p><a href="https://faq.jpx.co.jp/disclo/tse/web/knowledge6851.html" class="bare">https://faq.jpx.co.jp/disclo/tse/web/knowledge6851.html</a></p>
-</div>
-<div class="ulist">
-<ul>
 <li>
-<p>配当予想、配当予想の修正</p>
+<p>配当予想・配当予想の修正<br>
+公表がされた直近の配当の予想値と比較して、新たに算出した予想値に差異が生じた場合を含め、剰余金の配当について予想値を算出した場合に義務付けられている開示をいいます。</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p><a href="https://faq.jpx.co.jp/disclo/tse/web/knowledge6852.html" class="bare">https://faq.jpx.co.jp/disclo/tse/web/knowledge6852.html</a></p>
 </div>
 <div class="paragraph">
 <p>また、決算短信の訂正開示等が、次に挙げる条件を全て満たす場合、これも予測対象に含まれます。</p>
 </div>
 <div class="paragraph">
-<p>E)	直近の四半期決算期末または決算期末の決算短信に対する訂正開示であること</p>
+<p>E)	直近の決算期末または四半期期末に係る決算短信に対する訂正開示等であること</p>
 </div>
 <div class="paragraph">
 <p>F)	2021年3月27日から同年5月15日までの期間に開示されていること</p>
 </div>
 <div class="paragraph">
-<p>G)	開示日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと</p>
+<p>G)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと</p>
 </div>
 <div class="paragraph">
-<p>H)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと</p>
+<p>H)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと</p>
 </div>
 <div class="paragraph">
 <p>なお、ある同一銘柄について、これらの条件を満たす決算短信が複数存在する場合は、最も新しく開示されたもののみを予測の対象とします。</p>
 </div>
 <div class="paragraph">
-<p>以上を踏まえ、各決算短信等が予測対象に該当するかどうかの事例を、図に示します。</p>
+<p>以上を踏まえ、各決算短信等（訂正開示等を含みます。）が予測対象に該当するかどうかの事例を、図に示します。</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -895,7 +888,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>X = 該当期間の決算日に対して出力されたモデルのスコア（予測値）</p>
 </div>
 <div class="paragraph">
-<p>Y = 決算短信開示の開示後から起算して20営業日以内に発生した最高値もしくは最安値への変化率</p>
+<p>Y = 決算短信の開示後から起算して20営業日以内に発生した最高値もしくは最安値への変化率</p>
 </div>
 </div>
 </div>
@@ -1009,7 +1002,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <td class="tableblock halign-left valign-top"><p class="tableblock">2021年3月27日（土）〜2021年5月15日（土）</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">予測対象となる決算短信の開示日の期間</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">予測対象となる決算短信の開示日の条件</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">各銘柄の各四半期ごとに一番開示日が新しい開示　</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.1.2項に示すとおり</p></td>
 </tr>
@@ -1021,7 +1014,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">評価方法</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.1.3項に示す評価方法</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.1.3項に示す評価方法を、5回の決算短信開示期間に分けて実施</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.1.3項に示す評価方法を、5回の決算短信開示期間に応じて実施</p></td>
 </tr>
 </tbody>
 </table>
@@ -1029,10 +1022,10 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="sect3">
 <h4 id="_決算短信財務諸表">2.1.5. 決算短信・財務諸表</h4>
 <div class="paragraph">
-<p>上場企業の株価は、各社の経営状態等を反映して日々刻々と変化します。そのため、金融商品市場において公正な価格形成と円滑な流通を確保するためには公平で適時、適切な情報開示が必要不可欠なものとなっております。</p>
+<p>上場企業の株価は、各社の経営状態等を反映して日々刻々と変化します。そのため、金融商品市場において公正な価格形成と円滑な流通を確保するためには公平で適時、適切な情報開示が必要不可欠なものとなっています。</p>
 </div>
 <div class="paragraph">
-<p>東京証券取引所では、上場企業に対して、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けています。この制度を通じて、上場企業は、報道機関またはTDnet（適時開示情報伝達システム）（ <a href="https://www.release.tdnet.info/" class="bare">https://www.release.tdnet.info/</a> ）等を通じて、各社の重要な情報を投資者に対して、直接に、広く、かつタイムリーに伝達することが義務付けられています。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。下図に投資家における適時開示資料の代表的な用途を示します。</p>
+<p>東京証券取引所では、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けており、上場企業は、報道機関等を通じてあるいはTDnet（適時開示情報伝達システム）により直接に、広く、かつタイムリーに伝達することという特徴があります。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。適時開示資料とそのメタデータ（タイトル、開示日時等）を総称して適時開示情報と呼び、適時開示情報は「適時開示情報閲覧サービス（リンク）」で開示されます。下図に投資家における適時開示資料の代表的な用途を示します。</p>
 </div>
 <div class="paragraph">
 <p><strong>投資家における適時開示資料の代表的な用途</strong></p>
@@ -1046,19 +1039,23 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>(開示資料と翻訳より引用 <a href="https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf" class="bare">https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf</a>)</p>
 </div>
 <div class="paragraph">
-<p>上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、四半期に一回、四半期決算期末後45日以内に、決算短信の開示が義務付けられています。</p>
+<p>上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。また、東証は上場企業に対し、四半期決算期末後45日以内の決算内容の開示を要請しています。決算短信の作成要領等は、下記Webサイトで公開されています。</p>
 </div>
 <div class="paragraph">
-<p>決算短信は、大きく、サマリー情報と添付資料で構成されます。<br></p>
+<p>決算短信作成要領・四半期決算短信作成要領 | 日本取引所グループ<br>
+<a href="https://www.jpx.co.jp/equities/listed-co/format/summary/index.html" class="bare">https://www.jpx.co.jp/equities/listed-co/format/summary/index.html</a></p>
 </div>
 <div class="paragraph">
-<p>サマリー情報は、投資者の投資判断に重要な影響を与える上場会社の決算の内容について、その要点の一覧性及び比較可能性を確保する観点から、簡潔に取りまとめたものとして、特定の様式に基づいて東証が作成を要請している資料です。<br></p>
+<p>決算の内容として開示される決算短信は、大きく、サマリー情報と添付資料で構成されます。<br></p>
+</div>
+<div class="paragraph">
+<p>サマリー情報は、投資者の投資判断に重要な影響を与える上場会社の決算の内容について、その要点の一覧性及び比較可能性を確保する観点から、簡潔に取りまとめたものとして、参考様式に基づいて東証が作成を要請している資料です。<br></p>
 </div>
 <div class="paragraph">
 <p>添付資料とは、サマリー情報に記載される主要な決算数値を投資者が適切に理解できるようにする目的で作成される、経営成績・財政状態の概況、今後の見通し、財務諸表、主な注記等を記載した資料です。</p>
 </div>
 <div class="paragraph">
-<p>前述のとおり、決算短信には、財務諸表と呼ばれる書類が添付されています。財務諸表とは、財政状態、経営成績及びキャッシュ・フローの状況を外部の情報利用者に明らかにするためのもので、有価証券届出書や有価証券報告書等に記載される財務計算に関する書類のうち、貸借対照表、損益計算書、株主資本等変動計算書、キャッシュ・フロー計算書、附属明細表の総称を指します。これらの内、貸借対照表、損益計算書、キャッシュ・フロー計算書の3つは、総称して「財務三表」と呼ばれており、上場企業に対する投資判断において特に重要視されています。財務三表の読み方については、下記Webサイトが参考になります。</p>
+<p>前述のとおり、決算短信には、財務諸表が添付されています。財務諸表とは、財政状態、経営成績及びキャッシュ・フローの状況を外部の情報利用者に明らかにするためのもので、有価証券届出書や有価証券報告書等に記載される財務計算に関する書類のうち、貸借対照表、損益計算書、株主資本等変動計算書、キャッシュ・フロー計算書の総称を指します。これらの内、貸借対照表、損益計算書、キャッシュ・フロー計算書の3つは、総称して「財務三表」と呼ばれており、上場企業に対する投資判断において特に重要視されています。財務三表の読み方については、下記Webサイトが参考になります。</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1086,204 +1083,9 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </div>
 </div>
 <div class="sect2">
-<h3 id="_実行環境及び必要なライブラリ">2.2. 実行環境及び必要なライブラリ</h3>
-<div class="sect3">
-<h4 id="_実行環境">2.2.1. 実行環境</h4>
+<h3 id="_データセットの説明">2.2. データセットの説明</h3>
 <div class="paragraph">
-<p>本チュートリアルの実行環境は、本コンペティションで提出するモデルの実行環境と同一環境とするために以下のpython環境を用います。環境構築方法について、詳しくは <a href="https://signate.jp/features/runtime/detail">SIGNATE: Runtime 投稿方法: ローカル開発環境の構築方法は？</a> をご参照ください。</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>anaconda3-2019.03</pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_dockerを用いた実行環境構築方法">2.2.2. Dockerを用いた実行環境構築方法</h4>
-<div class="paragraph">
-<p>本チュートリアルのリポジトリを <code>git clone</code> していただき、以下の手順を実行していただくことで実行環境のdockerコンテナ内でjupyter notebookを起動可能となっています。`Chapter02` ディレクトリ内には、本チュートリアルのコードを記載した ipynb ファイルを配置しておりますので必要に応じてご活用ください。<br>
-※ docker のインストールについては <a href="http://docs.docker.jp/get-docker.html" class="bare">http://docs.docker.jp/get-docker.html</a> をご参照ください。</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash">cd handson/
-
-# データ配置先のディレクトリを作成
-mkdir data_dir
-# その後作成したhandson/data_dirに、コンペティションサイトよりデータをダウンロードし配置します。
-
-# dockerでjupyter notebookを起動します。(初回実行時は約2GB程度コンテナイメージをダウンロードします。)
-# データ配置先のディレクトリを /path/to としてマウントしています。
-# 学習済みモデル提出用のディレクトリ (handson/Chapter02/archive) を /opt/ml としてマウントしています。
-# jupyter notebook作業用に handson ディレクトリを /notebook としてマウントしています。
-# jupyter notebook は port 8888でtokenとpasswordを空にして、vscode のjupyter pluginからアクセスできるように xsrf 対策を無効化しています。
-docker run --name tutorial -v $(pwd)/data_dir:/path/to -v $(pwd)/Chapter02/archive:/opt/ml -v $(pwd):/notebook -e PYTHONPATH=/opt/ml/src -v $(pwd):/notebook -p8888:8888 --rm -it continuumio/anaconda3:2019.03 jupyter notebook --ip 0.0.0.0 --allow-root --no-browser --no-mathjax --NotebookApp.disable_check_xsrf=True  --NotebookApp.token='' --NotebookApp.password='' /notebook
-
-# ブラウザで以下のURLにアクセスしてjupyter notebookの画面が表示されていて、本チュートリアル用のnotebookが表示されていることを確認します。
-http://localhost:8888/</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_必要なライブラリのインストール">2.2.3. 必要なライブラリのインストール</h4>
-<div class="paragraph">
-<p>本チュートリアル内では、上記の実行環境に含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash"># shap用にg++とgccをインストールします
-apt-get update
-apt-get install -y --no-install-recommends g++ gcc
-
-# 必要なライブラリをインストールします
-pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ライブラリの読み込み">2.2.4. ライブラリの読み込み</h4>
-<div class="paragraph">
-<p>本チュートリアルでは、下記のライブラリのインポートを行います。</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="python"><span class="keyword">import</span> <span class="include">os</span>
-<span class="keyword">import</span> <span class="include">pickle</span>
-<span class="keyword">import</span> <span class="include">sys</span>
-<span class="keyword">import</span> <span class="include">warnings</span>
-<span class="keyword">from</span> <span class="include">glob</span> <span class="keyword">import</span> <span class="include">glob</span>
-
-<span class="keyword">import</span> <span class="include">matplotlib</span>
-<span class="keyword">import</span> <span class="include">matplotlib.pyplot</span> <span class="keyword">as</span> plt
-<span class="keyword">import</span> <span class="include">numpy</span> <span class="keyword">as</span> np
-<span class="keyword">import</span> <span class="include">pandas</span> <span class="keyword">as</span> pd
-<span class="keyword">import</span> <span class="include">seaborn</span> <span class="keyword">as</span> sns
-<span class="keyword">import</span> <span class="include">shap</span>
-<span class="keyword">import</span> <span class="include">xgboost</span>
-<span class="keyword">from</span> <span class="include">scipy.stats</span> <span class="keyword">import</span> <span class="include">spearmanr</span>
-<span class="keyword">from</span> <span class="include">sklearn.ensemble</span> <span class="keyword">import</span> (
-    ExtraTreesRegressor,
-    GradientBoostingRegressor,
-    RandomForestRegressor,
-)
-<span class="keyword">from</span> <span class="include">sklearn.metrics</span> <span class="keyword">import</span> <span class="include">accuracy_score</span>, <span class="include">mean_squared_error</span>
-<span class="keyword">from</span> <span class="include">tqdm.auto</span> <span class="keyword">import</span> <span class="include">tqdm</span>
-
-
-<span class="comment"># 表示用の設定を変更します</span>
-%matplotlib inline
-pd.options.display.max_rows = <span class="integer">100</span>
-pd.options.display.max_columns = <span class="integer">100</span>
-pd.options.display.width = <span class="integer">120</span></code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ライブラリ解説">2.2.5. ライブラリ解説</h4>
-<table class="tableblock frame-all grid-all stripes-even fit-content">
-<colgroup>
-<col>
-<col>
-<col>
-<col>
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top"><strong>ライブラリ名</strong></th>
-<th class="tableblock halign-left valign-top"><strong>目的</strong></th>
-<th class="tableblock halign-left valign-top"><strong>公式ドキュメント</strong></th>
-<th class="tableblock halign-left valign-top"><strong>入門解説</strong> ｑ</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">pandas</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">データの処理</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://pandas.pydata.org/docs/">pandas documentation</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/ysdyt/items/9ccca82fc5b504e7913a">Qiita:データ分析で頻出のPandas基本操作</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">numpy</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">データの処理</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://numpy.org/doc/stable/user/tutorials_index.html">NumPy Tutorials</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/jyori112/items/a15658d1dd17c421e1e2">Qiita:numpyの使い方</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">glob</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ファイルの検知</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://docs.python.org/3/library/glob.html">glob — Unix style pathname pattern expansion</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/HirosuguTakeshita/items/0e0850362c7eb3b10ea1">Qiita:【備忘録】globの使い方</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tqdm</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">計算の進捗確認</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://tqdm.github.io/">tqdm</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/pontyo4/items/76145cb10e030ad8186a">Qiita:tqdmでプログレスバーを表示させる</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">sklearn</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">機械学習モデルを作成</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://scikit-learn.org/stable/tutorial/index.html">https://scikit-learn.org/stable/tutorial/index.html</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/ynakayama/items/9c5867b6947aa41e9229">Qiita:scikit-learn から学ぶ機械学習の手法の概要</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">matplotlib</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">データの可視化</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://matplotlib.org/tutorials/index.html">matplotlib tutorials</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9">Qiita:早く知っておきたかったmatplotlibの基礎知識、あるいは見た目の調整が捗るArtistの話</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">scipy</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">統計用のライブラリ</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://docs.scipy.org/doc/scipy/reference/tutorial/index.html">SciPy Tutorial</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://amorphous.tf.chiba-u.jp/lecture.files/chem_computer/11_scipy%E3%81%AE%E5%9F%BA%E6%9C%AC%E3%81%A8%E5%BF%9C%E7%94%A8/11.html">千葉大: コンピュータ処理 ドキュメント 11. scipyの基本と応用</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">seaborn</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">データの可視化</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://seaborn.pydata.org/tutorial.html">User guide and tutorial</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/hik0107/items/3dc541158fceb3156ee0">Qiita:pythonで美しいグラフ描画 -seabornを使えばデータ分析と可視化が捗る その1</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">shap</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SHAP分析</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://shap.readthedocs.io/en/latest/">Welcome to the SHAP Documentation</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/shin_mura/items/cde01198552eda9146b7">Shapを用いた機械学習モデルの解釈説明</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">xgboost</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">機械学習モデル</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://xgboost.readthedocs.io/en/latest/">XGBoost Documentation</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/triwave33/items/aad60f25485a4595b5c8">XGBoost論文を丁寧に解説する(1)</a></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect3">
-<h4 id="_実行環境の確認">2.2.6. 実行環境の確認</h4>
-<div class="paragraph">
-<p>pythonのバージョンが3.7.3であることを確認します。</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="python">print(sys.version)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>出力</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash">3.7.3 (default, Mar 27 2019, 22:11:17)
-[GCC 7.3.0]</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_データセットの説明">2.3. データセットの説明</h3>
-<div class="paragraph">
-<p>提供されるデータは以下の5種類です。</p>
+<p>ここでは、コンペティションで提供している各データについて説明します。提供されるデータは以下の5種類です。</p>
 </div>
 <div class="paragraph">
 <p><strong>データ概要</strong></p>
@@ -1326,7 +1128,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 <p>提供データについては、2016年1月初から2020年12月末をcsvファイル形式、2021年１月初からのデータについては、本コンペティション専用のAPIにて提供いたします。APIによるデータ取得につきましては、5章をご参照ください。</p>
 </div>
 <div class="sect3">
-<h4 id="_銘柄情報_stock_list">2.3.1. 銘柄情報: stock_list</h4>
+<h4 id="_銘柄情報_stock_list">2.2.1. 銘柄情報: stock_list</h4>
 <div class="paragraph">
 <p>stock_listは、銘柄の名前や業種区分などの基本情報が含まれています。発行済株式数は、会社が発行することをあらかじめ定款に定めている株式数（授権株式数）のうち、会社が既に発行した株式数のことです。発行済株式数と株価とかけ合わせて時価総額を計算することができます。時価総額は企業価値を評価する際に用いられる重要な指標です。業種区分情報は、マーケットにおける業種別の平均などを計算する時に役立つ情報です。33業種は証券コード協議会が定めており、17業種はTOPIX-17シリーズとして「投資利便性を考慮して17業種に再編したもの」(JPX東証33業種別株価指数・TOPIX-17シリーズファクトシートより引用 <a href="https://www.jpx.co.jp/markets/indices/line-up/index.html" class="bare">https://www.jpx.co.jp/markets/indices/line-up/index.html</a>) です。</p>
 </div>
@@ -1446,7 +1248,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_株価情報_stock_price">2.3.2. 株価情報 : stock_price</h4>
+<h4 id="_株価情報_stock_price">2.2.2. 株価情報 : stock_price</h4>
 <div class="paragraph">
 <p>stock_priceには各銘柄の各日付の始値や終値などの株価情報が記録されています。テクニカル分析などで終値ベースの分析を実施する場合は、ExchangeOfficialCloseを利用します。<br>
 ここでいうテクニカル分析というのは、マーケットデータから計算される指標に基づいた分析のことです。また、終値ベースの分析とは、マーケットデータの中でも、終値のみを用いた分析を表しています。</p>
@@ -1469,6 +1271,12 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 <div class="paragraph">
 <p>このように、その日付時点では取得できない未来の情報をモデルに入力することをリークといい、時系列データには累積調整係数のようにその日付時点では取得できない情報が含まれていることがあるため、リークにはとくに注意する必要があります。</p>
+</div>
+<div class="paragraph">
+<p><strong>データの特性</strong></p>
+</div>
+<div class="paragraph">
+<p>マーケットが開いている日に取引が成立しなかった銘柄は、売買高が0となり、四本値 (始値、高値、安値、終値) 全てが0と表示されます。</p>
 </div>
 <table class="tableblock frame-all grid-all stripes-even stretch">
 <colgroup>
@@ -1594,7 +1402,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ファンダメンタル情報_stock_fin">2.3.3. ファンダメンタル情報: stock_fin</h4>
+<h4 id="_ファンダメンタル情報_stock_fin">2.2.3. ファンダメンタル情報: stock_fin</h4>
 <div class="paragraph">
 <p>株式投資における <code>ファンダメンタル情報</code> とは、対象銘柄の純資産といった財務状況や当期純利益といった業績状況を表す情報のことです。ファンダメンタル情報を用いて、各銘柄の成長性、収益性、安全性、割安度などの投資判断に活用することができます。ファンダメンタル情報を利用した解析は、さまざまな手法が考案されています。</p>
 </div>
@@ -1893,7 +1701,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_財務諸表株価情報_stock_fin_price">2.3.4. 財務諸表+株価情報: stock_fin_price</h4>
+<h4 id="_財務諸表株価情報_stock_fin_price">2.2.4. 財務諸表+株価情報: stock_fin_price</h4>
 <div class="paragraph">
 <p>stock_fin_priceは、株価情報である&lt;&lt;株価情報 : stock_price, stock_price&gt;&gt;と財務諸表である&lt;&lt;ファンダメンタル情報: stock_fin, stock_fin&gt;&gt;をデータとして扱いやすいように結合したデータです。変数名や型などについては、同じであるため記載を省略しています。</p>
 </div>
@@ -1902,7 +1710,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_目的変数_stock_labels">2.3.5. 目的変数: stock_labels</h4>
+<h4 id="_目的変数_stock_labels">2.2.5. 目的変数: stock_labels</h4>
 <div class="paragraph">
 <p>stock_labelsは予測の目的変数のデータであり、各銘柄で決算発表が行われた日の取引所公式終値から、その日の翌営業日以降N（5，10，20）営業日間における最高値及び最安値への変化率を記録したデータです。<br>
 各値の計算式は、 <code>([基準日付の翌日以降N営業日間における高値/安値] / [基準日付の終値]) - 1</code> です。<br>
@@ -1998,8 +1806,209 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_実行環境及び必要なライブラリ">2.3. 実行環境及び必要なライブラリ</h3>
 <div class="sect3">
-<h4 id="_データセットの読み込み">2.3.6. データセットの読み込み</h4>
+<h4 id="_実行環境">2.3.1. 実行環境</h4>
+<div class="paragraph">
+<p>本チュートリアルの実行環境は、本コンペティションで提出するモデルの実行環境と同一環境とするために以下のpython環境を用います。環境構築方法について、詳しくは <a href="https://signate.jp/features/runtime/detail">SIGNATE: Runtime 投稿方法: ローカル開発環境の構築方法は？</a> をご参照ください。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>anaconda3-2019.03</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_dockerを用いた実行環境構築方法">2.3.2. Dockerを用いた実行環境構築方法</h4>
+<div class="paragraph">
+<p>本チュートリアルのリポジトリを <code>git clone</code> していただき、以下の手順を実行していただくことで実行環境のdockerコンテナ内でjupyter notebookを起動可能となっています。 <code>Chapter02</code> ディレクトリ内には、本チュートリアルのコードを記載した ipynb ファイルを配置しておりますので必要に応じてご活用ください。</p>
+</div>
+<div class="paragraph">
+<p>Windows環境の場合、コマンド実行には「PowerShell」などをご使用ください。なお、PowerShellの利用に当たっては、最新のセキュリティ事情を踏まえご自身でご判断ください。</p>
+</div>
+<div class="paragraph">
+<p>docker のインストールについては <a href="http://docs.docker.jp/get-docker.html" class="bare">http://docs.docker.jp/get-docker.html</a> をご参照ください。docker の制約としてマウントするパスにはアルファベット、数字、「_」、「.」、「-」以外の文字を使用するとエラーとなることがあるようです。その場合は、パスが前述の文字のみで構成されているディレクトリをご使用ください。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">cd handson/
+
+# データ配置先のディレクトリを作成
+mkdir data_dir
+# その後作成したhandson/data_dirに、コンペティションサイトよりデータをダウンロードし配置します。
+
+# dockerでjupyter notebookを起動します。(初回実行時は約2GB程度コンテナイメージをダウンロードします。)
+# データ配置先のディレクトリを /path/to としてマウントしています。
+# 学習済みモデル提出用のディレクトリ (handson/Chapter02/archive) を /opt/ml としてマウントしています。
+# jupyter notebook作業用に handson ディレクトリを /notebook としてマウントしています。
+# jupyter notebook は port 8888でtokenとpasswordを空にして、vscode のjupyter pluginからアクセスできるように xsrf 対策を無効化しています。
+docker run --name tutorial -v ${PWD}/data_dir:/path/to -v ${PWD}/Chapter02/archive:/opt/ml -v ${PWD}:/notebook -e PYTHONPATH=/opt/ml/src -p8888:8888 --rm -it continuumio/anaconda3:2019.03 jupyter notebook --ip 0.0.0.0 --allow-root --no-browser --no-mathjax --NotebookApp.disable_check_xsrf=True  --NotebookApp.token='' --NotebookApp.password='' /notebook
+
+# ブラウザで以下のURLにアクセスしてjupyter notebookの画面が表示されていて、本チュートリアル用のnotebookが表示されていることを確認します。
+http://localhost:8888/</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_必要なライブラリのインストール">2.3.3. 必要なライブラリのインストール</h4>
+<div class="paragraph">
+<p>本チュートリアル内では、上記の実行環境に含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash"># shap用にg++とgccをインストールします
+apt-get update
+apt-get install -y --no-install-recommends g++ gcc
+
+# 必要なライブラリをインストールします
+pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ライブラリの読み込み">2.3.4. ライブラリの読み込み</h4>
+<div class="paragraph">
+<p>本チュートリアルでは、下記のライブラリのインポートを行います。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="keyword">import</span> <span class="include">os</span>
+<span class="keyword">import</span> <span class="include">pickle</span>
+<span class="keyword">import</span> <span class="include">sys</span>
+<span class="keyword">import</span> <span class="include">warnings</span>
+<span class="keyword">from</span> <span class="include">glob</span> <span class="keyword">import</span> <span class="include">glob</span>
+
+<span class="keyword">import</span> <span class="include">matplotlib</span>
+<span class="keyword">import</span> <span class="include">matplotlib.pyplot</span> <span class="keyword">as</span> plt
+<span class="keyword">import</span> <span class="include">numpy</span> <span class="keyword">as</span> np
+<span class="keyword">import</span> <span class="include">pandas</span> <span class="keyword">as</span> pd
+<span class="keyword">import</span> <span class="include">seaborn</span> <span class="keyword">as</span> sns
+<span class="keyword">import</span> <span class="include">shap</span>
+<span class="keyword">import</span> <span class="include">xgboost</span>
+<span class="keyword">from</span> <span class="include">scipy.stats</span> <span class="keyword">import</span> <span class="include">spearmanr</span>
+<span class="keyword">from</span> <span class="include">sklearn.ensemble</span> <span class="keyword">import</span> (
+    ExtraTreesRegressor,
+    GradientBoostingRegressor,
+    RandomForestRegressor,
+)
+<span class="keyword">from</span> <span class="include">sklearn.metrics</span> <span class="keyword">import</span> <span class="include">accuracy_score</span>, <span class="include">mean_squared_error</span>
+<span class="keyword">from</span> <span class="include">tqdm.auto</span> <span class="keyword">import</span> <span class="include">tqdm</span>
+
+
+<span class="comment"># 表示用の設定を変更します</span>
+%matplotlib inline
+pd.options.display.max_rows = <span class="integer">100</span>
+pd.options.display.max_columns = <span class="integer">100</span>
+pd.options.display.width = <span class="integer">120</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ライブラリ解説">2.3.5. ライブラリ解説</h4>
+<table class="tableblock frame-all grid-all stripes-even fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong>ライブラリ名</strong></th>
+<th class="tableblock halign-left valign-top"><strong>目的</strong></th>
+<th class="tableblock halign-left valign-top"><strong>公式ドキュメント</strong></th>
+<th class="tableblock halign-left valign-top"><strong>入門解説</strong> ｑ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">pandas</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">データの処理</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://pandas.pydata.org/docs/">pandas documentation</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/ysdyt/items/9ccca82fc5b504e7913a">Qiita:データ分析で頻出のPandas基本操作</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">numpy</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">データの処理</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://numpy.org/doc/stable/user/tutorials_index.html">NumPy Tutorials</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/jyori112/items/a15658d1dd17c421e1e2">Qiita:numpyの使い方</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">glob</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ファイルの検知</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://docs.python.org/3/library/glob.html">glob — Unix style pathname pattern expansion</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/HirosuguTakeshita/items/0e0850362c7eb3b10ea1">Qiita:【備忘録】globの使い方</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tqdm</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">計算の進捗確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://tqdm.github.io/">tqdm</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/pontyo4/items/76145cb10e030ad8186a">Qiita:tqdmでプログレスバーを表示させる</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">sklearn</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">機械学習モデルを作成</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://scikit-learn.org/stable/tutorial/index.html">https://scikit-learn.org/stable/tutorial/index.html</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/ynakayama/items/9c5867b6947aa41e9229">Qiita:scikit-learn から学ぶ機械学習の手法の概要</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">matplotlib</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">データの可視化</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://matplotlib.org/tutorials/index.html">matplotlib tutorials</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9">Qiita:早く知っておきたかったmatplotlibの基礎知識、あるいは見た目の調整が捗るArtistの話</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">scipy</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">統計用のライブラリ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://docs.scipy.org/doc/scipy/reference/tutorial/index.html">SciPy Tutorial</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://amorphous.tf.chiba-u.jp/lecture.files/chem_computer/11_scipy%E3%81%AE%E5%9F%BA%E6%9C%AC%E3%81%A8%E5%BF%9C%E7%94%A8/11.html">千葉大: コンピュータ処理 ドキュメント 11. scipyの基本と応用</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">seaborn</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">データの可視化</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://seaborn.pydata.org/tutorial.html">User guide and tutorial</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/hik0107/items/3dc541158fceb3156ee0">Qiita:pythonで美しいグラフ描画 -seabornを使えばデータ分析と可視化が捗る その1</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">shap</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SHAP分析</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://shap.readthedocs.io/en/latest/">Welcome to the SHAP Documentation</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/shin_mura/items/cde01198552eda9146b7">Shapを用いた機械学習モデルの解釈説明</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">xgboost</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">機械学習モデル</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://xgboost.readthedocs.io/en/latest/">XGBoost Documentation</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://qiita.com/triwave33/items/aad60f25485a4595b5c8">XGBoost論文を丁寧に解説する(1)</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_実行環境の確認">2.3.6. 実行環境の確認</h4>
+<div class="paragraph">
+<p>pythonのバージョンが3.7.3であることを確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python">print(sys.version)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>出力</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">3.7.3 (default, Mar 27 2019, 22:11:17)
+[GCC 7.3.0]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_データセットの読み込み">2.4. データセットの読み込み</h3>
 <div class="paragraph">
 <p>本コンペティション用に提供されているデータセットをダウンロードして、ファイルを解凍した場所を定義します。</p>
 </div>
@@ -2043,17 +2052,16 @@ dfs = {}
 </div>
 </div>
 </div>
-</div>
 <div class="sect2">
-<h3 id="_データセットの可視化">2.4. データセットの可視化</h3>
+<h3 id="_データセットの可視化">2.5. データセットの可視化</h3>
 <div class="paragraph">
 <p>データセットの各項目の特徴を把握することは、モデルを作成する上で重要な要素の1つです。一般にデータの特徴を把握するためには、各項目の意味を把握し、値の平均や標準偏差などの基本統計量を確認します。可視化もそういった特徴把握の手法の1つで、データをグラフなどで表現することで特性を直感的に理解できるようになります。</p>
 </div>
 <div class="paragraph">
-<p>Chapter 2.3 データセットの説明では、本コンペで用いるデータセットについて説明しました。ここではそれらのデータを、 <code>matplotlib</code> と <code>seaborn</code> を用いて可視化します。財務諸表、株価、移動平均、価格変化率、ヒストリカル・ボラティリティを個別で見て、最後に1つのグラフとしてまとめて可視化します。</p>
+<p>Chapter 2.2 データセットの説明では、本コンペで用いるデータセットについて説明しました。ここではそれらのデータを、 <code>matplotlib</code> と <code>seaborn</code> を用いて可視化します。財務諸表、株価、移動平均、価格変化率、ヒストリカル・ボラティリティを個別で見て、最後に1つのグラフとしてまとめて可視化します。</p>
 </div>
 <div class="sect3">
-<h4 id="_財務諸表">2.4.1. 財務諸表</h4>
+<h4 id="_財務諸表">2.5.1. 財務諸表</h4>
 <div class="paragraph">
 <p>ファンダメンタル情報は項目が多いため、今回は、売上高、営業利益、純利益、純資産及びその決算期の間の関係について可視化します。サンプルとして、銘柄コード9984の「ソフトバンクグループ」を可視化します。</p>
 </div>
@@ -2158,7 +2166,7 @@ ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(<span class="
 </div>
 </div>
 <div class="sect3">
-<h4 id="_株価">2.4.2. 株価</h4>
+<h4 id="_株価">2.5.2. 株価</h4>
 <div class="paragraph">
 <p>ここでは、サンプルとして銘柄コード9984の「ソフトバンクグループ」の終値の動きを可視化します。</p>
 </div>
@@ -2193,7 +2201,7 @@ ax.legend()</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_移動平均">2.4.3. 移動平均</h4>
+<h4 id="_移動平均">2.5.3. 移動平均</h4>
 <div class="paragraph">
 <p>ここでは移動平均をプロットします。移動平均にもさまざまな種類がありますが、ここでは単純移動平均線を用います。単純移動平均線というのは、例えば、5日線であれば、直近5営業日の価格の平均値です。これを1つずつ期間をスライドしながら計算したものになります。</p>
 </div>
@@ -2237,7 +2245,7 @@ ax.legend()</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_価格変化率">2.4.4. 価格変化率</h4>
+<h4 id="_価格変化率">2.5.4. 価格変化率</h4>
 <div class="paragraph">
 <p>価格変化率は、価格がその期間でどれくらい変化したかを(%)で表現したものです。相場の勢いや方向性等を判断する際によく使われます。</p>
 </div>
@@ -2281,7 +2289,7 @@ ax.legend()</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ヒストリカルボラティリティ">2.4.5. ヒストリカル・ボラティリティ</h4>
+<h4 id="_ヒストリカルボラティリティ">2.5.5. ヒストリカル・ボラティリティ</h4>
 <div class="paragraph">
 <p>ここではヒストリカル・ボラティリティを計算します。ここで計算するヒストリカル・ボラティリティは、5日、25日、75日の対数リターンの標準偏差です。ヒストリカル・ボラティリティはリスク指標の一つで、価格がどの程度激しく変動したかを把握するために利用します。一般的にヒストリカル・ボラティリティが大きい銘柄は、小さい銘柄よりも資産として保持するリスクが相対的に高いと考えられます。</p>
 </div>
@@ -2324,7 +2332,7 @@ ax.legend()</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_複数の株価データを同時にプロット">2.4.6. 複数の株価データを同時にプロット</h4>
+<h4 id="_複数の株価データを同時にプロット">2.5.6. 複数の株価データを同時にプロット</h4>
 <div class="paragraph">
 <p>これまで可視化してきた株価に関するデータを同時にプロットすることで、それぞれの値の関連性について考察します。</p>
 </div>
@@ -2401,7 +2409,7 @@ ax[<span class="integer">2</span>].set_ylabel(<span class="string"><span class="
 </div>
 </div>
 <div class="sect2">
-<h3 id="_データセットの前処理">2.5. データセットの前処理</h3>
+<h3 id="_データセットの前処理">2.6. データセットの前処理</h3>
 <div class="paragraph">
 <p>ここまでデータの読み込み及び可視化について説明してきましたが、ここからはデータの前処理やモデル構築に関して説明していきます。
 大まかな流れは、次の図のとおりです。</p>
@@ -2415,13 +2423,13 @@ ax[<span class="integer">2</span>].set_ylabel(<span class="string"><span class="
 <p>上図のとおり、モデルを構築する際には、データセットをそのまま入力するのではなく、欠損値処理や正規化処理などのデータセットの前処理を実施してから入力することが一般的です。ここではデータセットの前処理について解説していきます。</p>
 </div>
 <div class="sect3">
-<h4 id="_欠損値処理">2.5.1. 欠損値処理</h4>
+<h4 id="_欠損値処理">2.6.1. 欠損値処理</h4>
 <div class="paragraph">
 <p>機械学習モデルの多くは欠損値をそのまま扱うことができないため、補完するなどして対処する必要があります。欠損値補完の方法としては、平均値埋めやリストワイズ法、多重代入法などが存在します。また、変数に欠損が存在するレコードを単に除外することや、欠損を多く含む変数自体を除外することも考えられます。</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_欠損値の処理方法">2.5.2. 欠損値の処理方法</h4>
+<h4 id="_欠損値の処理方法">2.6.2. 欠損値の処理方法</h4>
 <div class="paragraph">
 <p>本コンペティションのデータについて、まずは実際に欠損が発生している箇所やパターンを特定するために、欠損の発生状況をプロットして確認してみます。</p>
 </div>
@@ -2488,9 +2496,9 @@ fin_data = fin_data.fillna(<span class="integer">0</span>)</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_特徴量の生成">2.6. 特徴量の生成</h3>
+<h3 id="_特徴量の生成">2.7. 特徴量の生成</h3>
 <div class="sect3">
-<h4 id="_なぜ特徴量の設計が重要なのか">2.6.1. なぜ特徴量の設計が重要なのか</h4>
+<h4 id="_なぜ特徴量の設計が重要なのか">2.7.1. なぜ特徴量の設計が重要なのか</h4>
 <div class="paragraph">
 <p>機械学習の手法には<strong>モデルにできるだけ生に近いデータを与えてその関係性を見つける手法</strong>と<strong>ドメイン知識や専門性を活かして、特徴量を設計する手法</strong>があります。</p>
 </div>
@@ -2509,7 +2517,7 @@ fin_data = fin_data.fillna(<span class="integer">0</span>)</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_定常性を意識した特徴量設計">2.6.2. 定常性を意識した特徴量設計</h4>
+<h4 id="_定常性を意識した特徴量設計">2.7.2. 定常性を意識した特徴量設計</h4>
 <div class="paragraph">
 <p>時系列データを扱う際には、定常性を意識して特徴量を設計することが重要です。</p>
 </div>
@@ -2527,7 +2535,7 @@ fin_data = fin_data.fillna(<span class="integer">0</span>)</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_特徴量の生成例">2.6.3. 特徴量の生成例</h4>
+<h4 id="_特徴量の生成例">2.7.3. 特徴量の生成例</h4>
 <div class="paragraph">
 <p>ここでは、特徴量の生成を <code>stock_price</code> の株価情報を利用して行います。株価情報には、価格や出来高など市場で公開されている株価の四本値(始値、高値、安値、終値)の時系列データが格納されています。本チュートリアルでは、特徴量の例として1ヶ月、2ヶ月、3ヶ月間の「終値の変化率（リターン）」、「ヒストリカル・ボラティリティ」、「移動平均線からの乖離率」を紹介します。<br>
 次のコードで具体的な計算については示しますが、定義は以下のとおりです。</p>
@@ -2616,25 +2624,25 @@ feats = feats.dropna().drop([<span class="string"><span class="delimiter">&quot;
 </div>
 </div>
 <div class="sect3">
-<h4 id="_テクニカル分析を活用した特徴量の生成">2.6.4. テクニカル分析を活用した特徴量の生成</h4>
+<h4 id="_テクニカル分析を活用した特徴量の生成">2.7.4. テクニカル分析を活用した特徴量の生成</h4>
 <div class="paragraph">
 <p>他に株価を扱うための特徴量としてRSIやストキャスティクスのようなテクニカル分析の指標などを活用することもあります。pythonの <code>talib</code> というライブラリにはたくさんのテクニカル分析が実装されているため、活用を検討する価値があります。ただし、これらに対しては、本章では取り扱わずに、第4章で紹介しています。</p>
 </div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_バックテスト用のテストデータ作成">2.7. バックテスト用のテストデータ作成</h3>
+<h3 id="_バックテスト用のテストデータ作成">2.8. バックテスト用のテストデータ作成</h3>
 <div class="paragraph">
 <p>ここでは、バックテストを行うためのデータの分割について説明します。</p>
 </div>
 <div class="sect3">
-<h4 id="_バックテストとは">2.7.1. バックテストとは</h4>
+<h4 id="_バックテストとは">2.8.1. バックテストとは</h4>
 <div class="paragraph">
 <p>バックテストとは、モデルの有効性を検証する際に、過去のデータを用いて、一定期間にどの程度のパフォーマンスが得られたかをシミュレーションすることです。モデルの有効性を検証する上で、どのようにバックテストを実施するかは重要なポイントになります。</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ホールドアウト検証">2.7.2. ホールドアウト検証</h4>
+<h4 id="_ホールドアウト検証">2.8.2. ホールドアウト検証</h4>
 <div class="paragraph">
 <p>ここでは、データセットを訓練データとテストデータに切り分けます。まずデータセットを分ける理由を説明し、次に、データセットの分け方及びコツについて解説します。</p>
 </div>
@@ -2696,7 +2704,7 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 </div>
 </div>
 <div class="sect3">
-<h4 id="_その他の検証方法">2.7.3. その他の検証方法</h4>
+<h4 id="_その他の検証方法">2.8.3. その他の検証方法</h4>
 <div class="paragraph">
 <p>・k-fold 交差検証(k-fold CV): データをまず訓練データとテストデータに分け、その後その訓練データをk個のグループに分割し、k-1個のグループに含まれるものを訓練データ、残りの1個のグループに含まれるものを評価データとすると、このような分割方法はk通り考えられます。<br>
 そこで、それぞれの分割方法したがってk回訓練と評価を行い、それぞれの試行結果の平均などを使用して、モデルやそのモデルのパラメータを評価します。なお、時系列データでは、将来の情報を含まないように注意する必要があります。</p>
@@ -2704,7 +2712,7 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 </div>
 </div>
 <div class="sect2">
-<h3 id="_モデルの構築">2.8. モデルの構築</h3>
+<h3 id="_モデルの構築">2.9. モデルの構築</h3>
 <div class="paragraph">
 <p>ここでは、モデルの学習に用いるためのデータを準備します。</p>
 </div>
@@ -2728,14 +2736,14 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 <p>前回までのマーケットデータを用いた特徴量生成方法、及び財務諸表データの欠損値処理を行った後のデータ処理について解説し、今回はそれらのデータを結合させ、モデルが学習できるフォーマットに直すことが目的です。</p>
 </div>
 <div class="sect3">
-<h4 id="_特徴量の生成_2">2.8.1. 特徴量の生成</h4>
+<h4 id="_特徴量の生成_2">2.9.1. 特徴量の生成</h4>
 <div class="paragraph">
 <p>ここでは、特徴量生成のコードを示しています。コードのおおまかな流れとしては、以下の3ステップに分けられます。</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>1. 財務データの取得及び前処理（Chapter2.5.2と同様）
-2. マーケットデータの取得及び特徴量定義（Chapter2.6.3と同様）
+<pre>1. 財務データの取得及び前処理（Chapter 2.6.2と同様）
+2. マーケットデータの取得及び特徴量定義（Chapter 2.7.2と同様）
 3. 財務データと生成した特徴量を結合</pre>
 </div>
 </div>
@@ -2840,7 +2848,7 @@ df.T</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_目的変数の対応付け及び訓練データ評価データテストデータの分割">2.8.2. 目的変数の対応付け及び訓練データ、評価データ、テストデータの分割</h4>
+<h4 id="_目的変数の対応付け及び訓練データ評価データテストデータの分割">2.9.2. 目的変数の対応付け及び訓練データ、評価データ、テストデータの分割</h4>
 <div class="paragraph">
 <p>次に目的変数を定義します。目的変数は、データセットの <code>stock_labels</code> 内にあり、利用する際は先ほど定義した特徴量のデータセットに対して、行（日付）を一致させる必要があります。</p>
 </div>
@@ -3002,7 +3010,7 @@ feature = pd.concat(buff)
 </div>
 </div>
 <div class="sect3">
-<h4 id="_モデル学習の実行方法">2.8.3. <strong>モデル学習の実行方法</strong></h4>
+<h4 id="_モデル学習の実行方法">2.9.3. <strong>モデル学習の実行方法</strong></h4>
 <div class="paragraph">
 <p>データの準備が完了したので、いよいよモデルの学習を実行します。ここでは、sklearnライブラリのRandomForestRegressorモデルを使用します。モデルに設定する各種パラメータは、ここではとくに指定せずにライブラリのデフォルトパラメータを使用します。</p>
 </div>
@@ -3035,12 +3043,12 @@ pred_model.fit(train_X[label], train_y[label])</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_モデルの推論">2.9. モデルの推論</h3>
+<h3 id="_モデルの推論">2.10. モデルの推論</h3>
 <div class="paragraph">
 <p>ここでは構築したモデルから予測結果を出力し、可視化などによる分析を実施します。</p>
 </div>
 <div class="sect3">
-<h4 id="_予測結果の出力方法">2.9.1. 予測結果の出力方法</h4>
+<h4 id="_予測結果の出力方法">2.10.1. 予測結果の出力方法</h4>
 <div class="paragraph">
 <p>ここまで、それぞれの目的変数に対して、訓練データ、評価データ、テストデータに分割しました。ここからは、モデルの学習完了後に、テストデータを入力として予測を出力し、pandas.DataFrame形式に変換します。</p>
 </div>
@@ -3099,7 +3107,7 @@ result[label][<span class="string"><span class="delimiter">&quot;</span><span cl
 </div>
 </div>
 <div class="sect3">
-<h4 id="_予測結果の可視化方法">2.9.2. 予測結果の可視化方法</h4>
+<h4 id="_予測結果の可視化方法">2.10.2. 予測結果の可視化方法</h4>
 <div class="paragraph">
 <p>予測結果の確認として、実際に決算開示等のあった銘柄について基準日付の終値から最高値への変化率(actual)と予測スコア(predict)の散布図を見ます。ここで散布図を選択する理由は、予測対象に対して予測スコアがどのような分布をとっているかを見ることが、モデルの挙動を理解するわかりやすい可視化であることが挙げられます。</p>
 </div>
@@ -3119,12 +3127,12 @@ result[label][<span class="string"><span class="delimiter">&quot;</span><span cl
 </div>
 </div>
 <div class="sect2">
-<h3 id="_予測結果に対する分析の道筋">2.10. 予測結果に対する分析の道筋</h3>
+<h3 id="_予測結果に対する分析の道筋">2.11. 予測結果に対する分析の道筋</h3>
 <div class="paragraph">
 <p>予測精度を向上させるためには、特徴量とモデルの分析を集中的に行う必要があります。特徴量の分析では、さまざまな手法がありますが、ここでは特徴量の重要度の分析とSHAPという手法を紹介します。</p>
 </div>
 <div class="sect3">
-<h4 id="_特徴量の重要度">2.10.1. 特徴量の重要度</h4>
+<h4 id="_特徴量の重要度">2.11.1. 特徴量の重要度</h4>
 <div class="paragraph">
 <p>特徴量の重要度は、Random ForestやGradient Boostingなどのいくつかの機械学習モデルで取得でき、モデル内でどの程度それぞれの説明変数が、目的変数に対して重要であるかを判断するために参考になる指標です。</p>
 </div>
@@ -3162,7 +3170,7 @@ Random Forestモデルの内部で、この2つを利用した分岐が多数存
 </div>
 </div>
 <div class="sect3">
-<h4 id="_shap">2.10.2. SHAP</h4>
+<h4 id="_shap">2.11.2. SHAP</h4>
 <div class="paragraph">
 <p>SHAPは、学習済みモデルにおいて、各特徴量がモデルの出力する予測値に与えた影響度を算出してくれるものです。</p>
 </div>
@@ -3228,9 +3236,9 @@ shap.summary_plot(shap_values, train_X[<span class="string"><span class="delimit
 </div>
 </div>
 <div class="sect2">
-<h3 id="_モデルの評価">2.11. モデルの評価</h3>
+<h3 id="_モデルの評価">2.12. モデルの評価</h3>
 <div class="sect3">
-<h4 id="_複数モデルの学習及び結果をまとめる">2.11.1. 複数モデルの学習及び結果をまとめる</h4>
+<h4 id="_複数モデルの学習及び結果をまとめる">2.12.1. 複数モデルの学習及び結果をまとめる</h4>
 <div class="paragraph">
 <p>ここでは、複数モデルを用いて、予測及び結果の比較を行いたいと思います。</p>
 </div>
@@ -3369,7 +3377,7 @@ results.head(<span class="integer">5</span>)</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_モデルの性能を示す評価関数の紹介">2.11.2. モデルの性能を示す評価関数の紹介</h4>
+<h4 id="_モデルの性能を示す評価関数の紹介">2.12.2. モデルの性能を示す評価関数の紹介</h4>
 <div class="paragraph">
 <p>まずは、今回用いる評価関数のリストを紹介します。</p>
 </div>
@@ -3466,12 +3474,12 @@ agg</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_モデルの提出">2.12. モデルの提出</h3>
+<h3 id="_モデルの提出">2.13. モデルの提出</h3>
 <div class="paragraph">
 <p>本コンペティションでは、モデルの予測の提出方法はモデル提出方式になります。以下ではこの方式について簡単に説明しますが、詳しくは <a href="https://signate.jp/features/runtime/detail">SIGNATE: Runtime 投稿方法</a>をご参照ください。</p>
 </div>
 <div class="sect3">
-<h4 id="_runtimeの概要">2.12.1. Runtimeの概要</h4>
+<h4 id="_runtimeの概要">2.13.1. Runtimeの概要</h4>
 <div class="quoteblock">
 <blockquote>
 <div class="paragraph">
@@ -3486,7 +3494,7 @@ agg</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_提出ファイルの作成">2.12.2. 提出ファイルの作成</h4>
+<h4 id="_提出ファイルの作成">2.13.2. 提出ファイルの作成</h4>
 <div class="sect4">
 <h5 id="_1_提出ファイルのテンプレートをダウンロード">1.提出ファイルのテンプレートをダウンロード</h5>
 <div class="paragraph">
@@ -3548,7 +3556,7 @@ agg</code></pre>
 </div>
 <div class="paragraph">
 <p>ここで、学習済みモデルの保存方法について説明します。
-学習済みモデルは <code>pickle</code> で保存します。保存場所は2.12.2で説明したディレクトリ構造の学習済みモデルの配置先である <code>model</code> ディレクトリになります。任意のファイル名を設定可能なので、今回はモデルの対象としている目的変数がわかるように <code>my_model_{label}.pkl</code> という名前で保存します。具体的にはモデルの保存は以下のように行います。</p>
+学習済みモデルは <code>pickle</code> で保存します。保存場所はChapter 2.13.2で説明したディレクトリ構造の学習済みモデルの配置先である <code>model</code> ディレクトリになります。任意のファイル名を設定可能なので、今回はモデルの対象としている目的変数がわかるように <code>my_model_{label}.pkl</code> という名前で保存します。具体的にはモデルの保存は以下のように行います。</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -4162,7 +4170,39 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 <p>本章では、本コンペティションに関連する金融・データ解析一般についてのtipsを紹介します。</p>
 </div>
 <div class="sect2">
-<h3 id="_金融用語集">4.1. 金融用語集</h3>
+<h3 id="_コンペティションフォーラムの紹介">4.1. コンペティションフォーラムの紹介</h3>
+<div class="paragraph">
+<p>J-Quantsでは、コンペティションに関連して執筆された記事の投稿やチュートリアルへのご質問をフォーラム（ "https://signate.jp/competitions/423/discussions" ）にて募集しております（コンペの登録が必要）。また、下記内容以外にも有志の方による素晴らしいスレッドがありますので、ぜひご確認ください。</p>
+</div>
+<table class="tableblock frame-all grid-all stripes-even fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><strong>タイトル</strong></th>
+<th class="tableblock halign-left valign-top"><strong>URL</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">参考書籍・記事・知見共有スレッド</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://signate.jp/competitions/423/discussions/jpx-1" class="bare">https://signate.jp/competitions/423/discussions/jpx-1</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Web記事投稿スレッド</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://signate.jp/competitions/423/discussions/jpx-web" class="bare">https://signate.jp/competitions/423/discussions/jpx-web</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">チュートリアル質問用スレッド</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://signate.jp/competitions/423/discussions/jpx" class="bare">https://signate.jp/competitions/423/discussions/jpx</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_金融用語集">4.2. 金融用語集</h3>
 <div class="paragraph">
 <p>本コンペティションで必要となる専門用語を解説してくれているサイトをご紹介します。<br>
 もし、専門用語で困った場合は、下記リンク先のコンテンツを確認していただければ幸いです。</p>
@@ -4255,7 +4295,7 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_東証マネ部">4.2. 東証マネ部</h3>
+<h3 id="_東証マネ部">4.3. 東証マネ部</h3>
 <div class="paragraph">
 <p>「東証 マネ部！」は身近なお金の話から、プロが教える資産運用のノウハウまで 、資産形成についてわかりやすく解説するサイトです。
 今回は、コンペに関係がありそうな記事をピックアップしてみました。コンペティションの息抜きにぜひご確認ください。</p>
@@ -4340,7 +4380,7 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_参考になる書籍">4.3. 参考になる書籍</h3>
+<h3 id="_参考になる書籍">4.4. 参考になる書籍</h3>
 <div class="paragraph">
 <p>本コンペティションに参考になる書籍を紹介致します。</p>
 </div>
@@ -4392,7 +4432,7 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_参考になるコンペティション">4.4. 参考になるコンペティション</h3>
+<h3 id="_参考になるコンペティション">4.5. 参考になるコンペティション</h3>
 <div class="paragraph">
 <p>本コンペティションに関連したコンペティションを紹介いたします。</p>
 </div>
@@ -4464,7 +4504,7 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_ファンダメンタルズ分析の活用方法">4.5. ファンダメンタルズ分析の活用方法</h3>
+<h3 id="_ファンダメンタルズ分析の活用方法">4.6. ファンダメンタルズ分析の活用方法</h3>
 <div class="paragraph">
 <p>ファンダメンタルズ分析とは、企業の成長性、収益性、割安性、安定性、効率性などを分析し、投資判断などに活用する手法です。ここでは成長性、収益性、割安性、安定性、効率性の代表的な指標を紹介します。</p>
 </div>
@@ -4530,7 +4570,7 @@ ROEやROAは、効率性を示す指標として注目されており、政府�
 </div>
 </div>
 <div class="sect2">
-<h3 id="_テクニカル分析の活用方法">4.6. テクニカル分析の活用方法</h3>
+<h3 id="_テクニカル分析の活用方法">4.7. テクニカル分析の活用方法</h3>
 <div class="paragraph">
 <p>テクニカル分析は、将来の株価の変化を過去に発生した価格や出来高等の時系列パターンから予想・分析しようとする手法であり、メジャーな分析手法の一つです。テクニカル分析にはトレンド分析、オシレーター分析、フォーメーション分析、ローソク足分析(テクニカル指標一覧より引用 <a href="https://info.monex.co.jp/technical-analysis/indicators/" class="bare">https://info.monex.co.jp/technical-analysis/indicators/</a> )があり、2章においてもオシレーターの代表的な分析手法の一つである「移動平均乖離率」を特徴量の一つとして採用しています。</p>
 </div>
@@ -4549,7 +4589,7 @@ ROEやROAは、効率性を示す指標として注目されており、政府�
 </div>
 </div>
 <div class="sect2">
-<h3 id="_ファクター分析の活用方法">4.7. ファクター分析の活用方法</h3>
+<h3 id="_ファクター分析の活用方法">4.8. ファクター分析の活用方法</h3>
 <div class="paragraph">
 <p>ファクター分析とは、投資が産み出すリターンを説明するファクターを定義し、そのファクターの挙動から分析を行う手法です。</p>
 </div>
@@ -4570,7 +4610,7 @@ ROEやROAは、効率性を示す指標として注目されており、政府�
 </div>
 </div>
 <div class="sect2">
-<h3 id="_複数個のモデルの出力をアンサンブルするアプローチ">4.8. 複数個のモデルの出力をアンサンブルするアプローチ</h3>
+<h3 id="_複数個のモデルの出力をアンサンブルするアプローチ">4.9. 複数個のモデルの出力をアンサンブルするアプローチ</h3>
 <div class="paragraph">
 <p>アンサンブルの活用について説明します。機械学習における「アンサンブル」とは、複数のモデルを組み合わせることでパフォーマンスの高いモデルを作成する手法を意味します。アンサンブルに使うモデルは多様性があればある程基本的には好ましく、多様性のあるモデルを作り、最終的にアンサンブルすることで、単一モデルでは達成できないパフォーマンスを最終的に達成する可能性があります。</p>
 </div>
@@ -4597,13 +4637,13 @@ ROEやROAは、効率性を示す指標として注目されており、政府�
 </div>
 </div>
 <div class="sect2">
-<h3 id="_プライベート期間の性能の向上のために考慮すべきこと">4.9. プライベート期間の性能の向上のために考慮すべきこと</h3>
+<h3 id="_プライベート期間の性能の向上のために考慮すべきこと">4.10. プライベート期間の性能の向上のために考慮すべきこと</h3>
 <div class="paragraph">
 <p>金融時系列はサンプル数が少ないため、特徴量を大量に生成し、特徴量選択をすべてモデルに任せるアプローチを採用する場合、ライブ性能の劣化に注意する必要があります。特徴量をどんどん増やすと、訓練期間のパフォーマンスは伸びていても、評価期間のパフォーマンスの向上が止まることがあります。100種類のデータを使うモデルと10種類のデータを使うモデルが、同一の訓練期間で同一の精度を達成した場合、評価期間・ライブ期間では、少ないデータを使ったモデルの方が高い性能を期待できる可能性が高いことが、経験的にわかっています。これは、説明変数の取りうるパターンが多いと、未来で同じ現象を発生する確率が下がっていくためと考えられます。モデルの複雑さとデータへの適合度とのバランスを取るためには、オッカムの剃刀(Wikipedia オッカムの剃刀より引用 <a href="https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%83%E3%82%AB%E3%83%A0%E3%81%AE%E5%89%83%E5%88%80" class="bare">https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%83%E3%82%AB%E3%83%A0%E3%81%AE%E5%89%83%E5%88%80</a> ) のような発想が必要となります。</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_本コンペでは利用できないがモデルを将来的に発展させるために検討する価値のある外部データ">4.10. 本コンペでは利用できないが、モデルを将来的に発展させるために検討する価値のある外部データ</h3>
+<h3 id="_本コンペでは利用できないがモデルを将来的に発展させるために検討する価値のある外部データ">4.11. 本コンペでは利用できないが、モデルを将来的に発展させるために検討する価値のある外部データ</h3>
 <div class="paragraph">
 <p>日本株のデータ以外に特徴量設計に利用可能と思われるデータを紹介します。本コンペでは、あらかじめ定められたデータしか利用することはできませんが、今後手元で新たなモデルを作成するときの知識としてご活用下さい。</p>
 </div>
@@ -4621,18 +4661,18 @@ ROEやROAは、効率性を示す指標として注目されており、政府�
 </div>
 </div>
 <div class="sect2">
-<h3 id="_モデルの再学習の運用について">4.11. モデルの再学習の運用について</h3>
+<h3 id="_モデルの再学習の運用について">4.12. モデルの再学習の運用について</h3>
 <div class="paragraph">
 <p>長期間に渡りモデルを運用しようとする場合、再学習の運用を考慮しておく必要があります。再学習の運用とは、例えば2019年までのデータを用いてモデルを学習し2020年で運用した場合、2020年末に2020年のデータを用いて再学習を行うといったようなことを指します。再学習を行うにあたっていくつか考慮しておくべきポイントを紹介します。</p>
 </div>
 <div class="sect3">
-<h4 id="_再学習を行う必要があるほど新規のデータが存在するか">4.11.1. 再学習を行う必要があるほど新規のデータが存在するか</h4>
+<h4 id="_再学習を行う必要があるほど新規のデータが存在するか">4.12.1. 再学習を行う必要があるほど新規のデータが存在するか</h4>
 <div class="paragraph">
 <p>再学習は、新規のデータが溜まった時に実施します。モデルにも依存しますが、モデルが挙動を変えるには、既存の学習に用いたデータ量と比較してある程度の量の新規データが存在しないと、再学習を実施してもモデルの挙動は変わりません。再学習する際に有用な新規データ量は一概には言えず、モデルによって変わります。毎日モデルをトレーニングするような運用も可能ですが、データ量が多少増えただけでは、ほぼ同じ挙動となる可能性が高いです。</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_再学習を行うことでモデルの出力分布が変わらないか">4.11.2. 再学習を行うことでモデルの出力分布が変わらないか</h4>
+<h4 id="_再学習を行うことでモデルの出力分布が変わらないか">4.12.2. 再学習を行うことでモデルの出力分布が変わらないか</h4>
 <div class="paragraph">
 <p>こちらは、システムで運用する場合に発生しやすい問題です。例えば、投資する際の購入タイミングを、モデルの出力が0.8以上といったしきい値を用いた実装をしていたとします。この際に再学習を行うことでモデルの出力が変わると、想像以上に購入したり、逆に購入を実施しなくなったりします。再学習を行った場合、直近数週間程度のデータは利用せずに、古いモデルと新しいモデルで出力を比較し、出力の分布が変わっていないことを確認するのが良いでしょう。</p>
 </div>
@@ -5220,6 +5260,25 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 </dd>
 </dl>
 </div>
+<div class="sect2">
+<h3 id="_商標">6.1. 商標</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Windows、PowerShellは、Microsoft Corporation の登録商標または商標です。</p>
+</li>
+<li>
+<p>Docker は、Docker Inc.の登録商標または商標です。</p>
+</li>
+<li>
+<p>CoLaboratory™ は、Google Inc. の登録商標または商標です。</p>
+</li>
+<li>
+<p>GitHub は、GitHub Inc.の登録商標または商標です</p>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -5242,7 +5301,7 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 </div>
 <div id="footer">
 <div id="footer-text">
-最終更新 2021-01-29 12:47:05 +0900
+最終更新 2021-02-05 14:55:08 +0900
 </div>
 </div>
 <script type="text/x-mathjax-config">

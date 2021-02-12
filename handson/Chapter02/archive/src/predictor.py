@@ -57,6 +57,17 @@ class ScoringService(object):
             cls.dfs = {}
         for k, v in inputs.items():
             cls.dfs[k] = pd.read_csv(v)
+            # DataFrameのindexを設定します。
+            if k == "stock_price":
+                cls.dfs[k].loc[:, "datetime"] = pd.to_datetime(
+                    cls.dfs[k].loc[:, "EndOfDayQuote Date"]
+                )
+                cls.dfs[k].set_index("datetime", inplace=True)
+            elif k in ["stock_fin", "stock_fin_price", "stock_labels"]:
+                cls.dfs[k].loc[:, "datetime"] = pd.to_datetime(
+                    cls.dfs[k].loc[:, "base_date"]
+                )
+                cls.dfs[k].set_index("datetime", inplace=True)
         return cls.dfs
 
     @classmethod
@@ -100,15 +111,12 @@ class ScoringService(object):
             feats = feature[feature["code"] == code]
 
             # stock_labelデータを読み込み
-            stock_labels = dfs["stock_labels"].copy()
+            stock_labels = dfs["stock_labels"]
             # 特定の銘柄コードのデータに絞る
             stock_labels = stock_labels[stock_labels["Local Code"] == code]
-            # 日付列をpd.Timestamp型に変換してindexに設定
-            stock_labels["datetime"] = pd.to_datetime(stock_labels["base_date"])
-            stock_labels.set_index("datetime", inplace=True)
 
             # 特定の目的変数に絞る
-            labels = stock_labels[label]
+            labels = stock_labels[label].copy()
             # nanを削除
             labels.dropna(inplace=True)
 
@@ -119,13 +127,13 @@ class ScoringService(object):
                 labels.index = feats.index
 
                 # データを分割
-                _train_X = feats[: cls.TRAIN_END].copy()
-                _val_X = feats[cls.VAL_START : cls.VAL_END].copy()
-                _test_X = feats[cls.TEST_START :].copy()
+                _train_X = feats[: cls.TRAIN_END]
+                _val_X = feats[cls.VAL_START : cls.VAL_END]
+                _test_X = feats[cls.TEST_START :]
 
-                _train_y = labels[: cls.TRAIN_END].copy()
-                _val_y = labels[cls.VAL_START : cls.VAL_END].copy()
-                _test_y = labels[cls.TEST_START :].copy()
+                _train_y = labels[: cls.TRAIN_END]
+                _val_y = labels[cls.VAL_START : cls.VAL_END]
+                _test_y = labels[cls.TEST_START :]
 
                 # データを配列に格納 (後ほど結合するため)
                 trains_X.append(_train_X)
@@ -157,35 +165,28 @@ class ScoringService(object):
             feature DataFrame (pd.DataFrame)
         """
         # stock_finデータを読み込み
-        stock_fin = dfs["stock_fin"].copy()
+        stock_fin = dfs["stock_fin"]
 
         # 特定の銘柄コードのデータに絞る
-        fin_data = stock_fin[stock_fin["Local Code"] == code].copy()
-        # 日付列をpd.Timestamp型に変換してindexに設定
-        fin_data["datetime"] = pd.to_datetime(fin_data["base_date"])
-        fin_data.set_index("datetime", inplace=True)
+        fin_data = stock_fin[stock_fin["Local Code"] == code]
+        # 特徴量の作成には過去60営業日のデータを使用しているため、
+        # 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します
+        n = 90
+        # 特徴量の生成対象期間を指定
+        fin_data = fin_data.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
         # fin_dataのnp.float64のデータのみを取得
         fin_data = fin_data.select_dtypes(include=["float64"])
         # 欠損値処理
         fin_feats = fin_data.fillna(0)
 
-        # 特徴量の作成には過去60営業日のデータを使用しているため、
-        # 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します
-        n = 90
-        # 特徴量の生成対象期間を指定
-        fin_feats = fin_feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
-
         # stock_priceデータを読み込む
-        price = dfs["stock_price"].copy()
+        price = dfs["stock_price"]
         # 特定の銘柄コードのデータに絞る
-        price_data = price[price["Local Code"] == code].copy()
-        # 日付列をpd.Timestamp型に変換してindexに設定
-        price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-        price_data.set_index("datetime", inplace=True)
+        price_data = price[price["Local Code"] == code]
         # 終値のみに絞る
-        feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
+        feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]]
         # 特徴量の生成対象期間を指定
-        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
+        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :].copy()
 
         # 終値の20営業日リターン
         feats["return_1month"] = feats[

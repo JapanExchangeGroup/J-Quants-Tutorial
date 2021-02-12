@@ -568,6 +568,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <li><a href="#_プライベート期間の性能の向上のために考慮すべきこと">4.10. プライベート期間の性能の向上のために考慮すべきこと</a></li>
 <li><a href="#_本コンペでは利用できないがモデルを将来的に発展させるために検討する価値のある外部データ">4.11. 本コンペでは利用できないが、モデルを将来的に発展させるために検討する価値のある外部データ</a></li>
 <li><a href="#_モデルの再学習の運用について">4.12. モデルの再学習の運用について</a></li>
+<li><a href="#_google_colaboratoryの使用法">4.13. Google Colaboratoryの使用法</a></li>
+<li><a href="#_内国株の売買制度">4.14. 内国株の売買制度</a></li>
 </ul>
 </li>
 <li><a href="#_j_quantsapi">5. J-QuantsAPI</a>
@@ -618,7 +620,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="content">
 <pre>2021-01-29: 初版リリース
 2021-02-05: 誤字や表記の修正を中心に改良
-2021-02-12: 次回リリース予定</pre>
+2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記</pre>
 </div>
 </div>
 </div>
@@ -842,7 +844,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>G)	&#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;の&#8203;開&#8203;示&#8203;日&#8203;及&#8203;び&#8203;同&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;当&#8203;該&#8203;開&#8203;示&#8203;に&#8203;対&#8203;す&#8203;る&#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;が&#8203;行&#8203;わ&#8203;れ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と</p>
 </div>
 <div class="paragraph">
-<p>H)	&#8203;開&#8203;示&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;上&#8203;場&#8203;廃&#8203;止&#8203;に&#8203;なっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と&#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;の&#8203;開&#8203;示&#8203;日&#8203;及&#8203;び&#8203;同&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;上&#8203;場&#8203;廃&#8203;止&#8203;に&#8203;なっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と</p>
+<p>H)  &#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;の&#8203;開&#8203;示&#8203;日&#8203;及&#8203;び&#8203;同&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;上&#8203;場&#8203;廃&#8203;止&#8203;に&#8203;なっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と</p>
 </div>
 <div class="paragraph">
 <p>な&#8203;お、&#8203;あ&#8203;る&#8203;同&#8203;一&#8203;銘&#8203;柄&#8203;に&#8203;つ&#8203;い&#8203;て、&#8203;こ&#8203;れ&#8203;ら&#8203;の&#8203;条&#8203;件&#8203;を&#8203;満&#8203;た&#8203;す&#8203;決&#8203;算&#8203;短&#8203;信&#8203;が&#8203;複&#8203;数&#8203;存&#8203;在&#8203;す&#8203;る&#8203;場&#8203;合&#8203;は、&#8203;最&#8203;も&#8203;新&#8203;し&#8203;く&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;た&#8203;も&#8203;の&#8203;の&#8203;み&#8203;を&#8203;予&#8203;測&#8203;の&#8203;対&#8203;象&#8203;と&#8203;し&#8203;ま&#8203;す。</p>
@@ -949,7 +951,10 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>次&#8203;に、&#8203;本&#8203;コ&#8203;ン&#8203;ペ&#8203;ティ&#8203;ショ&#8203;ン&#8203;の&#8203;Private LB&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;説&#8203;明&#8203;し&#8203;ま&#8203;す。&#8203;本&#8203;コ&#8203;ン&#8203;ペ&#8203;ティ&#8203;ショ&#8203;ン&#8203;で&#8203;は、&#8203;モ&#8203;デ&#8203;ル&#8203;提&#8203;出&#8203;締&#8203;切&#8203;日&#8203;よ&#8203;り&#8203;も&#8203;将&#8203;来&#8203;の&#8203;デー&#8203;タ&#8203;を&#8203;用&#8203;い&#8203;て、&#8203;Private LB&#8203;を&#8203;出&#8203;力&#8203;し&#8203;ま&#8203;す。&#8203;具&#8203;体&#8203;的&#8203;に&#8203;は、&#8203;本&#8203;コ&#8203;ン&#8203;ペ&#8203;ティ&#8203;ショ&#8203;ン&#8203;の&#8203;Private LB&#8203;で&#8203;は、&#8203;2021&#8203;年&#8203;3&#8203;月&#8203;27&#8203;日&#8203;（土）〜&#8203;2021&#8203;年&#8203;5&#8203;月&#8203;15&#8203;日&#8203;（土）&#8203;に&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;た&#8203;決&#8203;算&#8203;短&#8203;信&#8203;を&#8203;対&#8203;象&#8203;に、&#8203;そ&#8203;の&#8203;開&#8203;示&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;期&#8203;間&#8203;に&#8203;お&#8203;け&#8203;る&#8203;最&#8203;高&#8203;値&#8203;及&#8203;び&#8203;最&#8203;安&#8203;値&#8203;を&#8203;予&#8203;測&#8203;し&#8203;ま&#8203;す。</p>
 </div>
 <div class="paragraph">
-<p>ま&#8203;た、&#8203;こ&#8203;の&#8203;予&#8203;測&#8203;に&#8203;当&#8203;たっ&#8203;て&#8203;は、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;の&#8203;開&#8203;示&#8203;日&#8203;の&#8203;期&#8203;間&#8203;に&#8203;応&#8203;じ&#8203;て&#8203;5&#8203;回&#8203;に&#8203;分&#8203;け&#8203;て&#8203;実&#8203;施&#8203;し、&#8203;最&#8203;終&#8203;的&#8203;な&#8203;順&#8203;位&#8203;は&#8203;5&#8203;回&#8203;目&#8203;の&#8203;評&#8203;価&#8203;で&#8203;決&#8203;定&#8203;し&#8203;ま&#8203;す。&#8203;こ&#8203;の&#8203;5&#8203;回&#8203;の&#8203;評&#8203;価&#8203;の&#8203;ス&#8203;ケ&#8203;ジュー&#8203;ル&#8203;は&#8203;次&#8203;を&#8203;予&#8203;定&#8203;し&#8203;て&#8203;お&#8203;り&#8203;ま&#8203;す。</p>
+<p>ま&#8203;た、&#8203;こ&#8203;の&#8203;予&#8203;測&#8203;に&#8203;当&#8203;たっ&#8203;て&#8203;は、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;の&#8203;開&#8203;示&#8203;日&#8203;の&#8203;期&#8203;間&#8203;に&#8203;応&#8203;じ&#8203;て&#8203;5&#8203;回&#8203;に&#8203;分&#8203;け&#8203;て&#8203;実&#8203;施&#8203;し、&#8203;最&#8203;終&#8203;的&#8203;な&#8203;順&#8203;位&#8203;は&#8203;5&#8203;回&#8203;目&#8203;の&#8203;評&#8203;価&#8203;で&#8203;決&#8203;定&#8203;し&#8203;ま&#8203;す。&#8203;(&#8203;評&#8203;価&#8203;の&#8203;計&#8203;算&#8203;は&#8203;5&#8203;回&#8203;行&#8203;わ&#8203;れ&#8203;ま&#8203;す&#8203;が、&#8203;最&#8203;後&#8203;の&#8203;1&#8203;回&#8203;を&#8203;除&#8203;く&#8203;4&#8203;回&#8203;は&#8203;途&#8203;中&#8203;経&#8203;過&#8203;を&#8203;リー&#8203;ダー&#8203;ボー&#8203;ド&#8203;で&#8203;ご&#8203;確&#8203;認&#8203;い&#8203;た&#8203;だ&#8203;け&#8203;る&#8203;よ&#8203;う&#8203;に&#8203;計&#8203;算&#8203;し&#8203;て&#8203;い&#8203;る&#8203;も&#8203;の&#8203;に&#8203;な&#8203;り&#8203;ま&#8203;す。&#8203;)</p>
+</div>
+<div class="paragraph">
+<p>こ&#8203;の&#8203;5&#8203;回&#8203;の&#8203;評&#8203;価&#8203;の&#8203;ス&#8203;ケ&#8203;ジュー&#8203;ル&#8203;は&#8203;次&#8203;を&#8203;予&#8203;定&#8203;し&#8203;て&#8203;お&#8203;り&#8203;ま&#8203;す。</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1024,7 +1029,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>上&#8203;場&#8203;企&#8203;業&#8203;の&#8203;株&#8203;価&#8203;は、&#8203;各&#8203;社&#8203;の&#8203;経&#8203;営&#8203;状&#8203;態&#8203;等&#8203;を&#8203;反&#8203;映&#8203;し&#8203;て&#8203;日々&#8203;刻々&#8203;と&#8203;変&#8203;化&#8203;し&#8203;ま&#8203;す。&#8203;そ&#8203;の&#8203;た&#8203;め、&#8203;金&#8203;融&#8203;商&#8203;品&#8203;市&#8203;場&#8203;に&#8203;お&#8203;い&#8203;て&#8203;公&#8203;正&#8203;な&#8203;価&#8203;格&#8203;形&#8203;成&#8203;と&#8203;円&#8203;滑&#8203;な&#8203;流&#8203;通&#8203;を&#8203;確&#8203;保&#8203;す&#8203;る&#8203;た&#8203;め&#8203;に&#8203;は&#8203;公&#8203;平&#8203;で&#8203;適&#8203;時、&#8203;適&#8203;切&#8203;な&#8203;情&#8203;報&#8203;開&#8203;示&#8203;が&#8203;必&#8203;要&#8203;不&#8203;可&#8203;欠&#8203;な&#8203;も&#8203;の&#8203;と&#8203;なっ&#8203;て&#8203;い&#8203;ま&#8203;す。</p>
 </div>
 <div class="paragraph">
-<p>東&#8203;京&#8203;証&#8203;券&#8203;取&#8203;引&#8203;所&#8203;で&#8203;は、&#8203;投&#8203;資&#8203;者&#8203;が&#8203;投&#8203;資&#8203;判&#8203;断&#8203;を&#8203;行&#8203;う&#8203;う&#8203;え&#8203;で&#8203;必&#8203;要&#8203;な&#8203;会&#8203;社&#8203;情&#8203;報&#8203;を、&#8203;迅&#8203;速、&#8203;正&#8203;確&#8203;か&#8203;つ&#8203;公&#8203;平&#8203;に&#8203;提&#8203;供&#8203;す&#8203;る&#8203;た&#8203;め&#8203;の&#8203;制&#8203;度&#8203;と&#8203;し&#8203;て、&#8203;適&#8203;時&#8203;開&#8203;示&#8203;制&#8203;度&#8203;を&#8203;設&#8203;け&#8203;て&#8203;お&#8203;り、&#8203;上&#8203;場&#8203;企&#8203;業&#8203;は、&#8203;報&#8203;道&#8203;機&#8203;関&#8203;等&#8203;を&#8203;通&#8203;じ&#8203;て&#8203;あ&#8203;る&#8203;い&#8203;は&#8203;TDnet&#8203;（適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;伝&#8203;達&#8203;シ&#8203;ス&#8203;テ&#8203;ム）&#8203;に&#8203;よ&#8203;り&#8203;直&#8203;接&#8203;に、&#8203;広&#8203;く、&#8203;か&#8203;つ&#8203;タ&#8203;イ&#8203;ム&#8203;リー&#8203;に&#8203;伝&#8203;達&#8203;す&#8203;る&#8203;こ&#8203;と&#8203;と&#8203;い&#8203;う&#8203;特&#8203;徴&#8203;が&#8203;あ&#8203;り&#8203;ま&#8203;す。&#8203;適&#8203;時&#8203;開&#8203;示&#8203;制&#8203;度&#8203;の&#8203;下&#8203;で&#8203;上&#8203;場&#8203;企&#8203;業&#8203;が&#8203;開&#8203;示&#8203;す&#8203;る&#8203;資&#8203;料&#8203;の&#8203;こ&#8203;と&#8203;を、&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;と&#8203;呼&#8203;び&#8203;ま&#8203;す。&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;と&#8203;そ&#8203;の&#8203;メ&#8203;タ&#8203;デー&#8203;タ&#8203;（タ&#8203;イ&#8203;ト&#8203;ル、&#8203;開&#8203;示&#8203;日&#8203;時&#8203;等）&#8203;を&#8203;総&#8203;称&#8203;し&#8203;て&#8203;適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;と&#8203;呼&#8203;び、&#8203;適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;は&#8203;「適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;閲&#8203;覧&#8203;サー&#8203;ビ&#8203;ス&#8203;（リ&#8203;ン&#8203;ク）」&#8203;で&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;ま&#8203;す。&#8203;下&#8203;図&#8203;に&#8203;投&#8203;資&#8203;家&#8203;に&#8203;お&#8203;け&#8203;る&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;の&#8203;代&#8203;表&#8203;的&#8203;な&#8203;用&#8203;途&#8203;を&#8203;示&#8203;し&#8203;ま&#8203;す。</p>
+<p>東&#8203;京&#8203;証&#8203;券&#8203;取&#8203;引&#8203;所&#8203;で&#8203;は、&#8203;投&#8203;資&#8203;者&#8203;が&#8203;投&#8203;資&#8203;判&#8203;断&#8203;を&#8203;行&#8203;う&#8203;う&#8203;え&#8203;で&#8203;必&#8203;要&#8203;な&#8203;会&#8203;社&#8203;情&#8203;報&#8203;を、&#8203;迅&#8203;速、&#8203;正&#8203;確&#8203;か&#8203;つ&#8203;公&#8203;平&#8203;に&#8203;提&#8203;供&#8203;す&#8203;る&#8203;た&#8203;め&#8203;の&#8203;制&#8203;度&#8203;と&#8203;し&#8203;て、&#8203;適&#8203;時&#8203;開&#8203;示&#8203;制&#8203;度&#8203;を&#8203;設&#8203;け&#8203;て&#8203;お&#8203;り、&#8203;上&#8203;場&#8203;企&#8203;業&#8203;は、&#8203;報&#8203;道&#8203;機&#8203;関&#8203;等&#8203;を&#8203;通&#8203;じ&#8203;て&#8203;あ&#8203;る&#8203;い&#8203;は&#8203;TDnet&#8203;（適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;伝&#8203;達&#8203;シ&#8203;ス&#8203;テ&#8203;ム）&#8203;に&#8203;よ&#8203;り&#8203;直&#8203;接&#8203;に、&#8203;広&#8203;く、&#8203;か&#8203;つ&#8203;タ&#8203;イ&#8203;ム&#8203;リー&#8203;に&#8203;伝&#8203;達&#8203;す&#8203;る&#8203;こ&#8203;と&#8203;と&#8203;い&#8203;う&#8203;特&#8203;徴&#8203;が&#8203;あ&#8203;り&#8203;ま&#8203;す。&#8203;適&#8203;時&#8203;開&#8203;示&#8203;制&#8203;度&#8203;の&#8203;下&#8203;で&#8203;上&#8203;場&#8203;企&#8203;業&#8203;が&#8203;開&#8203;示&#8203;す&#8203;る&#8203;資&#8203;料&#8203;の&#8203;こ&#8203;と&#8203;を、&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;と&#8203;呼&#8203;び&#8203;ま&#8203;す。&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;と&#8203;そ&#8203;の&#8203;メ&#8203;タ&#8203;デー&#8203;タ&#8203;（タ&#8203;イ&#8203;ト&#8203;ル、&#8203;開&#8203;示&#8203;日&#8203;時&#8203;等）&#8203;を&#8203;総&#8203;称&#8203;し&#8203;て&#8203;適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;と&#8203;呼&#8203;び、&#8203;適&#8203;時&#8203;開&#8203;示&#8203;情&#8203;報&#8203;は&#8203;「<a href="https://www.release.tdnet.info/inbs/I_main_00.html">適時開示情報閲覧サービス</a>」&#8203;で&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;ま&#8203;す。&#8203;下&#8203;図&#8203;に&#8203;投&#8203;資&#8203;家&#8203;に&#8203;お&#8203;け&#8203;る&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;の&#8203;代&#8203;表&#8203;的&#8203;な&#8203;用&#8203;途&#8203;を&#8203;示&#8203;し&#8203;ま&#8203;す。</p>
 </div>
 <div class="paragraph">
 <p><strong>&#8203;投&#8203;資&#8203;家&#8203;に&#8203;お&#8203;け&#8203;る&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;の&#8203;代&#8203;表&#8203;的&#8203;な&#8203;用&#8203;途&#8203;</strong></p>
@@ -1038,7 +1043,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>(&#8203;開&#8203;示&#8203;資&#8203;料&#8203;と&#8203;翻&#8203;訳&#8203;よ&#8203;り&#8203;引&#8203;用&#8203; <a href="https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf" class="bare">https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf</a>)</p>
 </div>
 <div class="paragraph">
-<p>上&#8203;場&#8203;企&#8203;業&#8203;が&#8203;開&#8203;示&#8203;を&#8203;義&#8203;務&#8203;付&#8203;け&#8203;ら&#8203;れ&#8203;て&#8203;い&#8203;る&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;の&#8203;一&#8203;つ&#8203;に、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;が&#8203;あ&#8203;り&#8203;ま&#8203;す。&#8203;決&#8203;算&#8203;短&#8203;信&#8203;と&#8203;は、&#8203;決&#8203;算&#8203;発&#8203;表&#8203;及&#8203;び&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;発&#8203;表&#8203;を&#8203;行&#8203;う&#8203;際&#8203;に、&#8203;決&#8203;算&#8203;内&#8203;容&#8203;の&#8203;要&#8203;点&#8203;を&#8203;ま&#8203;と&#8203;め&#8203;た&#8203;書&#8203;類&#8203;の&#8203;こ&#8203;と&#8203;で&#8203;す。&#8203;本&#8203;資&#8203;料&#8203;で&#8203;は、&#8203;決&#8203;算&#8203;発&#8203;表&#8203;時&#8203;に&#8203;開&#8203;示&#8203;す&#8203;る&#8203;決&#8203;算&#8203;短&#8203;信&#8203;と、&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;発&#8203;表&#8203;時&#8203;に&#8203;開&#8203;示&#8203;す&#8203;る&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;短&#8203;信&#8203;を&#8203;総&#8203;称&#8203;し&#8203;て、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;と&#8203;呼&#8203;び&#8203;ま&#8203;す。&#8203;上&#8203;場&#8203;企&#8203;業&#8203;は、&#8203;決&#8203;算&#8203;期&#8203;末&#8203;を&#8203;含&#8203;め&#8203;四&#8203;半&#8203;期&#8203;毎&#8203;に&#8203;決&#8203;算&#8203;内&#8203;容&#8203;が&#8203;定&#8203;まっ&#8203;た&#8203;際、&#8203;決&#8203;算&#8203;内&#8203;容&#8203;の&#8203;開&#8203;示&#8203;が&#8203;義&#8203;務&#8203;付&#8203;け&#8203;ら&#8203;れ&#8203;て&#8203;い&#8203;ま&#8203;す。&#8203;ま&#8203;た、&#8203;東&#8203;証&#8203;は&#8203;上&#8203;場&#8203;企&#8203;業&#8203;に&#8203;対&#8203;し、&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;期&#8203;末&#8203;後&#8203;45&#8203;日&#8203;以&#8203;内&#8203;の&#8203;決&#8203;算&#8203;内&#8203;容&#8203;の&#8203;開&#8203;示&#8203;を&#8203;要&#8203;請&#8203;し&#8203;て&#8203;い&#8203;ま&#8203;す。&#8203;決&#8203;算&#8203;短&#8203;信&#8203;の&#8203;作&#8203;成&#8203;要&#8203;領&#8203;等&#8203;は、&#8203;下&#8203;記&#8203;Web&#8203;サ&#8203;イ&#8203;ト&#8203;で&#8203;公&#8203;開&#8203;さ&#8203;れ&#8203;て&#8203;い&#8203;ま&#8203;す。</p>
+<p>上&#8203;場&#8203;企&#8203;業&#8203;が&#8203;開&#8203;示&#8203;を&#8203;義&#8203;務&#8203;付&#8203;け&#8203;ら&#8203;れ&#8203;て&#8203;い&#8203;る&#8203;適&#8203;時&#8203;開&#8203;示&#8203;資&#8203;料&#8203;の&#8203;一&#8203;つ&#8203;に、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;が&#8203;あ&#8203;り&#8203;ま&#8203;す。&#8203;決&#8203;算&#8203;短&#8203;信&#8203;と&#8203;は、&#8203;決&#8203;算&#8203;発&#8203;表&#8203;及&#8203;び&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;発&#8203;表&#8203;を&#8203;行&#8203;う&#8203;際&#8203;に、&#8203;決&#8203;算&#8203;内&#8203;容&#8203;の&#8203;要&#8203;点&#8203;を&#8203;ま&#8203;と&#8203;め&#8203;た&#8203;書&#8203;類&#8203;の&#8203;こ&#8203;と&#8203;で&#8203;す。&#8203;本&#8203;資&#8203;料&#8203;で&#8203;は、&#8203;決&#8203;算&#8203;発&#8203;表&#8203;時&#8203;に&#8203;開&#8203;示&#8203;す&#8203;る&#8203;決&#8203;算&#8203;短&#8203;信&#8203;と、&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;発&#8203;表&#8203;時&#8203;に&#8203;開&#8203;示&#8203;す&#8203;る&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;短&#8203;信&#8203;を&#8203;総&#8203;称&#8203;し&#8203;て、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;と&#8203;呼&#8203;び&#8203;ま&#8203;す。&#8203;上&#8203;場&#8203;企&#8203;業&#8203;は、&#8203;決&#8203;算&#8203;期&#8203;末&#8203;を&#8203;含&#8203;め&#8203;四&#8203;半&#8203;期&#8203;毎&#8203;に&#8203;決&#8203;算&#8203;内&#8203;容&#8203;が&#8203;定&#8203;まっ&#8203;た&#8203;際、&#8203;決&#8203;算&#8203;内&#8203;容&#8203;の&#8203;開&#8203;示&#8203;が&#8203;義&#8203;務&#8203;付&#8203;け&#8203;ら&#8203;れ&#8203;て&#8203;い&#8203;ま&#8203;す。&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;短&#8203;信&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;は、&#8203;金&#8203;商&#8203;法&#8203;に&#8203;基&#8203;づ&#8203;く&#8203;四&#8203;半&#8203;期&#8203;報&#8203;告&#8203;書&#8203;の&#8203;法&#8203;定&#8203;提&#8203;出&#8203;期&#8203;限&#8203;が&#8203;45&#8203;日&#8203;と&#8203;さ&#8203;れ&#8203;て&#8203;い&#8203;る&#8203;こ&#8203;と&#8203;か&#8203;ら、&#8203;ま&#8203;た、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;は、&#8203;決&#8203;算&#8203;期&#8203;末&#8203;後&#8203;45&#8203;日&#8203;以&#8203;内&#8203;に&#8203;決&#8203;算&#8203;の&#8203;内&#8203;容&#8203;を&#8203;開&#8203;示&#8203;す&#8203;る&#8203;こ&#8203;と&#8203;を&#8203;東&#8203;証&#8203;が&#8203;要&#8203;請&#8203;し&#8203;て&#8203;い&#8203;る&#8203;こ&#8203;と&#8203;か&#8203;ら、&#8203;決&#8203;算&#8203;短&#8203;信&#8203;等&#8203;の&#8203;多&#8203;く&#8203;は&#8203;期&#8203;末&#8203;後&#8203;45&#8203;日&#8203;以&#8203;内&#8203;に&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;て&#8203;い&#8203;ま&#8203;す。&#8203;決&#8203;算&#8203;短&#8203;信&#8203;の&#8203;作&#8203;成&#8203;要&#8203;領&#8203;等&#8203;は、&#8203;下&#8203;記&#8203;Web&#8203;サ&#8203;イ&#8203;ト&#8203;で&#8203;公&#8203;開&#8203;さ&#8203;れ&#8203;て&#8203;い&#8203;ま&#8203;す。</p>
 </div>
 <div class="paragraph">
 <p>決&#8203;算&#8203;短&#8203;信&#8203;作&#8203;成&#8203;要&#8203;領・&#8203;四&#8203;半&#8203;期&#8203;決&#8203;算&#8203;短&#8203;信&#8203;作&#8203;成&#8203;要&#8203;領&#8203; | &#8203;日&#8203;本&#8203;取&#8203;引&#8203;所&#8203;グ&#8203;ルー&#8203;プ&#8203;<br>
@@ -1820,7 +1825,13 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </div>
 </div>
 <div class="sect3">
-<h4 id="_dockerを用いた実行環境構築方法">2.3.2. Dockerを用いた実行環境構築方法</h4>
+<h4 id="_google_colaboratoryの利用">2.3.2. Google Colaboratoryの利用</h4>
+<div class="paragraph">
+<p>本&#8203;章&#8203;は&#8203;Docker&#8203;を&#8203;用&#8203;い&#8203;た&#8203;実&#8203;行&#8203;環&#8203;境&#8203;の&#8203;利&#8203;用&#8203;を&#8203;想&#8203;定&#8203;し&#8203;て&#8203;記&#8203;述&#8203;し&#8203;て&#8203;お&#8203;り&#8203;ま&#8203;す&#8203;が、&#8203;Docker&#8203;の&#8203;実&#8203;行&#8203;環&#8203;境&#8203;構&#8203;築&#8203;が&#8203;ご&#8203;利&#8203;用&#8203;の&#8203;OS&#8203;な&#8203;ど&#8203;何&#8203;ら&#8203;か&#8203;の&#8203;理&#8203;由&#8203;に&#8203;よ&#8203;り&#8203;困&#8203;難&#8203;な&#8203;方、&#8203;よ&#8203;り&#8203;簡&#8203;便&#8203;に&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;を&#8203;実&#8203;行&#8203;し&#8203;た&#8203;い&#8203;方&#8203;は&#8203;Google Colaboratory&#8203;の&#8203;利&#8203;用&#8203;を&#8203;ご&#8203;検&#8203;討&#8203;く&#8203;だ&#8203;さ&#8203;い。&#8203;本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;で&#8203;提&#8203;供&#8203;さ&#8203;れ&#8203;る&#8203;Notebook&#8203;は&#8203;Google Colaboratory&#8203;で&#8203;も&#8203;実&#8203;行&#8203;可&#8203;能&#8203;で&#8203;す。&#8203;詳&#8203;細&#8203;は&#8203;第&#8203;4&#8203;章&#8203;を&#8203;ご&#8203;参&#8203;照&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_dockerを用いた実行環境構築方法">2.3.3. Dockerを用いた実行環境構築方法</h4>
 <div class="paragraph">
 <p>本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;の&#8203;リ&#8203;ポ&#8203;ジ&#8203;ト&#8203;リ&#8203;を&#8203; <code>git clone</code> &#8203;し&#8203;て&#8203;い&#8203;た&#8203;だ&#8203;き、&#8203;以&#8203;下&#8203;の&#8203;手&#8203;順&#8203;を&#8203;実&#8203;行&#8203;し&#8203;て&#8203;い&#8203;た&#8203;だ&#8203;く&#8203;こ&#8203;と&#8203;で&#8203;実&#8203;行&#8203;環&#8203;境&#8203;の&#8203;docker&#8203;コ&#8203;ン&#8203;テ&#8203;ナ&#8203;内&#8203;で&#8203;jupyter notebook&#8203;を&#8203;起&#8203;動&#8203;可&#8203;能&#8203;と&#8203;なっ&#8203;て&#8203;い&#8203;ま&#8203;す。&#8203; <code>Chapter02</code> &#8203;ディ&#8203;レ&#8203;ク&#8203;ト&#8203;リ&#8203;内&#8203;に&#8203;は、&#8203;本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;の&#8203;コー&#8203;ド&#8203;を&#8203;記&#8203;載&#8203;し&#8203;た&#8203; ipynb &#8203;ファ&#8203;イ&#8203;ル&#8203;を&#8203;配&#8203;置&#8203;し&#8203;て&#8203;お&#8203;り&#8203;ま&#8203;す&#8203;の&#8203;で&#8203;必&#8203;要&#8203;に&#8203;応&#8203;じ&#8203;て&#8203;ご&#8203;活&#8203;用&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
 </div>
@@ -1851,7 +1862,7 @@ http://localhost:8888/</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_必要なライブラリのインストール">2.3.3. 必要なライブラリのインストール</h4>
+<h4 id="_必要なライブラリのインストール">2.3.4. 必要なライブラリのインストール</h4>
 <div class="paragraph">
 <p>本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;内&#8203;で&#8203;は、&#8203;上&#8203;記&#8203;の&#8203;実&#8203;行&#8203;環&#8203;境&#8203;に&#8203;含&#8203;ま&#8203;れ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;ラ&#8203;イ&#8203;ブ&#8203;ラ&#8203;リ&#8203;を&#8203;使&#8203;用&#8203;す&#8203;る&#8203;た&#8203;め、&#8203;以&#8203;下&#8203;の&#8203;コ&#8203;マ&#8203;ン&#8203;ド&#8203;を&#8203;使&#8203;用&#8203;し&#8203;て&#8203;個&#8203;別&#8203;に&#8203;イ&#8203;ン&#8203;ス&#8203;トー&#8203;ル&#8203;し&#8203;ま&#8203;す。</p>
 </div>
@@ -1867,7 +1878,7 @@ pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ライブラリの読み込み">2.3.4. ライブラリの読み込み</h4>
+<h4 id="_ライブラリの読み込み">2.3.5. ライブラリの読み込み</h4>
 <div class="paragraph">
 <p>本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;で&#8203;は、&#8203;下&#8203;記&#8203;の&#8203;ラ&#8203;イ&#8203;ブ&#8203;ラ&#8203;リ&#8203;の&#8203;イ&#8203;ン&#8203;ポー&#8203;ト&#8203;を&#8203;行&#8203;い&#8203;ま&#8203;す。</p>
 </div>
@@ -1905,7 +1916,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ライブラリ解説">2.3.5. ライブラリ解説</h4>
+<h4 id="_ライブラリ解説">2.3.6. ライブラリ解説</h4>
 <table class="tableblock frame-all grid-all stripes-even fit-content">
 <colgroup>
 <col>
@@ -1986,7 +1997,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_実行環境の確認">2.3.6. 実行環境の確認</h4>
+<h4 id="_実行環境の確認">2.3.7. 実行環境の確認</h4>
 <div class="paragraph">
 <p>python&#8203;の&#8203;バー&#8203;ジョ&#8203;ン&#8203;が&#8203;3.7.3&#8203;で&#8203;あ&#8203;る&#8203;こ&#8203;と&#8203;を&#8203;確&#8203;認&#8203;し&#8203;ま&#8203;す。</p>
 </div>
@@ -2036,7 +2047,18 @@ inputs = {
 dfs = {}
 <span class="keyword">for</span> k, v <span class="keyword">in</span> inputs.items():
     print(k)
-    dfs[k] = pd.read_csv(v)</code></pre>
+    dfs[k] = pd.read_csv(v)
+    <span class="comment"># DataFrameのindexを設定します。</span>
+    <span class="keyword">if</span> k == <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>:
+        dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+            dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>]
+        )
+        dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    <span class="keyword">elif</span> k <span class="keyword">in</span> [<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin_price</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]:
+        dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+            dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>]
+        )
+        dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2067,15 +2089,12 @@ dfs = {}
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finの読み込み</span>
-fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984にデータを絞る</span>
 code = <span class="integer">9984</span>
-fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
+fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 <span class="comment"># 2019年までの値を表示</span>
 fin_data = fin_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
 
@@ -2106,7 +2125,7 @@ sns.pairplot(fin_data[columns], hue=<span class="string"><span class="delimiter"
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finの読み込み</span>
-fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984と9983を比較する</span>
 codes = [<span class="integer">9984</span>, <span class="integer">9983</span>]
@@ -2125,12 +2144,9 @@ columns = [
 <span class="comment"># 比較対象の銘柄コード毎に処理</span>
 <span class="keyword">for</span> code <span class="keyword">in</span> codes:
     <span class="comment"># 特定の銘柄コードに絞り込み</span>
-    fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-    <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-    fin_data.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-    fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># 2019年までの値を表示</span>
-    fin_data = fin_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+    fin_data = fin_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
     <span class="comment"># 重複を排除</span>
     fin_data.drop_duplicates(
         subset=[
@@ -2172,14 +2188,11 @@ ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(<span class="
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
 price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
 
@@ -2207,16 +2220,13 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
 
 <span class="comment"># 5日、25日、75日の移動平均を算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
@@ -2251,16 +2261,13 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
 
 <span class="comment"># 5日、25日、75日の価格変化率を算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
@@ -2295,16 +2302,14 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
+
 <span class="comment"># 5日、25日、75日のヒストリカル・ボラティリティを算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
 cols = []
@@ -2338,16 +2343,14 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
+
 <span class="comment"># 5日、25日、75日を対象に値を算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
 ma_cols = []
@@ -2435,11 +2438,8 @@ ax[<span class="integer">2</span>].set_ylabel(<span class="string"><span class="
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finデータを読み込む</span>
-stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-stock_fin.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 <span class="comment"># 2019年までの値を表示</span>
 stock_fin = stock_fin[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
 
@@ -2475,15 +2475,11 @@ sns.heatmap(stock_fin.groupby(<span class="string"><span class="delimiter">&quot
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finデータを読み込む</span>
-stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984にデータを絞る</span>
 code = <span class="integer">9984</span>
 stock_fin = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
-
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-stock_fin.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 
 <span class="comment"># float64型の列に絞り込み</span>
 fin_data = stock_fin.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
@@ -2576,14 +2572,11 @@ fin_data = fin_data.fillna(<span class="integer">0</span>)</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceデータを読み込む</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984にデータを絞る</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 
 <span class="comment"># 終値のみに絞る</span>
 feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
@@ -2617,8 +2610,10 @@ feats[<span class="string"><span class="delimiter">&quot;</span><span class="con
 feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">MA_gap_3month</span><span class="delimiter">&quot;</span></span>] = feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>] / (
     feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>].rolling(<span class="integer">60</span>).mean()
 )
+<span class="comment"># 欠損値処理</span>
+feats = feats.fillna(<span class="integer">0</span>)
 <span class="comment"># 元データのカラムを削除</span>
-feats = feats.dropna().drop([<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>], axis=<span class="integer">1</span>)</code></pre>
+feats = feats.drop([<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>], axis=<span class="integer">1</span>)</code></pre>
 </div>
 </div>
 </div>
@@ -2758,13 +2753,10 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 </span><span class="content">    </span><span class="delimiter">&quot;&quot;&quot;</span></span>
     <span class="comment"># おおまかな手順の1つ目</span>
     <span class="comment"># stock_finデータを読み込み</span>
-    stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+    stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
     <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-    fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-    <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-    fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-    fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># fin_dataのnp.float64のデータのみを取得</span>
     fin_data = fin_data.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
     <span class="comment"># 欠損値処理</span>
@@ -2772,12 +2764,9 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 
     <span class="comment"># おおまかな手順の2つ目</span>
     <span class="comment"># stock_priceデータを読み込む</span>
-    price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+    price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
     <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-    price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-    <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-    price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-    price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># 終値のみに絞る</span>
     feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
     <span class="comment"># 終値の20営業日リターン</span>
@@ -2830,6 +2819,9 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
     <span class="comment"># 銘柄コードを設定</span>
     feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>] = code
 
+    <span class="comment"># 生成対象日以降の特徴量に絞る</span>
+    feats = feats.loc[pd.Timestamp(start_dt) :]
+
     <span class="keyword">return</span> feats</code></pre>
 </div>
 </div>
@@ -2881,12 +2873,9 @@ df.T</code></pre>
         feats = feature[feature[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>] == code]
 
         <span class="comment"># stock_labelデータを読み込み</span>
-        stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>].copy()
+        stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]
         <span class="comment"># 特定の銘柄コードのデータに絞る</span>
         stock_labels = stock_labels[stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
-        <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-        stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-        stock_labels.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 
         <span class="comment"># 特定の目的変数に絞る</span>
         labels = stock_labels[label]
@@ -2900,13 +2889,13 @@ df.T</code></pre>
             labels.index = feats.index
 
             <span class="comment"># データを分割（ホールドアウト法）</span>
-            _train_X = feats[: TRAIN_END].copy()
-            _val_X = feats[VAL_START : VAL_END].copy()
-            _test_X = feats[TEST_START :].copy()
+            _train_X = feats[: TRAIN_END]
+            _val_X = feats[VAL_START : VAL_END]
+            _test_X = feats[TEST_START :]
 
-            _train_y = labels[: TRAIN_END].copy()
-            _val_y = labels[VAL_START : VAL_END].copy()
-            _test_y = labels[TEST_START :].copy()
+            _train_y = labels[: TRAIN_END]
+            _val_y = labels[VAL_START : VAL_END]
+            _test_y = labels[TEST_START :]
 
             <span class="comment"># データを配列に格納 (後ほど結合するため)</span>
             trains_X.append(_train_X)
@@ -3674,6 +3663,17 @@ headerはなし、B列C列はfloat64</code></pre>
             cls.dfs = {}
         <span class="keyword">for</span> k, v <span class="keyword">in</span> inputs.items():
             cls.dfs[k] = pd.read_csv(v)
+            <span class="comment"># DataFrameのindexを設定します。</span>
+            <span class="keyword">if</span> k == <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>:
+                cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+                    cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>]
+                )
+                cls.dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+            <span class="keyword">elif</span> k <span class="keyword">in</span> [<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin_price</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]:
+                cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+                    cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>]
+                )
+                cls.dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
         <span class="keyword">return</span> cls.dfs
 
     <span class="decorator">@classmethod</span>
@@ -3717,15 +3717,12 @@ headerはなし、B列C列はfloat64</code></pre>
             feats = feature[feature[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>] == code]
 
             <span class="comment"># stock_labelデータを読み込み</span>
-            stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>].copy()
+            stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]
             <span class="comment"># 特定の銘柄コードのデータに絞る</span>
             stock_labels = stock_labels[stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
-            <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-            stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-            stock_labels.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 
             <span class="comment"># 特定の目的変数に絞る</span>
-            labels = stock_labels[label]
+            labels = stock_labels[label].copy()
             <span class="comment"># nanを削除</span>
             labels.dropna(inplace=<span class="predefined-constant">True</span>)
 
@@ -3736,13 +3733,13 @@ headerはなし、B列C列はfloat64</code></pre>
                 labels.index = feats.index
 
                 <span class="comment"># データを分割</span>
-                _train_X = feats[: cls.TRAIN_END].copy()
-                _val_X = feats[cls.VAL_START : cls.VAL_END].copy()
-                _test_X = feats[cls.TEST_START :].copy()
+                _train_X = feats[: cls.TRAIN_END]
+                _val_X = feats[cls.VAL_START : cls.VAL_END]
+                _test_X = feats[cls.TEST_START :]
 
-                _train_y = labels[: cls.TRAIN_END].copy()
-                _val_y = labels[cls.VAL_START : cls.VAL_END].copy()
-                _test_y = labels[cls.TEST_START :].copy()
+                _train_y = labels[: cls.TRAIN_END]
+                _val_y = labels[cls.VAL_START : cls.VAL_END]
+                _test_y = labels[cls.TEST_START :]
 
                 <span class="comment"># データを配列に格納 (後ほど結合するため)</span>
                 trains_X.append(_train_X)
@@ -3774,35 +3771,28 @@ headerはなし、B列C列はfloat64</code></pre>
 </span><span class="content">            feature DataFrame (pd.DataFrame)</span><span class="content">
 </span><span class="content">        </span><span class="delimiter">&quot;&quot;&quot;</span></span>
         <span class="comment"># stock_finデータを読み込み</span>
-        stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+        stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
         <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-        fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-        <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-        fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-        fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+        fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
+        <span class="comment"># 特徴量の作成には過去60営業日のデータを使用しているため、</span>
+        <span class="comment"># 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します</span>
+        n = <span class="integer">90</span>
+        <span class="comment"># 特徴量の生成対象期間を指定</span>
+        fin_data = fin_data.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
         <span class="comment"># fin_dataのnp.float64のデータのみを取得</span>
         fin_data = fin_data.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
         <span class="comment"># 欠損値処理</span>
         fin_feats = fin_data.fillna(<span class="integer">0</span>)
 
-        <span class="comment"># 特徴量の作成には過去60営業日のデータを使用しているため、</span>
-        <span class="comment"># 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します</span>
-        n = <span class="integer">90</span>
-        <span class="comment"># 特徴量の生成対象期間を指定</span>
-        fin_feats = fin_feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
-
         <span class="comment"># stock_priceデータを読み込む</span>
-        price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+        price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
         <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-        price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-        <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-        price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-        price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+        price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
         <span class="comment"># 終値のみに絞る</span>
-        feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
+        feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]]
         <span class="comment"># 特徴量の生成対象期間を指定</span>
-        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
+        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :].copy()
 
         <span class="comment"># 終値の20営業日リターン</span>
         feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">return_1month</span><span class="delimiter">&quot;</span></span>] = feats[
@@ -4130,6 +4120,31 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </div>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_ランタイム環境に関して">2.13.3. ランタイム環境に関して</h4>
+<div class="paragraph">
+<p>■&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;環&#8203;境&#8203;で&#8203;の&#8203;利&#8203;用&#8203;可&#8203;能&#8203;な&#8203;デー&#8203;タ&#8203;に&#8203;つ&#8203;い&#8203;て</p>
+</div>
+<div class="paragraph">
+<p>・&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;環&#8203;境&#8203;に&#8203;提&#8203;出&#8203;し&#8203;た&#8203;モ&#8203;デ&#8203;ル&#8203;は、&#8203;各&#8203;銘&#8203;柄&#8203;の&#8203;株&#8203;価&#8203;の&#8203;最&#8203;高&#8203;値&#8203;及&#8203;び&#8203;最&#8203;安&#8203;値&#8203;を&#8203;予&#8203;測&#8203;す&#8203;る&#8203;際、&#8203;評&#8203;価&#8203;対&#8203;象&#8203;と&#8203;な&#8203;る&#8203;決&#8203;算&#8203;短&#8203;信&#8203;の&#8203;開&#8203;示&#8203;日&#8203;以&#8203;前&#8203;の&#8203;デー&#8203;タ&#8203;（銘&#8203;柄、&#8203;株&#8203;価、&#8203;ファ&#8203;ン&#8203;ダ&#8203;メ&#8203;ン&#8203;タ&#8203;ル&#8203;情&#8203;報）&#8203;を&#8203;利&#8203;用&#8203;す&#8203;る&#8203;こ&#8203;と&#8203;が&#8203;で&#8203;き&#8203;ま&#8203;す。</p>
+</div>
+<div class="paragraph">
+<p>・&#8203;た&#8203;だ&#8203;し、&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;環&#8203;境&#8203;で&#8203;は、&#8203;評&#8203;価&#8203;対&#8203;象&#8203;と&#8203;な&#8203;る&#8203;決&#8203;算&#8203;短&#8203;信&#8203;の&#8203;開&#8203;示&#8203;日&#8203;の&#8203;期&#8203;間&#8203;の&#8203;デー&#8203;タ&#8203;を&#8203;全&#8203;て&#8203;格&#8203;納&#8203;し&#8203;て&#8203;い&#8203;る&#8203;た&#8203;め、&#8203;予&#8203;測&#8203;時&#8203;に&#8203;開&#8203;示&#8203;日&#8203;よ&#8203;り&#8203;未&#8203;来&#8203;の&#8203;デー&#8203;タ&#8203;を&#8203;利&#8203;用&#8203;す&#8203;る&#8203;と、&#8203;リー&#8203;ク&#8203;が&#8203;生&#8203;じ&#8203;る&#8203;こ&#8203;と&#8203;に&#8203;な&#8203;り&#8203;ま&#8203;す。</p>
+</div>
+<div class="paragraph">
+<p>・&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;環&#8203;境&#8203;で&#8203;こ&#8203;れ&#8203;ら&#8203;の&#8203;デー&#8203;タ&#8203;を&#8203;用&#8203;い&#8203;て&#8203;特&#8203;徴&#8203;量&#8203;生&#8203;成&#8203;や&#8203;モ&#8203;デ&#8203;ル&#8203;の&#8203;再&#8203;学&#8203;習&#8203;を&#8203;行&#8203;う&#8203;際&#8203;は、&#8203;リー&#8203;ク&#8203;が&#8203;含&#8203;ま&#8203;れ&#8203;な&#8203;い&#8203;よ&#8203;う&#8203;ご&#8203;留&#8203;意&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
+</div>
+<div class="paragraph">
+<p>以&#8203;下、&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;実&#8203;行&#8203;日&#8203;が&#8203;5&#8203;月&#8203;10&#8203;日&#8203;の&#8203;ケー&#8203;ス&#8203;（Private 1st）&#8203;を&#8203;例&#8203;と&#8203;し&#8203;て&#8203;取&#8203;り&#8203;上&#8203;げ&#8203;ま&#8203;す。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>・ランタイム環境には、2016年1月1日から2021年4月5日までのデータが配置されています
+・提出モデルは、3月29日に開示された決算短信について翌営業日より20営業日間の最高値及び最安値を予測する際、3月29日までのデータを利用できます。3月30日以降のデータを利用するとリークとなり、入賞資格を失います
+・同様に、4月1日に開示された決算短信について予測する際には、4月2日以降のデータは利用できません</pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -4427,6 +4442,16 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">和&#8203;泉&#8203; &#8203;潔&#8203;他</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">市&#8203;場&#8203;レ&#8203;ポー&#8203;ト&#8203;や&#8203;経&#8203;済&#8203;ニュー&#8203;ス&#8203;な&#8203;ど&#8203;の&#8203;テ&#8203;キ&#8203;ス&#8203;ト&#8203;デー&#8203;タ&#8203;を&#8203;分&#8203;析&#8203;し、&#8203;資&#8203;産&#8203;運&#8203;用&#8203;や&#8203;市&#8203;場&#8203;分&#8203;析&#8203;に&#8203;活&#8203;か&#8203;す&#8203;手&#8203;法&#8203;を&#8203;解&#8203;説&#8203;し&#8203;て&#8203;い&#8203;る。&#8203;数&#8203;式&#8203;は&#8203;少&#8203;な&#8203;く、&#8203;金&#8203;融&#8203;テ&#8203;キ&#8203;ス&#8203;ト&#8203;マ&#8203;イ&#8203;ニ&#8203;ン&#8203;グ&#8203;の&#8203;独&#8203;特&#8203;な&#8203;注&#8203;意&#8203;点&#8203;や&#8203;思&#8203;考&#8203;法&#8203;を&#8203;中&#8203;心&#8203;に&#8203;整&#8203;理&#8203;し&#8203;て&#8203;お&#8203;り、&#8203;初&#8203;め&#8203;て&#8203;金&#8203;融&#8203;分&#8203;野&#8203;の&#8203;テ&#8203;キ&#8203;ス&#8203;ト&#8203;マ&#8203;イ&#8203;ニ&#8203;ン&#8203;グ&#8203;を&#8203;す&#8203;る&#8203;人&#8203;に&#8203;は&#8203;助&#8203;か&#8203;る&#8203;一&#8203;冊。</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">統&#8203;計&#8203;学&#8203;入&#8203;門</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">東&#8203;京&#8203;大&#8203;学&#8203;教&#8203;養&#8203;学&#8203;部&#8203;統&#8203;計&#8203;学&#8203;教&#8203;室&#8203; &#8203;編</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文&#8203;科&#8203;と&#8203;理&#8203;科&#8203;両&#8203;方&#8203;の&#8203;学&#8203;生&#8203;の&#8203;た&#8203;め&#8203;に，&#8203;統&#8203;計&#8203;的&#8203;な&#8203;も&#8203;の&#8203;の&#8203;考&#8203;え&#8203;方&#8203;の&#8203;基&#8203;礎&#8203;が&#8203;や&#8203;さ&#8203;し&#8203;く&#8203;解&#8203;説&#8203;さ&#8203;れ&#8203;て&#8203;お&#8203;り、&#8203;統&#8203;計&#8203;学&#8203;の&#8203;体&#8203;系&#8203;的&#8203;な&#8203;知&#8203;識&#8203;を&#8203;与&#8203;え&#8203;る&#8203;よ&#8203;う&#8203;に，&#8203;編&#8203;集・&#8203;執&#8203;筆&#8203;さ&#8203;れ&#8203;た&#8203;一&#8203;冊。</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Python&#8203;デー&#8203;タ&#8203;サ&#8203;イ&#8203;エ&#8203;ン&#8203;ス&#8203;ハ&#8203;ン&#8203;ド&#8203;ブッ&#8203;ク</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Jake VanderPlas &#8203;著、&#8203;菊&#8203;池&#8203; &#8203;彰&#8203; &#8203;訳</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;に&#8203;お&#8203;い&#8203;て&#8203;も&#8203;利&#8203;用&#8203;さ&#8203;れ&#8203;て&#8203;い&#8203;る&#8203;Jupyter、&#8203;NumPy、&#8203;pandas、&#8203;Matplotlib、&#8203;scikit-learn&#8203;等&#8203;を&#8203;カ&#8203;バー&#8203;し&#8203;て&#8203;い&#8203;る&#8203;一&#8203;冊。&#8203;そ&#8203;れ&#8203;ぞ&#8203;れ&#8203;の&#8203;ト&#8203;ピッ&#8203;ク&#8203;に&#8203;つ&#8203;い&#8203;て、&#8203;押&#8203;さ&#8203;え&#8203;て&#8203;お&#8203;く&#8203;べ&#8203;き&#8203;基&#8203;本、&#8203;tips、&#8203;便&#8203;利&#8203;な&#8203;コ&#8203;マ&#8203;ン&#8203;ド&#8203;な&#8203;ど&#8203;が&#8203;紹&#8203;介&#8203;さ&#8203;れ&#8203;て&#8203;い&#8203;る。</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -4674,6 +4699,68 @@ ROE&#8203;や&#8203;ROA&#8203;は、&#8203;効&#8203;率&#8203;性&#8203;を&#82
 <h4 id="_再学習を行うことでモデルの出力分布が変わらないか">4.12.2. 再学習を行うことでモデルの出力分布が変わらないか</h4>
 <div class="paragraph">
 <p>こ&#8203;ち&#8203;ら&#8203;は、&#8203;シ&#8203;ス&#8203;テ&#8203;ム&#8203;で&#8203;運&#8203;用&#8203;す&#8203;る&#8203;場&#8203;合&#8203;に&#8203;発&#8203;生&#8203;し&#8203;や&#8203;す&#8203;い&#8203;問&#8203;題&#8203;で&#8203;す。&#8203;例&#8203;え&#8203;ば、&#8203;投&#8203;資&#8203;す&#8203;る&#8203;際&#8203;の&#8203;購&#8203;入&#8203;タ&#8203;イ&#8203;ミ&#8203;ン&#8203;グ&#8203;を、&#8203;モ&#8203;デ&#8203;ル&#8203;の&#8203;出&#8203;力&#8203;が&#8203;0.8&#8203;以&#8203;上&#8203;と&#8203;いっ&#8203;た&#8203;し&#8203;き&#8203;い&#8203;値&#8203;を&#8203;用&#8203;い&#8203;た&#8203;実&#8203;装&#8203;を&#8203;し&#8203;て&#8203;い&#8203;た&#8203;と&#8203;し&#8203;ま&#8203;す。&#8203;こ&#8203;の&#8203;際&#8203;に&#8203;再&#8203;学&#8203;習&#8203;を&#8203;行&#8203;う&#8203;こ&#8203;と&#8203;で&#8203;モ&#8203;デ&#8203;ル&#8203;の&#8203;出&#8203;力&#8203;が&#8203;変&#8203;わ&#8203;る&#8203;と、&#8203;想&#8203;像&#8203;以&#8203;上&#8203;に&#8203;購&#8203;入&#8203;し&#8203;た&#8203;り、&#8203;逆&#8203;に&#8203;購&#8203;入&#8203;を&#8203;実&#8203;施&#8203;し&#8203;な&#8203;く&#8203;なっ&#8203;た&#8203;り&#8203;し&#8203;ま&#8203;す。&#8203;再&#8203;学&#8203;習&#8203;を&#8203;行っ&#8203;た&#8203;場&#8203;合、&#8203;直&#8203;近&#8203;数&#8203;週&#8203;間&#8203;程&#8203;度&#8203;の&#8203;デー&#8203;タ&#8203;は&#8203;利&#8203;用&#8203;せ&#8203;ず&#8203;に、&#8203;古&#8203;い&#8203;モ&#8203;デ&#8203;ル&#8203;と&#8203;新&#8203;し&#8203;い&#8203;モ&#8203;デ&#8203;ル&#8203;で&#8203;出&#8203;力&#8203;を&#8203;比&#8203;較&#8203;し、&#8203;出&#8203;力&#8203;の&#8203;分&#8203;布&#8203;が&#8203;変&#8203;わっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と&#8203;を&#8203;確&#8203;認&#8203;す&#8203;る&#8203;の&#8203;が&#8203;良&#8203;い&#8203;で&#8203;しょ&#8203;う。</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_google_colaboratoryの使用法">4.13. Google Colaboratoryの使用法</h3>
+<div class="paragraph">
+<p>Google Colaboratory&#8203;は、&#8203;ブ&#8203;ラ&#8203;ウ&#8203;ザ&#8203;か&#8203;ら&#8203; Python &#8203;を&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;形&#8203;式&#8203;で&#8203;記&#8203;述、&#8203;実&#8203;行&#8203;で&#8203;き&#8203;る&#8203;サー&#8203;ビ&#8203;ス&#8203;で&#8203;す。&#8203;環&#8203;境&#8203;構&#8203;築&#8203;が&#8203;不&#8203;要&#8203;と&#8203;なっ&#8203;て&#8203;お&#8203;り、&#8203;本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;も&#8203;Google Colaboratory&#8203;で&#8203;実&#8203;行&#8203;す&#8203;る&#8203;こ&#8203;と&#8203;が&#8203;可&#8203;能&#8203;と&#8203;なっ&#8203;て&#8203;い&#8203;ま&#8203;す。&#8203;ま&#8203;た、&#8203;時&#8203;間&#8203;等&#8203;の&#8203;制&#8203;限&#8203;は&#8203;ご&#8203;ざ&#8203;い&#8203;ま&#8203;す&#8203;が&#8203;GPU&#8203;を&#8203;利&#8203;用&#8203;で&#8203;き&#8203;る&#8203;こ&#8203;と&#8203;や、&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;の&#8203;共&#8203;有&#8203;が&#8203;簡&#8203;単&#8203;に&#8203;で&#8203;き&#8203;る&#8203;こ&#8203;と&#8203;な&#8203;ど、&#8203;多&#8203;く&#8203;の&#8203;利&#8203;点&#8203;を&#8203;備&#8203;え&#8203;て&#8203;い&#8203;ま&#8203;す&#8203; (<a href="https://colab.research.google.com/notebooks/intro.ipynb?hl=ja#">参考元</a>  )。</p>
+</div>
+<div class="sect3">
+<h4 id="_colab_でノートブックが動作する時間は">4.13.1. <strong>Colab でノートブックが動作する時間は？</strong></h4>
+<div class="paragraph">
+<p>本&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;を&#8203;Google Colaboratory&#8203;で&#8203;実&#8203;行&#8203;す&#8203;る&#8203;際&#8203;に&#8203;は&#8203;時&#8203;間&#8203;制&#8203;限&#8203;に&#8203;ご&#8203;注&#8203;意&#8203;く&#8203;だ&#8203;さ&#8203;い。&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;は、&#8203;イ&#8203;ン&#8203;ス&#8203;タ&#8203;ン&#8203;ス&#8203;が&#8203;起&#8203;動&#8203;さ&#8203;れ&#8203;た&#8203;後&#8203; 12 &#8203;時&#8203;間&#8203;経&#8203;過&#8203;す&#8203;る&#8203;と&#8203;自&#8203;動&#8203;的&#8203;に&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;が&#8203;リ&#8203;セッ&#8203;ト&#8203;さ&#8203;れ&#8203;実&#8203;行&#8203;環&#8203;境&#8203;が&#8203;初&#8203;期&#8203;化&#8203;さ&#8203;れ&#8203;ま&#8203;す。&#8203;ま&#8203;た、&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;の&#8203;ア&#8203;イ&#8203;ド&#8203;ル&#8203;状&#8203;態&#8203;が&#8203; 90 &#8203;分&#8203;続&#8203;く&#8203;と&#8203;タ&#8203;イ&#8203;ム&#8203;ア&#8203;ウ&#8203;ト&#8203;し、&#8203;こ&#8203;ち&#8203;ら&#8203;も&#8203;ラ&#8203;ン&#8203;タ&#8203;イ&#8203;ム&#8203;が&#8203;リ&#8203;セッ&#8203;ト&#8203;さ&#8203;れ&#8203;ま&#8203;す。&#8203;(&#8203;詳&#8203;細&#8203;は&#8203;<a href="https://research.google.com/colaboratory/faq.html#:~:text=How%20long%20can%20notebooks%20run,or%20based%20on%20your%20usage">Google Colaboratory&#8203;の&#8203;Q&amp;A</a>&#8203;を&#8203;ご&#8203;参&#8203;照&#8203;く&#8203;だ&#8203;さ&#8203;い。&#8203;)。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_本コンペでgoogle_colaboratoryを使用するために">4.13.2. 本コンペでGoogle Colaboratoryを使用するために</h4>
+<div class="paragraph">
+<p>本&#8203;コ&#8203;ン&#8203;ペ&#8203;の&#8203;2&#8203;章&#8203;の&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;を&#8203;Google Colaboratory&#8203;上&#8203;で&#8203;動&#8203;か&#8203;す&#8203;た&#8203;め&#8203;に&#8203;は、&#8203;ま&#8203;ず&#8203;以&#8203;下&#8203;の&#8203;手&#8203;順&#8203;で&#8203;Google Drive&#8203;上&#8203;に&#8203;ファ&#8203;イ&#8203;ル&#8203;を&#8203;設&#8203;置&#8203;し&#8203;ま&#8203;す。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Google Drive&#8203;の&#8203;My Drive&#8203;に&#8203;<code>JPX_competition</code>&#8203;と&#8203;い&#8203;う&#8203;フォ&#8203;ル&#8203;ダー&#8203;を&#8203;作&#8203;成&#8203;し&#8203;ま&#8203;す。</p>
+</li>
+<li>
+<p>SIGNATE&#8203;の&#8203;コ&#8203;ン&#8203;ペ&#8203;ティ&#8203;ショ&#8203;ン&#8203;サ&#8203;イ&#8203;ト&#8203;よ&#8203;り&#8203;ダ&#8203;ウ&#8203;ン&#8203;ロー&#8203;ド&#8203;し&#8203;た&#8203;各&#8203;種&#8203;デー&#8203;タ&#8203;を&#8203;1&#8203;で&#8203;作&#8203;成&#8203;し&#8203;た&#8203;フォ&#8203;ル&#8203;ダー&#8203;に&#8203;アッ&#8203;プ&#8203;ロー&#8203;ド&#8203;し&#8203;ま&#8203;す。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>次&#8203;に&#8203;Google Colaboratory&#8203;上&#8203;で&#8203;チュー&#8203;ト&#8203;リ&#8203;ア&#8203;ル&#8203;の&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;を&#8203;展&#8203;開&#8203;し&#8203;ま&#8203;す。&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;は&#8203;Google Colaboratory&#8203;上&#8203;で&#8203;も&#8203;実&#8203;行&#8203;可&#8203;能&#8203;と&#8203;なっ&#8203;て&#8203;お&#8203;り、&#8203;そ&#8203;の&#8203;ま&#8203;ま&#8203;編&#8203;集&#8203;な&#8203;し&#8203;で&#8203;実&#8203;行&#8203;で&#8203;き&#8203;ま&#8203;す。&#8203;以&#8203;下、&#8203;具&#8203;体&#8203;的&#8203;な&#8203;方&#8203;法&#8203;を&#8203;説&#8203;明&#8203;し&#8203;ま&#8203;す。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;を&#8203;ダ&#8203;ウ&#8203;ン&#8203;ロー&#8203;ド&#8203;し&#8203;ま&#8203;す。&#8203; <a href="https://github.com/JapanExchangeGroup/J-Quants-Tutorial/blob/main/handson/Chapter02/20210121-chapter02-tutorial.ipynb">こちらのGithubリポジトリ</a>&#8203;よ&#8203;り&#8203;Raw&#8203;ボ&#8203;タ&#8203;ン&#8203;を&#8203;右&#8203;ク&#8203;リッ&#8203;ク&#8203;し、&#8203;「リ&#8203;ン&#8203;ク&#8203;先&#8203;を&#8203;名&#8203;前&#8203;を&#8203;つ&#8203;け&#8203;て&#8203;保&#8203;存」&#8203;を&#8203;選&#8203;択&#8203;し&#8203;て&#8203;先&#8203;程&#8203;作&#8203;成&#8203;し&#8203;た&#8203;<code>JPX_competition</code>&#8203;に&#8203;保&#8203;存&#8203;し&#8203;て&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
+</li>
+<li>
+<p>Google Drive&#8203;に&#8203;アッ&#8203;プ&#8203;ロー&#8203;ド&#8203;し&#8203;た&#8203; <code>20210121-chapter02-tutorial.ipynb</code> &#8203;ファ&#8203;イ&#8203;ル&#8203;を&#8203;ダ&#8203;ブ&#8203;ル&#8203;ク&#8203;リッ&#8203;ク&#8203;し&#8203;て&#8203; Google Colaboratory &#8203;で&#8203;開&#8203;き&#8203;ま&#8203;す。</p>
+</li>
+<li>
+<p>コ&#8203;ン&#8203;ペ&#8203;ティ&#8203;ショ&#8203;ン&#8203;デー&#8203;タ&#8203;を&#8203;ノー&#8203;ト&#8203;ブッ&#8203;ク&#8203;で&#8203;読&#8203;み&#8203;込&#8203;む&#8203;た&#8203;め&#8203;に、&#8203;Google Drive&#8203;へ&#8203;マ&#8203;ウ&#8203;ン&#8203;ト&#8203;し&#8203;ま&#8203;す。&#8203;マ&#8203;ウ&#8203;ン&#8203;ト&#8203;方&#8203;法&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;は&#8203;<a href="https://qiita.com/kado_u/items/45b76f9a6f920bf0f786">こちら</a>&#8203;の&#8203;記&#8203;事&#8203;を&#8203;ご&#8203;参&#8203;照&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_内国株の売買制度">4.14. 内国株の売買制度</h3>
+<div class="paragraph">
+<p>本&#8203;節&#8203;で&#8203;は、&#8203;本&#8203;コ&#8203;ン&#8203;ペ&#8203;ティ&#8203;ショ&#8203;ン&#8203;の&#8203;題&#8203;材&#8203;と&#8203;なっ&#8203;て&#8203;い&#8203;る&#8203;株&#8203;式&#8203;の&#8203;売&#8203;買&#8203;制&#8203;度&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;説&#8203;明&#8203;し&#8203;ま&#8203;す。</p>
+</div>
+<div class="sect3">
+<h4 id="_制限値幅">4.14.1. 制限値幅</h4>
+<div class="paragraph">
+<p>東&#8203;京&#8203;証&#8203;券&#8203;取&#8203;引&#8203;所&#8203;で&#8203;は、&#8203;一&#8203;日&#8203;の&#8203;売&#8203;買&#8203;に&#8203;お&#8203;け&#8203;る&#8203;値&#8203;動&#8203;き&#8203;の&#8203;幅&#8203;を&#8203;価&#8203;格&#8203;水&#8203;準&#8203;に&#8203;応&#8203;じ&#8203;て&#8203;一&#8203;定&#8203;に&#8203;制&#8203;限&#8203;し&#8203;て&#8203;お&#8203;り、&#8203;こ&#8203;の&#8203;値&#8203;幅&#8203;を&#8203; <strong>&#8203;制&#8203;限&#8203;値&#8203;幅&#8203;</strong> &#8203;と&#8203;い&#8203;い&#8203;ま&#8203;す。&#8203;制&#8203;限&#8203;値&#8203;幅&#8203;は、&#8203;前&#8203;日&#8203;の&#8203;終&#8203;値&#8203;又&#8203;は&#8203;最&#8203;終&#8203;気&#8203;配&#8203;値&#8203;段&#8203;な&#8203;ど&#8203;（以&#8203;下、&#8203;「基&#8203;準&#8203;値&#8203;段」&#8203;と&#8203;言&#8203;い&#8203;ま&#8203;す）&#8203;を&#8203;基&#8203;準&#8203;と&#8203;し&#8203;て&#8203;お&#8203;り、&#8203;そ&#8203;の&#8203;値&#8203;幅&#8203;の&#8203;大&#8203;き&#8203;さ&#8203;は&#8203;基&#8203;準&#8203;値&#8203;段&#8203;に&#8203;よっ&#8203;て&#8203;異&#8203;な&#8203;り&#8203;ま&#8203;す。&#8203;詳&#8203;細&#8203;は&#8203;<a href="https://www.jpx.co.jp/equities/trading/domestic/06.html">こちら</a>&#8203;を&#8203;ご&#8203;参&#8203;照&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_呼値の単位">4.14.2. 呼値の単位</h4>
+<div class="paragraph">
+<p>内&#8203;国&#8203;株&#8203;式&#8203;の&#8203;売&#8203;買&#8203;の&#8203;注&#8203;文&#8203;を&#8203;す&#8203;る&#8203;際&#8203;の&#8203;値&#8203;段&#8203;の&#8203;刻&#8203;み&#8203;こ&#8203;と&#8203;を&#8203; <strong>&#8203;呼&#8203;値&#8203;の&#8203;単&#8203;位&#8203;</strong> &#8203;と&#8203;い&#8203;い、&#8203;こ&#8203;の&#8203;呼&#8203;値&#8203;の&#8203;単&#8203;位&#8203;は、&#8203;売&#8203;買&#8203;の&#8203;対&#8203;象&#8203;と&#8203;な&#8203;る&#8203;銘&#8203;柄&#8203;及&#8203;び&#8203;そ&#8203;の&#8203;値&#8203;段&#8203;の&#8203;水&#8203;準&#8203;に&#8203;応&#8203;じ&#8203;て&#8203;異&#8203;な&#8203;り&#8203;ま&#8203;す。&#8203;各&#8203;値&#8203;段&#8203;の&#8203;水&#8203;準&#8203;に&#8203;お&#8203;け&#8203;る&#8203;詳&#8203;細&#8203;な&#8203;呼&#8203;値&#8203;の&#8203;単&#8203;位&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;は、&#8203;<a href="https://www.jpx.co.jp/equities/trading/domestic/07.html">こちら</a>&#8203;を&#8203;ご&#8203;参&#8203;照&#8203;く&#8203;だ&#8203;さ&#8203;い。&#8203;な&#8203;お、&#8203;銘&#8203;柄&#8203;に&#8203;よっ&#8203;て&#8203;は&#8203;呼&#8203;値&#8203;の&#8203;単&#8203;位&#8203;は&#8203;整&#8203;数&#8203;で&#8203;は&#8203;な&#8203;く、&#8203;小&#8203;数&#8203;点&#8203;が&#8203;あ&#8203;る&#8203;も&#8203;の&#8203;も&#8203;ご&#8203;ざ&#8203;い&#8203;ま&#8203;す&#8203;の&#8203;で&#8203;ご&#8203;留&#8203;意&#8203;く&#8203;だ&#8203;さ&#8203;い。</p>
 </div>
 </div>
 </div>
@@ -5300,7 +5387,7 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 </div>
 <div id="footer">
 <div id="footer-text">
-最終更新 2021-02-05 14:55:08 +0900
+最終更新 2021-02-12 18:31:45 +0900
 </div>
 </div>
 <script type="text/x-mathjax-config">

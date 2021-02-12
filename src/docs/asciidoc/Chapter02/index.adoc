@@ -98,7 +98,7 @@ F)	2021年3月27日から同年5月15日までの期間に開示されている�
 G)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと
 
 
-H)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
+H)  訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
 
 なお、ある同一銘柄について、これらの条件を満たす決算短信が複数存在する場合は、最も新しく開示されたもののみを予測の対象とします。
 
@@ -175,7 +175,9 @@ P_low : 最安値の順位相関係数
 
 次に、本コンペティションのPrivate LBについて説明します。本コンペティションでは、モデル提出締切日よりも将来のデータを用いて、Private LBを出力します。具体的には、本コンペティションのPrivate LBでは、2021年3月27日（土）〜2021年5月15日（土）に開示された決算短信を対象に、その開示日から起算して20営業日を経過した期間における最高値及び最安値を予測します。
 
-また、この予測に当たっては、決算短信の開示日の期間に応じて5回に分けて実施し、最終的な順位は5回目の評価で決定します。この5回の評価のスケジュールは次を予定しております。
+また、この予測に当たっては、決算短信の開示日の期間に応じて5回に分けて実施し、最終的な順位は5回目の評価で決定します。(評価の計算は5回行われますが、最後の1回を除く4回は途中経過をリーダーボードでご確認いただけるように計算しているものになります。)
+
+この5回の評価のスケジュールは次を予定しております。
 
 - 5月10日（月）に3月27日（土）〜4月5日（月）分の財務諸表の評価
 - 5月17日（月）に3月27日（土）〜4月12日（月）分の財務諸表の評価
@@ -201,7 +203,7 @@ P_low : 最安値の順位相関係数
 上場企業の株価は、各社の経営状態等を反映して日々刻々と変化します。そのため、金融商品市場において公正な価格形成と円滑な流通を確保するためには公平で適時、適切な情報開示が必要不可欠なものとなっています。
 
 
-東京証券取引所では、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けており、上場企業は、報道機関等を通じてあるいはTDnet（適時開示情報伝達システム）により直接に、広く、かつタイムリーに伝達することという特徴があります。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。適時開示資料とそのメタデータ（タイトル、開示日時等）を総称して適時開示情報と呼び、適時開示情報は「適時開示情報閲覧サービス（リンク）」で開示されます。下図に投資家における適時開示資料の代表的な用途を示します。
+東京証券取引所では、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けており、上場企業は、報道機関等を通じてあるいはTDnet（適時開示情報伝達システム）により直接に、広く、かつタイムリーに伝達することという特徴があります。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。適時開示資料とそのメタデータ（タイトル、開示日時等）を総称して適時開示情報と呼び、適時開示情報は「link:https://www.release.tdnet.info/inbs/I_main_00.html[適時開示情報閲覧サービス]」で開示されます。下図に投資家における適時開示資料の代表的な用途を示します。
 
 *投資家における適時開示資料の代表的な用途*
 
@@ -209,7 +211,7 @@ image::structure.png[structure]
 (開示資料と翻訳より引用 https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf)
 
 
-上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。また、東証は上場企業に対し、四半期決算期末後45日以内の決算内容の開示を要請しています。決算短信の作成要領等は、下記Webサイトで公開されています。
+上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。四半期決算短信については、金商法に基づく四半期報告書の法定提出期限が45日とされていることから、また、決算短信については、決算期末後45日以内に決算の内容を開示することを東証が要請していることから、決算短信等の多くは期末後45日以内に開示されています。決算短信の作成要領等は、下記Webサイトで公開されています。
 
 決算短信作成要領・四半期決算短信作成要領 | 日本取引所グループ +
 https://www.jpx.co.jp/equities/listed-co/format/summary/index.html
@@ -433,6 +435,10 @@ image::sample_stock_labels.png[sample_stock_label]
 anaconda3-2019.03
 ----
 
+==== Google Colaboratoryの利用
+
+本章はDockerを用いた実行環境の利用を想定して記述しておりますが、Dockerの実行環境構築がご利用のOSなど何らかの理由により困難な方、より簡便にチュートリアルを実行したい方はGoogle Colaboratoryの利用をご検討ください。本チュートリアルで提供されるNotebookはGoogle Colaboratoryでも実行可能です。詳細は第4章をご参照ください。
+
 ==== Dockerを用いた実行環境構築方法
 
 本チュートリアルのリポジトリを `git clone` していただき、以下の手順を実行していただくことで実行環境のdockerコンテナ内でjupyter notebookを起動可能となっています。 `Chapter02` ディレクトリ内には、本チュートリアルのコードを記載した ipynb ファイルを配置しておりますので必要に応じてご活用ください。
@@ -573,6 +579,17 @@ dfs = {}
 for k, v in inputs.items():
     print(k)
     dfs[k] = pd.read_csv(v)
+    # DataFrameのindexを設定します。
+    if k == "stock_price":
+        dfs[k].loc[:, "datetime"] = pd.to_datetime(
+            dfs[k].loc[:, "EndOfDayQuote Date"]
+        )
+        dfs[k].set_index("datetime", inplace=True)
+    elif k in ["stock_fin", "stock_fin_price", "stock_labels"]:
+        dfs[k].loc[:, "datetime"] = pd.to_datetime(
+            dfs[k].loc[:, "base_date"]
+        )
+        dfs[k].set_index("datetime", inplace=True)
 ----
 
 読み込んだデータを確認します。
@@ -598,15 +615,12 @@ Chapter 2.2 データセットの説明では、本コンペで用いるデー�
 [source, python]
 ----
 # stock_finの読み込み
-fin = dfs["stock_fin"].copy()
+fin = dfs["stock_fin"]
 
 # 銘柄コード9984にデータを絞る
 code = 9984
-fin_data = fin[fin["Local Code"] == code].copy()
+fin_data = fin[fin["Local Code"] == code]
 
-# 日付列をpd.Timestamp型に変換してindexに設定
-fin_data["datetime"] = pd.to_datetime(fin_data["base_date"])
-fin_data.set_index("datetime", inplace=True)
 # 2019年までの値を表示
 fin_data = fin_data[:"2019"]
 
@@ -633,7 +647,7 @@ image::sample_fin_stock.png[sample fin plot]
 [source, python]
 ----
 # stock_finの読み込み
-fin = dfs["stock_fin"].copy()
+fin = dfs["stock_fin"]
 
 # 銘柄コード9984と9983を比較する
 codes = [9984, 9983]
@@ -652,12 +666,9 @@ columns = [
 # 比較対象の銘柄コード毎に処理
 for code in codes:
     # 特定の銘柄コードに絞り込み
-    fin_data = fin[fin["Local Code"] == code].copy()
-    # 日付列をpd.Timestamp型に変換してindexに設定
-    fin_data.loc[:, "datetime"] = pd.to_datetime(fin_data["base_date"])
-    fin_data.set_index("datetime", inplace=True)
+    fin_data = fin[fin["Local Code"] == code]
     # 2019年までの値を表示
-    fin_data = fin_data[:"2019"]
+    fin_data = fin_data[:"2019"].copy()
     # 重複を排除
     fin_data.drop_duplicates(
         subset=[
@@ -692,14 +703,11 @@ image::sample_comparison.png[sample_comparison]
 [source, python]
 ----
 # stock_priceの読み込み
-price = dfs["stock_price"].copy()
+price = dfs["stock_price"]
 
 # 特定の銘柄コードに絞り込み
 code = 9984
-price_data = price[price["Local Code"] == code].copy()
-# 日付列をpd.Timestamp型に変換してindexに設定
-price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-price_data.set_index("datetime", inplace=True)
+price_data = price[price["Local Code"] == code]
 # 2019年までの値を表示
 price_data = price_data[:"2019"]
 
@@ -722,16 +730,13 @@ image::sample_stock_price_close.png[sample_close_price]
 [source, python]
 ----
 # stock_priceの読み込み
-price = dfs["stock_price"].copy()
+price = dfs["stock_price"]
 
 # 特定の銘柄コードに絞り込み
 code = 9984
-price_data = price[price["Local Code"] == code].copy()
-# 日付列をpd.Timestamp型に変換してindexに設定
-price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-price_data.set_index("datetime", inplace=True)
+price_data = price[price["Local Code"] == code]
 # 2019年までの値を表示
-price_data = price_data[:"2019"]
+price_data = price_data[:"2019"].copy()
 
 # 5日、25日、75日の移動平均を算出
 periods = [5, 25, 75]
@@ -761,16 +766,13 @@ image::sample_moving_average.png[sample_SMA]
 [source, python]
 ----
 # stock_priceの読み込み
-price = dfs["stock_price"].copy()
+price = dfs["stock_price"]
 
 # 特定の銘柄コードに絞り込み
 code = 9984
-price_data = price[price["Local Code"] == code].copy()
-# 日付列をpd.Timestamp型に変換してindexに設定
-price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-price_data.set_index("datetime", inplace=True)
+price_data = price[price["Local Code"] == code]
 # 2019年までの値を表示
-price_data = price_data[:"2019"]
+price_data = price_data[:"2019"].copy()
 
 # 5日、25日、75日の価格変化率を算出
 periods = [5, 25, 75]
@@ -801,16 +803,14 @@ image::sample_rate_of_return.png[sample_rr]
 [source, python]
 ----
 # stock_priceの読み込み
-price = dfs["stock_price"].copy()
+price = dfs["stock_price"]
 
 # 特定の銘柄コードに絞り込み
 code = 9984
-price_data = price[price["Local Code"] == code].copy()
-# 日付列をpd.Timestamp型に変換してindexに設定
-price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-price_data.set_index("datetime", inplace=True)
+price_data = price[price["Local Code"] == code]
 # 2019年までの値を表示
-price_data = price_data[:"2019"]
+price_data = price_data[:"2019"].copy()
+
 # 5日、25日、75日のヒストリカル・ボラティリティを算出
 periods = [5, 25, 75]
 cols = []
@@ -839,16 +839,14 @@ image::sample_volatility.png[sample_volatility]
 [source, python]
 ----
 # stock_priceの読み込み
-price = dfs["stock_price"].copy()
+price = dfs["stock_price"]
 
 # 特定の銘柄コードに絞り込み
 code = 9984
-price_data = price[price["Local Code"] == code].copy()
-# 日付列をpd.Timestamp型に変換してindexに設定
-price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-price_data.set_index("datetime", inplace=True)
+price_data = price[price["Local Code"] == code]
 # 2019年までの値を表示
-price_data = price_data[:"2019"]
+price_data = price_data[:"2019"].copy()
+
 # 5日、25日、75日を対象に値を算出
 periods = [5, 25, 75]
 ma_cols = []
@@ -921,11 +919,8 @@ image::flow_chart.png[pipeline]
 [source, python]
 ----
 # stock_finデータを読み込む
-stock_fin = dfs["stock_fin"].copy()
+stock_fin = dfs["stock_fin"]
 
-# 日付列をpd.Timestamp型に変換してindexに設定
-stock_fin["datetime"] = pd.to_datetime(stock_fin["base_date"])
-stock_fin.set_index("datetime", inplace=True)
 # 2019年までの値を表示
 stock_fin = stock_fin[:"2019"]
 
@@ -956,15 +951,11 @@ image::missing_values.png[欠損値]
 [source, python]
 ----
 # stock_finデータを読み込む
-stock_fin = dfs["stock_fin"].copy()
+stock_fin = dfs["stock_fin"]
 
 # 銘柄コード9984にデータを絞る
 code = 9984
 stock_fin = stock_fin[stock_fin["Local Code"] == code]
-
-# 日付列をpd.Timestamp型に変換してindexに設定
-stock_fin["datetime"] = pd.to_datetime(stock_fin["base_date"])
-stock_fin.set_index("datetime", inplace=True)
 
 # float64型の列に絞り込み
 fin_data = stock_fin.select_dtypes(include=["float64"])
@@ -1020,14 +1011,11 @@ fin_data = fin_data.fillna(0)
 [source, python]
 ----
 # stock_priceデータを読み込む
-price = dfs["stock_price"].copy()
+price = dfs["stock_price"]
 
 # 銘柄コード9984にデータを絞る
 code = 9984
-price_data = price[price["Local Code"] == code].copy()
-# 日付列をpd.Timestamp型に変換してindexに設定
-price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-price_data.set_index("datetime", inplace=True)
+price_data = price[price["Local Code"] == code]
 
 # 終値のみに絞る
 feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
@@ -1061,8 +1049,10 @@ feats["MA_gap_2month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
 feats["MA_gap_3month"] = feats["EndOfDayQuote ExchangeOfficialClose"] / (
     feats["EndOfDayQuote ExchangeOfficialClose"].rolling(60).mean()
 )
+# 欠損値処理
+feats = feats.fillna(0)
 # 元データのカラムを削除
-feats = feats.dropna().drop(["EndOfDayQuote ExchangeOfficialClose"], axis=1)
+feats = feats.drop(["EndOfDayQuote ExchangeOfficialClose"], axis=1)
 ----
 
 ==== テクニカル分析を活用した特徴量の生成
@@ -1158,13 +1148,10 @@ def get_features_for_predict(dfs, code):
     """
     # おおまかな手順の1つ目
     # stock_finデータを読み込み
-    stock_fin = dfs["stock_fin"].copy()
+    stock_fin = dfs["stock_fin"]
 
     # 特定の銘柄コードのデータに絞る
-    fin_data = stock_fin[stock_fin["Local Code"] == code].copy()
-    # 日付列をpd.Timestamp型に変換してindexに設定
-    fin_data["datetime"] = pd.to_datetime(fin_data["base_date"])
-    fin_data.set_index("datetime", inplace=True)
+    fin_data = stock_fin[stock_fin["Local Code"] == code]
     # fin_dataのnp.float64のデータのみを取得
     fin_data = fin_data.select_dtypes(include=["float64"])
     # 欠損値処理
@@ -1172,12 +1159,9 @@ def get_features_for_predict(dfs, code):
 
     # おおまかな手順の2つ目
     # stock_priceデータを読み込む
-    price = dfs["stock_price"].copy()
+    price = dfs["stock_price"]
     # 特定の銘柄コードのデータに絞る
-    price_data = price[price["Local Code"] == code].copy()
-    # 日付列をpd.Timestamp型に変換してindexに設定
-    price_data["datetime"] = pd.to_datetime(price_data["EndOfDayQuote Date"])
-    price_data.set_index("datetime", inplace=True)
+    price_data = price[price["Local Code"] == code]
     # 終値のみに絞る
     feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
     # 終値の20営業日リターン
@@ -1230,6 +1214,9 @@ def get_features_for_predict(dfs, code):
     # 銘柄コードを設定
     feats["code"] = code
 
+    # 生成対象日以降の特徴量に絞る
+    feats = feats.loc[pd.Timestamp(start_dt) :]
+
     return feats
 ----
 
@@ -1276,12 +1263,9 @@ def get_features_and_label(dfs, codes, feature, label):
         feats = feature[feature["code"] == code]
 
         # stock_labelデータを読み込み
-        stock_labels = dfs["stock_labels"].copy()
+        stock_labels = dfs["stock_labels"]
         # 特定の銘柄コードのデータに絞る
         stock_labels = stock_labels[stock_labels["Local Code"] == code]
-        # 日付列をpd.Timestamp型に変換してindexに設定
-        stock_labels["datetime"] = pd.to_datetime(stock_labels["base_date"])
-        stock_labels.set_index("datetime", inplace=True)
 
         # 特定の目的変数に絞る
         labels = stock_labels[label]
@@ -1295,13 +1279,13 @@ def get_features_and_label(dfs, codes, feature, label):
             labels.index = feats.index
 
             # データを分割（ホールドアウト法）
-            _train_X = feats[: TRAIN_END].copy()
-            _val_X = feats[VAL_START : VAL_END].copy()
-            _test_X = feats[TEST_START :].copy()
+            _train_X = feats[: TRAIN_END]
+            _val_X = feats[VAL_START : VAL_END]
+            _test_X = feats[TEST_START :]
 
-            _train_y = labels[: TRAIN_END].copy()
-            _val_y = labels[VAL_START : VAL_END].copy()
-            _test_y = labels[TEST_START :].copy()
+            _train_y = labels[: TRAIN_END]
+            _val_y = labels[VAL_START : VAL_END]
+            _test_y = labels[TEST_START :]
 
             # データを配列に格納 (後ほど結合するため)
             trains_X.append(_train_X)
@@ -1911,4 +1895,21 @@ updating: src/predictor.py	(in=11408) (out=2417) (deflated 79%)
 updating: model/my_model_label_high_20.pkl .	(in=18919345) (out=5071005) (deflated 73%)
 updating: model/my_model_label_low_20.pkl .	(in=18704305) (out=5006613) (deflated 73%)
 total bytes=37635058, compressed=10080035 -> 73% savings
+----
+
+==== ランタイム環境に関して
+
+■ランタイム環境での利用可能なデータについて
+
+・ランタイム環境に提出したモデルは、各銘柄の株価の最高値及び最安値を予測する際、評価対象となる決算短信の開示日以前のデータ（銘柄、株価、ファンダメンタル情報）を利用することができます。
+
+・ただし、ランタイム環境では、評価対象となる決算短信の開示日の期間のデータを全て格納しているため、予測時に開示日より未来のデータを利用すると、リークが生じることになります。
+
+・ランタイム環境でこれらのデータを用いて特徴量生成やモデルの再学習を行う際は、リークが含まれないようご留意ください。
+
+以下、ランタイム実行日が5月10日のケース（Private 1st）を例として取り上げます。
+----
+・ランタイム環境には、2016年1月1日から2021年4月5日までのデータが配置されています
+・提出モデルは、3月29日に開示された決算短信について翌営業日より20営業日間の最高値及び最安値を予測する際、3月29日までのデータを利用できます。3月30日以降のデータを利用するとリークとなり、入賞資格を失います
+・同様に、4月1日に開示された決算短信について予測する際には、4月2日以降のデータは利用できません
 ----

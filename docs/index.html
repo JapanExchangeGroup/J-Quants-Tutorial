@@ -5,15 +5,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.12">
-
-<meta property="og:url" content="https://japanexchangegroup.github.io/J-Quants-Tutorial/" />
-<meta property="og:type" content="website" />
-<meta property="og:title" content="J-Quants-Tutorial" />
-<meta property="og:description" content="（JPX）株式分析チュートリアル" />
-<meta property="og:site_name" content="J-Quants-Tutorial" />
-<meta property="og:image" content="https://jquants-tutorial.s3-ap-northeast-1.amazonaws.com/J-Quants-ogp.png" />
+<meta property=“og:url” content=“https://japanexchangegroup.github.io/J-Quants-Tutorial/” />
+<meta property=“og:type” content=“website” />
+<meta property=“og:title” content=“J-Quants-Tutorial” />
+<meta property=“og:description” content=“（JPX）株式分析チュートリアル” />
+<meta property=“og:site_name” content=“J-Quants-Tutorial” />
+<meta property=“og:image” content=“https://jquants-tutorial.s3-ap-northeast-1.amazonaws.com/J-Quants-ogp.png” />
 <meta name="author" content="本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。">
-
 <title>株式分析チュートリアル | 日本取引所グループ</title>
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -576,6 +574,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <li><a href="#_プライベート期間の性能の向上のために考慮すべきこと">4.10. プライベート期間の性能の向上のために考慮すべきこと</a></li>
 <li><a href="#_本コンペでは利用できないがモデルを将来的に発展させるために検討する価値のある外部データ">4.11. 本コンペでは利用できないが、モデルを将来的に発展させるために検討する価値のある外部データ</a></li>
 <li><a href="#_モデルの再学習の運用について">4.12. モデルの再学習の運用について</a></li>
+<li><a href="#_google_colaboratoryの使用法">4.13. Google Colaboratoryの使用法</a></li>
+<li><a href="#_内国株の売買制度">4.14. 内国株の売買制度</a></li>
 </ul>
 </li>
 <li><a href="#_j_quantsapi">5. J-QuantsAPI</a>
@@ -626,7 +626,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="content">
 <pre>2021-01-29: 初版リリース
 2021-02-05: 誤字や表記の修正を中心に改良
-2021-02-12: 次回リリース予定</pre>
+2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記</pre>
 </div>
 </div>
 </div>
@@ -850,7 +850,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>G)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと</p>
 </div>
 <div class="paragraph">
-<p>H)	開示日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと</p>
+<p>H)  訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと</p>
 </div>
 <div class="paragraph">
 <p>なお、ある同一銘柄について、これらの条件を満たす決算短信が複数存在する場合は、最も新しく開示されたもののみを予測の対象とします。</p>
@@ -957,7 +957,10 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>次に、本コンペティションのPrivate LBについて説明します。本コンペティションでは、モデル提出締切日よりも将来のデータを用いて、Private LBを出力します。具体的には、本コンペティションのPrivate LBでは、2021年3月27日（土）〜2021年5月15日（土）に開示された決算短信を対象に、その開示日から起算して20営業日を経過した期間における最高値及び最安値を予測します。</p>
 </div>
 <div class="paragraph">
-<p>また、この予測に当たっては、決算短信の開示日の期間に応じて5回に分けて実施し、最終的な順位は5回目の評価で決定します。この5回の評価のスケジュールは次を予定しております。</p>
+<p>また、この予測に当たっては、決算短信の開示日の期間に応じて5回に分けて実施し、最終的な順位は5回目の評価で決定します。(評価の計算は5回行われますが、最後の1回を除く4回は途中経過をリーダーボードでご確認いただけるように計算しているものになります。)</p>
+</div>
+<div class="paragraph">
+<p>この5回の評価のスケジュールは次を予定しております。</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1032,7 +1035,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>上場企業の株価は、各社の経営状態等を反映して日々刻々と変化します。そのため、金融商品市場において公正な価格形成と円滑な流通を確保するためには公平で適時、適切な情報開示が必要不可欠なものとなっています。</p>
 </div>
 <div class="paragraph">
-<p>東京証券取引所では、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けており、上場企業は、報道機関等を通じてあるいはTDnet（適時開示情報伝達システム）により直接に、広く、かつタイムリーに伝達することという特徴があります。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。適時開示資料とそのメタデータ（タイトル、開示日時等）を総称して適時開示情報と呼び、適時開示情報は「適時開示情報閲覧サービス（リンク）」で開示されます。下図に投資家における適時開示資料の代表的な用途を示します。</p>
+<p>東京証券取引所では、投資者が投資判断を行ううえで必要な会社情報を、迅速、正確かつ公平に提供するための制度として、適時開示制度を設けており、上場企業は、報道機関等を通じてあるいはTDnet（適時開示情報伝達システム）により直接に、広く、かつタイムリーに伝達することという特徴があります。適時開示制度の下で上場企業が開示する資料のことを、適時開示資料と呼びます。適時開示資料とそのメタデータ（タイトル、開示日時等）を総称して適時開示情報と呼び、適時開示情報は「<a href="https://www.release.tdnet.info/inbs/I_main_00.html">適時開示情報閲覧サービス</a>」で開示されます。下図に投資家における適時開示資料の代表的な用途を示します。</p>
 </div>
 <div class="paragraph">
 <p><strong>投資家における適時開示資料の代表的な用途</strong></p>
@@ -1046,7 +1049,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>(開示資料と翻訳より引用 <a href="https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf" class="bare">https://aamt.info/wp-content/uploads/2019/11/%E3%83%91%E3%83%8D%E3%83%AB%E3%83%87%E3%82%A3%E3%82%B9%E3%82%AB%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3_%E5%B1%B1%E8%97%A4%E6%95%A6%E5%8F%B2%E6%B0%8F_AAMT2019Tokyo-1.pdf</a>)</p>
 </div>
 <div class="paragraph">
-<p>上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。また、東証は上場企業に対し、四半期決算期末後45日以内の決算内容の開示を要請しています。決算短信の作成要領等は、下記Webサイトで公開されています。</p>
+<p>上場企業が開示を義務付けられている適時開示資料の一つに、決算短信があります。決算短信とは、決算発表及び四半期決算発表を行う際に、決算内容の要点をまとめた書類のことです。本資料では、決算発表時に開示する決算短信と、四半期決算発表時に開示する四半期決算短信を総称して、決算短信と呼びます。上場企業は、決算期末を含め四半期毎に決算内容が定まった際、決算内容の開示が義務付けられています。四半期決算短信については、金商法に基づく四半期報告書の法定提出期限が45日とされていることから、また、決算短信については、決算期末後45日以内に決算の内容を開示することを東証が要請していることから、決算短信等の多くは期末後45日以内に開示されています。決算短信の作成要領等は、下記Webサイトで公開されています。</p>
 </div>
 <div class="paragraph">
 <p>決算短信作成要領・四半期決算短信作成要領 | 日本取引所グループ<br>
@@ -1828,7 +1831,13 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </div>
 </div>
 <div class="sect3">
-<h4 id="_dockerを用いた実行環境構築方法">2.3.2. Dockerを用いた実行環境構築方法</h4>
+<h4 id="_google_colaboratoryの利用">2.3.2. Google Colaboratoryの利用</h4>
+<div class="paragraph">
+<p>本章はDockerを用いた実行環境の利用を想定して記述しておりますが、Dockerの実行環境構築がご利用のOSなど何らかの理由により困難な方、より簡便にチュートリアルを実行したい方はGoogle Colaboratoryの利用をご検討ください。本チュートリアルで提供されるNotebookはGoogle Colaboratoryでも実行可能です。詳細は第4章をご参照ください。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_dockerを用いた実行環境構築方法">2.3.3. Dockerを用いた実行環境構築方法</h4>
 <div class="paragraph">
 <p>本チュートリアルのリポジトリを <code>git clone</code> していただき、以下の手順を実行していただくことで実行環境のdockerコンテナ内でjupyter notebookを起動可能となっています。 <code>Chapter02</code> ディレクトリ内には、本チュートリアルのコードを記載した ipynb ファイルを配置しておりますので必要に応じてご活用ください。</p>
 </div>
@@ -1859,7 +1868,7 @@ http://localhost:8888/</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_必要なライブラリのインストール">2.3.3. 必要なライブラリのインストール</h4>
+<h4 id="_必要なライブラリのインストール">2.3.4. 必要なライブラリのインストール</h4>
 <div class="paragraph">
 <p>本チュートリアル内では、上記の実行環境に含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。</p>
 </div>
@@ -1875,7 +1884,7 @@ pip install shap==0.37.0 slicer==0.0.3 xgboost==1.3.0.post0</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ライブラリの読み込み">2.3.4. ライブラリの読み込み</h4>
+<h4 id="_ライブラリの読み込み">2.3.5. ライブラリの読み込み</h4>
 <div class="paragraph">
 <p>本チュートリアルでは、下記のライブラリのインポートを行います。</p>
 </div>
@@ -1913,7 +1922,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ライブラリ解説">2.3.5. ライブラリ解説</h4>
+<h4 id="_ライブラリ解説">2.3.6. ライブラリ解説</h4>
 <table class="tableblock frame-all grid-all stripes-even fit-content">
 <colgroup>
 <col>
@@ -1994,7 +2003,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_実行環境の確認">2.3.6. 実行環境の確認</h4>
+<h4 id="_実行環境の確認">2.3.7. 実行環境の確認</h4>
 <div class="paragraph">
 <p>pythonのバージョンが3.7.3であることを確認します。</p>
 </div>
@@ -2044,7 +2053,18 @@ inputs = {
 dfs = {}
 <span class="keyword">for</span> k, v <span class="keyword">in</span> inputs.items():
     print(k)
-    dfs[k] = pd.read_csv(v)</code></pre>
+    dfs[k] = pd.read_csv(v)
+    <span class="comment"># DataFrameのindexを設定します。</span>
+    <span class="keyword">if</span> k == <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>:
+        dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+            dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>]
+        )
+        dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    <span class="keyword">elif</span> k <span class="keyword">in</span> [<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin_price</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]:
+        dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+            dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>]
+        )
+        dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2075,15 +2095,12 @@ dfs = {}
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finの読み込み</span>
-fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984にデータを絞る</span>
 code = <span class="integer">9984</span>
-fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
+fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 <span class="comment"># 2019年までの値を表示</span>
 fin_data = fin_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
 
@@ -2114,7 +2131,7 @@ sns.pairplot(fin_data[columns], hue=<span class="string"><span class="delimiter"
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finの読み込み</span>
-fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984と9983を比較する</span>
 codes = [<span class="integer">9984</span>, <span class="integer">9983</span>]
@@ -2133,12 +2150,9 @@ columns = [
 <span class="comment"># 比較対象の銘柄コード毎に処理</span>
 <span class="keyword">for</span> code <span class="keyword">in</span> codes:
     <span class="comment"># 特定の銘柄コードに絞り込み</span>
-    fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-    <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-    fin_data.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-    fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    fin_data = fin[fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># 2019年までの値を表示</span>
-    fin_data = fin_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+    fin_data = fin_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
     <span class="comment"># 重複を排除</span>
     fin_data.drop_duplicates(
         subset=[
@@ -2180,14 +2194,11 @@ ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(<span class="
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
 price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
 
@@ -2215,16 +2226,13 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
 
 <span class="comment"># 5日、25日、75日の移動平均を算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
@@ -2259,16 +2267,13 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
 
 <span class="comment"># 5日、25日、75日の価格変化率を算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
@@ -2303,16 +2308,14 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
+
 <span class="comment"># 5日、25日、75日のヒストリカル・ボラティリティを算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
 cols = []
@@ -2346,16 +2349,14 @@ ax.legend()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceの読み込み</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 特定の銘柄コードに絞り込み</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 <span class="comment"># 2019年までの値を表示</span>
-price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
+price_data = price_data[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>].copy()
+
 <span class="comment"># 5日、25日、75日を対象に値を算出</span>
 periods = [<span class="integer">5</span>, <span class="integer">25</span>, <span class="integer">75</span>]
 ma_cols = []
@@ -2443,11 +2444,8 @@ ax[<span class="integer">2</span>].set_ylabel(<span class="string"><span class="
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finデータを読み込む</span>
-stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-stock_fin.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 <span class="comment"># 2019年までの値を表示</span>
 stock_fin = stock_fin[:<span class="string"><span class="delimiter">&quot;</span><span class="content">2019</span><span class="delimiter">&quot;</span></span>]
 
@@ -2483,15 +2481,11 @@ sns.heatmap(stock_fin.groupby(<span class="string"><span class="delimiter">&quot
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_finデータを読み込む</span>
-stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984にデータを絞る</span>
 code = <span class="integer">9984</span>
 stock_fin = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
-
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-stock_fin.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 
 <span class="comment"># float64型の列に絞り込み</span>
 fin_data = stock_fin.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
@@ -2584,14 +2578,11 @@ fin_data = fin_data.fillna(<span class="integer">0</span>)</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># stock_priceデータを読み込む</span>
-price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
 
 <span class="comment"># 銘柄コード9984にデータを絞る</span>
 code = <span class="integer">9984</span>
-price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-<span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
 
 <span class="comment"># 終値のみに絞る</span>
 feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
@@ -2625,8 +2616,10 @@ feats[<span class="string"><span class="delimiter">&quot;</span><span class="con
 feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">MA_gap_3month</span><span class="delimiter">&quot;</span></span>] = feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>] / (
     feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>].rolling(<span class="integer">60</span>).mean()
 )
+<span class="comment"># 欠損値処理</span>
+feats = feats.fillna(<span class="integer">0</span>)
 <span class="comment"># 元データのカラムを削除</span>
-feats = feats.dropna().drop([<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>], axis=<span class="integer">1</span>)</code></pre>
+feats = feats.drop([<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>], axis=<span class="integer">1</span>)</code></pre>
 </div>
 </div>
 </div>
@@ -2766,13 +2759,10 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 </span><span class="content">    </span><span class="delimiter">&quot;&quot;&quot;</span></span>
     <span class="comment"># おおまかな手順の1つ目</span>
     <span class="comment"># stock_finデータを読み込み</span>
-    stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+    stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
     <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-    fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-    <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-    fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-    fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># fin_dataのnp.float64のデータのみを取得</span>
     fin_data = fin_data.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
     <span class="comment"># 欠損値処理</span>
@@ -2780,12 +2770,9 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 
     <span class="comment"># おおまかな手順の2つ目</span>
     <span class="comment"># stock_priceデータを読み込む</span>
-    price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+    price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
     <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-    price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-    <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-    price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-    price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+    price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># 終値のみに絞る</span>
     feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
     <span class="comment"># 終値の20営業日リターン</span>
@@ -2838,6 +2825,9 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
     <span class="comment"># 銘柄コードを設定</span>
     feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>] = code
 
+    <span class="comment"># 生成対象日以降の特徴量に絞る</span>
+    feats = feats.loc[pd.Timestamp(start_dt) :]
+
     <span class="keyword">return</span> feats</code></pre>
 </div>
 </div>
@@ -2889,12 +2879,9 @@ df.T</code></pre>
         feats = feature[feature[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>] == code]
 
         <span class="comment"># stock_labelデータを読み込み</span>
-        stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>].copy()
+        stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]
         <span class="comment"># 特定の銘柄コードのデータに絞る</span>
         stock_labels = stock_labels[stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
-        <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-        stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-        stock_labels.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 
         <span class="comment"># 特定の目的変数に絞る</span>
         labels = stock_labels[label]
@@ -2908,13 +2895,13 @@ df.T</code></pre>
             labels.index = feats.index
 
             <span class="comment"># データを分割（ホールドアウト法）</span>
-            _train_X = feats[: TRAIN_END].copy()
-            _val_X = feats[VAL_START : VAL_END].copy()
-            _test_X = feats[TEST_START :].copy()
+            _train_X = feats[: TRAIN_END]
+            _val_X = feats[VAL_START : VAL_END]
+            _test_X = feats[TEST_START :]
 
-            _train_y = labels[: TRAIN_END].copy()
-            _val_y = labels[VAL_START : VAL_END].copy()
-            _test_y = labels[TEST_START :].copy()
+            _train_y = labels[: TRAIN_END]
+            _val_y = labels[VAL_START : VAL_END]
+            _test_y = labels[TEST_START :]
 
             <span class="comment"># データを配列に格納 (後ほど結合するため)</span>
             trains_X.append(_train_X)
@@ -3682,6 +3669,17 @@ headerはなし、B列C列はfloat64</code></pre>
             cls.dfs = {}
         <span class="keyword">for</span> k, v <span class="keyword">in</span> inputs.items():
             cls.dfs[k] = pd.read_csv(v)
+            <span class="comment"># DataFrameのindexを設定します。</span>
+            <span class="keyword">if</span> k == <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>:
+                cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+                    cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>]
+                )
+                cls.dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+            <span class="keyword">elif</span> k <span class="keyword">in</span> [<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin_price</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]:
+                cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(
+                    cls.dfs[k].loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>]
+                )
+                cls.dfs[k].set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
         <span class="keyword">return</span> cls.dfs
 
     <span class="decorator">@classmethod</span>
@@ -3725,15 +3723,12 @@ headerはなし、B列C列はfloat64</code></pre>
             feats = feature[feature[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>] == code]
 
             <span class="comment"># stock_labelデータを読み込み</span>
-            stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>].copy()
+            stock_labels = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_labels</span><span class="delimiter">&quot;</span></span>]
             <span class="comment"># 特定の銘柄コードのデータに絞る</span>
             stock_labels = stock_labels[stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
-            <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-            stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(stock_labels[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-            stock_labels.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
 
             <span class="comment"># 特定の目的変数に絞る</span>
-            labels = stock_labels[label]
+            labels = stock_labels[label].copy()
             <span class="comment"># nanを削除</span>
             labels.dropna(inplace=<span class="predefined-constant">True</span>)
 
@@ -3744,13 +3739,13 @@ headerはなし、B列C列はfloat64</code></pre>
                 labels.index = feats.index
 
                 <span class="comment"># データを分割</span>
-                _train_X = feats[: cls.TRAIN_END].copy()
-                _val_X = feats[cls.VAL_START : cls.VAL_END].copy()
-                _test_X = feats[cls.TEST_START :].copy()
+                _train_X = feats[: cls.TRAIN_END]
+                _val_X = feats[cls.VAL_START : cls.VAL_END]
+                _test_X = feats[cls.TEST_START :]
 
-                _train_y = labels[: cls.TRAIN_END].copy()
-                _val_y = labels[cls.VAL_START : cls.VAL_END].copy()
-                _test_y = labels[cls.TEST_START :].copy()
+                _train_y = labels[: cls.TRAIN_END]
+                _val_y = labels[cls.VAL_START : cls.VAL_END]
+                _test_y = labels[cls.TEST_START :]
 
                 <span class="comment"># データを配列に格納 (後ほど結合するため)</span>
                 trains_X.append(_train_X)
@@ -3782,35 +3777,28 @@ headerはなし、B列C列はfloat64</code></pre>
 </span><span class="content">            feature DataFrame (pd.DataFrame)</span><span class="content">
 </span><span class="content">        </span><span class="delimiter">&quot;&quot;&quot;</span></span>
         <span class="comment"># stock_finデータを読み込み</span>
-        stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].copy()
+        stock_fin = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>]
 
         <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-        fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-        <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-        fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(fin_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">base_date</span><span class="delimiter">&quot;</span></span>])
-        fin_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+        fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
+        <span class="comment"># 特徴量の作成には過去60営業日のデータを使用しているため、</span>
+        <span class="comment"># 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します</span>
+        n = <span class="integer">90</span>
+        <span class="comment"># 特徴量の生成対象期間を指定</span>
+        fin_data = fin_data.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
         <span class="comment"># fin_dataのnp.float64のデータのみを取得</span>
         fin_data = fin_data.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
         <span class="comment"># 欠損値処理</span>
         fin_feats = fin_data.fillna(<span class="integer">0</span>)
 
-        <span class="comment"># 特徴量の作成には過去60営業日のデータを使用しているため、</span>
-        <span class="comment"># 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します</span>
-        n = <span class="integer">90</span>
-        <span class="comment"># 特徴量の生成対象期間を指定</span>
-        fin_feats = fin_feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
-
         <span class="comment"># stock_priceデータを読み込む</span>
-        price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>].copy()
+        price = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_price</span><span class="delimiter">&quot;</span></span>]
         <span class="comment"># 特定の銘柄コードのデータに絞る</span>
-        price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code].copy()
-        <span class="comment"># 日付列をpd.Timestamp型に変換してindexに設定</span>
-        price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = pd.to_datetime(price_data[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote Date</span><span class="delimiter">&quot;</span></span>])
-        price_data.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+        price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
         <span class="comment"># 終値のみに絞る</span>
-        feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
+        feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]]
         <span class="comment"># 特徴量の生成対象期間を指定</span>
-        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
+        feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :].copy()
 
         <span class="comment"># 終値の20営業日リターン</span>
         feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">return_1month</span><span class="delimiter">&quot;</span></span>] = feats[
@@ -4138,6 +4126,31 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </div>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_ランタイム環境に関して">2.13.3. ランタイム環境に関して</h4>
+<div class="paragraph">
+<p>■ランタイム環境での利用可能なデータについて</p>
+</div>
+<div class="paragraph">
+<p>・ランタイム環境に提出したモデルは、各銘柄の株価の最高値及び最安値を予測する際、評価対象となる決算短信の開示日以前のデータ（銘柄、株価、ファンダメンタル情報）を利用することができます。</p>
+</div>
+<div class="paragraph">
+<p>・ただし、ランタイム環境では、評価対象となる決算短信の開示日の期間のデータを全て格納しているため、予測時に開示日より未来のデータを利用すると、リークが生じることになります。</p>
+</div>
+<div class="paragraph">
+<p>・ランタイム環境でこれらのデータを用いて特徴量生成やモデルの再学習を行う際は、リークが含まれないようご留意ください。</p>
+</div>
+<div class="paragraph">
+<p>以下、ランタイム実行日が5月10日のケース（Private 1st）を例として取り上げます。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>・ランタイム環境には、2016年1月1日から2021年4月5日までのデータが配置されています
+・提出モデルは、3月29日に開示された決算短信について翌営業日より20営業日間の最高値及び最安値を予測する際、3月29日までのデータを利用できます。3月30日以降のデータを利用するとリークとなり、入賞資格を失います
+・同様に、4月1日に開示された決算短信について予測する際には、4月2日以降のデータは利用できません</pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -4435,6 +4448,16 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">和泉 潔他</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">市場レポートや経済ニュースなどのテキストデータを分析し、資産運用や市場分析に活かす手法を解説している。数式は少なく、金融テキストマイニングの独特な注意点や思考法を中心に整理しており、初めて金融分野のテキストマイニングをする人には助かる一冊。</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">統計学入門</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">東京大学教養学部統計学教室 編</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文科と理科両方の学生のために，統計的なものの考え方の基礎がやさしく解説されており、統計学の体系的な知識を与えるように，編集・執筆された一冊。</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pythonデータサイエンスハンドブック</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Jake VanderPlas 著、菊池 彰 訳</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本チュートリアルにおいても利用されているJupyter、NumPy、pandas、Matplotlib、scikit-learn等をカバーしている一冊。それぞれのトピックについて、押さえておくべき基本、tips、便利なコマンドなどが紹介されている。</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -4682,6 +4705,68 @@ ROEやROAは、効率性を示す指標として注目されており、政府�
 <h4 id="_再学習を行うことでモデルの出力分布が変わらないか">4.12.2. 再学習を行うことでモデルの出力分布が変わらないか</h4>
 <div class="paragraph">
 <p>こちらは、システムで運用する場合に発生しやすい問題です。例えば、投資する際の購入タイミングを、モデルの出力が0.8以上といったしきい値を用いた実装をしていたとします。この際に再学習を行うことでモデルの出力が変わると、想像以上に購入したり、逆に購入を実施しなくなったりします。再学習を行った場合、直近数週間程度のデータは利用せずに、古いモデルと新しいモデルで出力を比較し、出力の分布が変わっていないことを確認するのが良いでしょう。</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_google_colaboratoryの使用法">4.13. Google Colaboratoryの使用法</h3>
+<div class="paragraph">
+<p>Google Colaboratoryは、ブラウザから Python をノートブック形式で記述、実行できるサービスです。環境構築が不要となっており、本チュートリアルもGoogle Colaboratoryで実行することが可能となっています。また、時間等の制限はございますがGPUを利用できることや、ノートブックの共有が簡単にできることなど、多くの利点を備えています (<a href="https://colab.research.google.com/notebooks/intro.ipynb?hl=ja#">参考元</a>  )。</p>
+</div>
+<div class="sect3">
+<h4 id="_colab_でノートブックが動作する時間は">4.13.1. <strong>Colab でノートブックが動作する時間は？</strong></h4>
+<div class="paragraph">
+<p>本チュートリアルをGoogle Colaboratoryで実行する際には時間制限にご注意ください。ノートブックは、インスタンスが起動された後 12 時間経過すると自動的にランタイムがリセットされ実行環境が初期化されます。また、ノートブックのアイドル状態が 90 分続くとタイムアウトし、こちらもランタイムがリセットされます。(詳細は<a href="https://research.google.com/colaboratory/faq.html#:~:text=How%20long%20can%20notebooks%20run,or%20based%20on%20your%20usage">Google ColaboratoryのQ&amp;A</a>をご参照ください。)。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_本コンペでgoogle_colaboratoryを使用するために">4.13.2. 本コンペでGoogle Colaboratoryを使用するために</h4>
+<div class="paragraph">
+<p>本コンペの2章のチュートリアルをGoogle Colaboratory上で動かすためには、まず以下の手順でGoogle Drive上にファイルを設置します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Google DriveのMy Driveに<code>JPX_competition</code>というフォルダーを作成します。</p>
+</li>
+<li>
+<p>SIGNATEのコンペティションサイトよりダウンロードした各種データを1で作成したフォルダーにアップロードします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>次にGoogle Colaboratory上でチュートリアルのノートブックを展開します。ノートブックはGoogle Colaboratory上でも実行可能となっており、そのまま編集なしで実行できます。以下、具体的な方法を説明します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>ノートブックをダウンロードします。 <a href="https://github.com/JapanExchangeGroup/J-Quants-Tutorial/blob/main/handson/Chapter02/20210121-chapter02-tutorial.ipynb">こちらのGithubリポジトリ</a>よりRawボタンを右クリックし、「リンク先を名前をつけて保存」を選択して先程作成した<code>JPX_competition</code>に保存してください。</p>
+</li>
+<li>
+<p>Google Driveにアップロードした <code>20210121-chapter02-tutorial.ipynb</code> ファイルをダブルクリックして Google Colaboratory で開きます。</p>
+</li>
+<li>
+<p>コンペティションデータをノートブックで読み込むために、Google Driveへマウントします。マウント方法については<a href="https://qiita.com/kado_u/items/45b76f9a6f920bf0f786">こちら</a>の記事をご参照ください。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_内国株の売買制度">4.14. 内国株の売買制度</h3>
+<div class="paragraph">
+<p>本節では、本コンペティションの題材となっている株式の売買制度について説明します。</p>
+</div>
+<div class="sect3">
+<h4 id="_制限値幅">4.14.1. 制限値幅</h4>
+<div class="paragraph">
+<p>東京証券取引所では、一日の売買における値動きの幅を価格水準に応じて一定に制限しており、この値幅を <strong>制限値幅</strong> といいます。制限値幅は、前日の終値又は最終気配値段など（以下、「基準値段」と言います）を基準としており、その値幅の大きさは基準値段によって異なります。詳細は<a href="https://www.jpx.co.jp/equities/trading/domestic/06.html">こちら</a>をご参照ください。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_呼値の単位">4.14.2. 呼値の単位</h4>
+<div class="paragraph">
+<p>内国株式の売買の注文をする際の値段の刻みことを <strong>呼値の単位</strong> といい、この呼値の単位は、売買の対象となる銘柄及びその値段の水準に応じて異なります。各値段の水準における詳細な呼値の単位については、<a href="https://www.jpx.co.jp/equities/trading/domestic/07.html">こちら</a>をご参照ください。なお、銘柄によっては呼値の単位は整数ではなく、小数点があるものもございますのでご留意ください。</p>
 </div>
 </div>
 </div>
@@ -5308,7 +5393,7 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 </div>
 <div id="footer">
 <div id="footer-text">
-最終更新 2021-02-05 14:55:08 +0900
+最終更新 2021-02-12 18:31:45 +0900
 </div>
 </div>
 <script type="text/x-mathjax-config">

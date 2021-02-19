@@ -293,8 +293,8 @@ call_jquants_api(paramdict, idtk, "stocklabels")
 
 # Codeを指定する場合
 paramdict = {}
-paramdict["from"] = "2020-02-01"
-paramdict["to"] = "2020-02-28"
+paramdict["datefrom"] = "2020-02-01"
+paramdict["dateto"] = "2020-02-28"
 paramdict["includedetails"] = "true"
 call_jquants_api(paramdict, idtk, "stocklabels", "1301")
 ----

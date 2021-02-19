@@ -257,6 +257,29 @@ class ScoringService(object):
         return feats
 
     @classmethod
+    def get_feature_columns(cls, dfs, train_X, column_group="fundamental+technical"):
+        # 特徴量グループを定義
+        # ファンダメンタル
+        fundamental_cols = dfs["stock_fin"].select_dtypes("float64").columns
+        fundamental_cols = fundamental_cols[
+            fundamental_cols != "Result_Dividend DividendPayableDate"
+        ]
+        fundamental_cols = fundamental_cols[fundamental_cols != "Local Code"]
+        # 価格変化率
+        returns_cols = [x for x in train_X.columns if "return" in x]
+        # テクニカル
+        technical_cols = [
+            x for x in train_X.columns if (x not in fundamental_cols) and (x != "code")
+        ]
+        columns = {
+            "fundamental_only": fundamental_cols,
+            "return_only": returns_cols,
+            "technical_only": technical_cols,
+            "fundamental+technical": list(fundamental_cols) + list(technical_cols),
+        }
+        return columns[column_group]
+
+    @classmethod
     def create_model(cls, dfs, codes, label):
         """
         Args:
@@ -275,9 +298,11 @@ class ScoringService(object):
         train_X, train_y, _, _, _, _ = cls.get_features_and_label(
             dfs, codes, feature, label
         )
+        # 特徴量カラムを指定
+        feature_columns = cls.get_feature_columns(dfs, train_X)
         # モデル作成
         model = RandomForestRegressor(random_state=0)
-        model.fit(train_X, train_y)
+        model.fit(train_X[feature_columns], train_y)
 
         return model
 
@@ -398,10 +423,13 @@ class ScoringService(object):
         # 出力対象列を定義
         output_columns = ["code"]
 
+        # 特徴量カラムを指定
+        feature_columns = cls.get_feature_columns(cls.dfs, feats)
+
         # 目的変数毎に予測
         for label in labels:
             # 予測実施
-            df[label] = cls.models[label].predict(feats)
+            df[label] = cls.models[label].predict(feats[feature_columns])
             # 出力対象列に追加
             output_columns.append(label)
 

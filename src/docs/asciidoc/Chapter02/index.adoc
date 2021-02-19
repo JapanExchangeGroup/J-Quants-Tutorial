@@ -98,7 +98,7 @@ F)	2021年3月27日から同年5月15日までの期間に開示されている�
 G)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、当該開示に対する訂正開示等が行われていないこと
 
 
-H)  訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
+H)	訂正開示等の開示日及び同日から起算して20営業日を経過した日までの期間、上場廃止になっていないこと
 
 なお、ある同一銘柄について、これらの条件を満たす決算短信が複数存在する場合は、最も新しく開示されたもののみを予測の対象とします。
 
@@ -308,7 +308,8 @@ stock_priceには各銘柄の各日付の始値や終値などの株価情報が
 
 **データの特性**
 
-マーケットが開いている日に取引が成立しなかった銘柄は、売買高が0となり、四本値 (始値、高値、安値、終値) 全てが0と表示されます。
+* マーケットが開いている日に取引が成立しなかった銘柄は、売買高が0となり、四本値 (始値、高値、安値、終値) 全てが0と表示されます。
+* stock_priceのデータは、そのデータに含まれている最新日付時点で累積調整係数1となるように調整されます。調整済み株価についても同様に過去に遡って更新されます。
 
 [cols="2,3,1,1", options="header"]
 |===
@@ -1138,11 +1139,12 @@ TEST_START = "2019-01-01"
 
 [source, python]
 ----
-def get_features_for_predict(dfs, code):
+def get_features_for_predict(dfs, code, start_dt="2016-01-01"):
     """
     Args:
         dfs (dict)  : dict of pd.DataFrame include stock_fin, stock_price
         code (int)  : A local code for a listed company
+        start_dt (str): specify date range
     Returns:
         feature DataFrame (pd.DataFrame)
     """
@@ -1152,6 +1154,11 @@ def get_features_for_predict(dfs, code):
 
     # 特定の銘柄コードのデータに絞る
     fin_data = stock_fin[stock_fin["Local Code"] == code]
+    # 特徴量の作成には過去60営業日のデータを使用しているため、
+    # 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します
+    n = 90
+    # 特徴量の生成対象期間を指定
+    fin_data = fin_data.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
     # fin_dataのnp.float64のデータのみを取得
     fin_data = fin_data.select_dtypes(include=["float64"])
     # 欠損値処理
@@ -1163,7 +1170,10 @@ def get_features_for_predict(dfs, code):
     # 特定の銘柄コードのデータに絞る
     price_data = price[price["Local Code"] == code]
     # 終値のみに絞る
-    feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]].copy()
+    feats = price_data[["EndOfDayQuote ExchangeOfficialClose"]]
+    # 特徴量の生成対象期間を指定
+    feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :].copy()
+
     # 終値の20営業日リターン
     feats["return_1month"] = feats["EndOfDayQuote ExchangeOfficialClose"].pct_change(20)
     # 終値の40営業日リターン
@@ -1599,14 +1609,18 @@ columns = {
     "fundamental+technical": list(fundamental_cols) + list(technical_cols),
 }
 
+# 学習済みモデル保存用
+trained_models = dict()
 # 結果保存用
 all_results = dict()
 # モデル毎に処理
 for model in tqdm(models.keys()):
     all_results[model] = dict()
+    trained_models[model] = dict()
     # データセット毎に処理
-    for col in columns.keys():
+    for col in tqdm(columns.keys()):
         result = dict()
+        trained_models[model][col] = dict()
         # 目的変数毎に処理
         for label in tqdm(labels):
             if len(test_X[label][columns[col]]) > 0:
@@ -1614,6 +1628,8 @@ for model in tqdm(models.keys()):
                 pred_model = models[model](random_state=0)
                 # 学習
                 pred_model.fit(train_X[label][columns[col]].values, train_y[label])
+                # 学習済みモデル保存
+                trained_models[model][col][label] = pred_model
                 # 結果データ作成
                 result[label] = test_X[label][["code"]].copy()
                 result[label]["datetime"] = test_X[label][columns[col]].index
@@ -1657,7 +1673,7 @@ image::multiple_data_results.png[データのフォーマット]
 | *評価関数* | *説明*
 |RMSE| 二乗平均平方根
 |accuracy| 目的変数の符号と予測した目的変数の符号の精度
-|spreaman_corr| スピアマンの順位相関
+|spearman_corr| スピアマンの順位相関
 |corr| ピアソンの相関係数
 |R^2 score| 単回帰した時の直線と観測値のバラつき
 |===
@@ -1772,12 +1788,43 @@ docker pull continuumio/anaconda3:2019.03
 
 [source, python]
 ----
-model = [保存対象の学習済みモデル]
-# モデル保存先ディレクトリのパスを定義
-model_path = '../model'
-label = "label_high_20"
+# モデル保存用にメソッドを定義します
+def save_model(model, label, model_path="../model"):
+    # モデル保存先ディレクトリを作成
+    os.makedirs(model_path, exist_ok=True)
+    with open(os.path.join(model_path, f"my_model_{label}.pkl"), "wb") as f:
+        # モデルをpickle形式で保存
+        pickle.dump(model, f)
+----
 
-include::../../../../handson/Chapter02/archive/src/predictor.py[tag=save_model_partial,indent=0]
+[source, python]
+----
+# 保存した学習済みモデルから、提出するモデルを選択してpickle形式で保存します。
+# 使用するモデルや特徴量を変更する際は、学習時と推論時で同一の特徴量をモデルに
+# 入力するために提出用のpredictor.pyについても変更する必要があることにご注意ください。
+
+# モデルの保存先を指定します。
+model_path = "archive/model"
+# モデルの種類
+models = ["rf"]
+# 使用する特徴量カラム
+columns = ["fundamental+technical"]
+# 目的変数
+labels = [
+    "label_high_20",
+    "label_low_20",
+]
+
+# モデル毎に処理
+for model in models:
+    # 特徴量毎に処理
+    for col in columns:
+        # 目的変数毎に処理
+        for label in labels:
+            # 学習済みモデルを取得
+            pred_model = trained_models[model][col][label]
+            # モデルを保存
+            save_model(pred_model, label, model_path=model_path)
 ----
 
 ===== 4.predictor.py を記述する

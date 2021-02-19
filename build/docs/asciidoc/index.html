@@ -620,7 +620,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="content">
 <pre>2021-01-29: 初版リリース
 2021-02-05: 誤字や表記の修正を中心に改良
-2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記</pre>
+2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記
+2021-02-19: predictor.pyの修正、stocklabelsAPIの修正</pre>
 </div>
 </div>
 </div>
@@ -844,7 +845,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>G)	&#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;の&#8203;開&#8203;示&#8203;日&#8203;及&#8203;び&#8203;同&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;当&#8203;該&#8203;開&#8203;示&#8203;に&#8203;対&#8203;す&#8203;る&#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;が&#8203;行&#8203;わ&#8203;れ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と</p>
 </div>
 <div class="paragraph">
-<p>H)  &#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;の&#8203;開&#8203;示&#8203;日&#8203;及&#8203;び&#8203;同&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;上&#8203;場&#8203;廃&#8203;止&#8203;に&#8203;なっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と</p>
+<p>H)	&#8203;開&#8203;示&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;上&#8203;場&#8203;廃&#8203;止&#8203;に&#8203;なっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と&#8203;訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;の&#8203;開&#8203;示&#8203;日&#8203;及&#8203;び&#8203;同&#8203;日&#8203;か&#8203;ら&#8203;起&#8203;算&#8203;し&#8203;て&#8203;20&#8203;営&#8203;業&#8203;日&#8203;を&#8203;経&#8203;過&#8203;し&#8203;た&#8203;日&#8203;ま&#8203;で&#8203;の&#8203;期&#8203;間、&#8203;上&#8203;場&#8203;廃&#8203;止&#8203;に&#8203;なっ&#8203;て&#8203;い&#8203;な&#8203;い&#8203;こ&#8203;と</p>
 </div>
 <div class="paragraph">
 <p>な&#8203;お、&#8203;あ&#8203;る&#8203;同&#8203;一&#8203;銘&#8203;柄&#8203;に&#8203;つ&#8203;い&#8203;て、&#8203;こ&#8203;れ&#8203;ら&#8203;の&#8203;条&#8203;件&#8203;を&#8203;満&#8203;た&#8203;す&#8203;決&#8203;算&#8203;短&#8203;信&#8203;が&#8203;複&#8203;数&#8203;存&#8203;在&#8203;す&#8203;る&#8203;場&#8203;合&#8203;は、&#8203;最&#8203;も&#8203;新&#8203;し&#8203;く&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;た&#8203;も&#8203;の&#8203;の&#8203;み&#8203;を&#8203;予&#8203;測&#8203;の&#8203;対&#8203;象&#8203;と&#8203;し&#8203;ま&#8203;す。</p>
@@ -1279,8 +1280,15 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="paragraph">
 <p><strong>&#8203;デー&#8203;タ&#8203;の&#8203;特&#8203;性&#8203;</strong></p>
 </div>
-<div class="paragraph">
+<div class="ulist">
+<ul>
+<li>
 <p>マー&#8203;ケッ&#8203;ト&#8203;が&#8203;開&#8203;い&#8203;て&#8203;い&#8203;る&#8203;日&#8203;に&#8203;取&#8203;引&#8203;が&#8203;成&#8203;立&#8203;し&#8203;な&#8203;かっ&#8203;た&#8203;銘&#8203;柄&#8203;は、&#8203;売&#8203;買&#8203;高&#8203;が&#8203;0&#8203;と&#8203;な&#8203;り、&#8203;四&#8203;本&#8203;値&#8203; (&#8203;始&#8203;値、&#8203;高&#8203;値、&#8203;安&#8203;値、&#8203;終&#8203;値&#8203;) &#8203;全&#8203;て&#8203;が&#8203;0&#8203;と&#8203;表&#8203;示&#8203;さ&#8203;れ&#8203;ま&#8203;す。</p>
+</li>
+<li>
+<p>stock_price&#8203;の&#8203;デー&#8203;タ&#8203;は、&#8203;そ&#8203;の&#8203;デー&#8203;タ&#8203;に&#8203;含&#8203;ま&#8203;れ&#8203;て&#8203;い&#8203;る&#8203;最&#8203;新&#8203;日&#8203;付&#8203;時&#8203;点&#8203;で&#8203;累&#8203;積&#8203;調&#8203;整&#8203;係&#8203;数&#8203;1&#8203;と&#8203;な&#8203;る&#8203;よ&#8203;う&#8203;に&#8203;調&#8203;整&#8203;さ&#8203;れ&#8203;ま&#8203;す。&#8203;調&#8203;整&#8203;済&#8203;み&#8203;株&#8203;価&#8203;に&#8203;つ&#8203;い&#8203;て&#8203;も&#8203;同&#8203;様&#8203;に&#8203;過&#8203;去&#8203;に&#8203;遡っ&#8203;て&#8203;更&#8203;新&#8203;さ&#8203;れ&#8203;ま&#8203;す。</p>
+</li>
+</ul>
 </div>
 <table class="tableblock frame-all grid-all stripes-even stretch">
 <colgroup>
@@ -2743,11 +2751,12 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="python"><span class="keyword">def</span> <span class="function">get_features_for_predict</span>(dfs, code):
+<pre class="CodeRay highlight"><code data-lang="python"><span class="keyword">def</span> <span class="function">get_features_for_predict</span>(dfs, code, start_dt=<span class="string"><span class="delimiter">&quot;</span><span class="content">2016-01-01</span><span class="delimiter">&quot;</span></span>):
     <span class="docstring"><span class="delimiter">&quot;&quot;&quot;</span><span class="content">
 </span><span class="content">    Args:</span><span class="content">
 </span><span class="content">        dfs (dict)  : dict of pd.DataFrame include stock_fin, stock_price</span><span class="content">
 </span><span class="content">        code (int)  : A local code for a listed company</span><span class="content">
+</span><span class="content">        start_dt (str): specify date range</span><span class="content">
 </span><span class="content">    Returns:</span><span class="content">
 </span><span class="content">        feature DataFrame (pd.DataFrame)</span><span class="content">
 </span><span class="content">    </span><span class="delimiter">&quot;&quot;&quot;</span></span>
@@ -2757,6 +2766,11 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
 
     <span class="comment"># 特定の銘柄コードのデータに絞る</span>
     fin_data = stock_fin[stock_fin[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
+    <span class="comment"># 特徴量の作成には過去60営業日のデータを使用しているため、</span>
+    <span class="comment"># 予測対象日からバッファ含めて土日を除く過去90日遡った時点から特徴量を生成します</span>
+    n = <span class="integer">90</span>
+    <span class="comment"># 特徴量の生成対象期間を指定</span>
+    fin_data = fin_data.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :]
     <span class="comment"># fin_dataのnp.float64のデータのみを取得</span>
     fin_data = fin_data.select_dtypes(include=[<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>])
     <span class="comment"># 欠損値処理</span>
@@ -2768,7 +2782,10 @@ TEST_START = <span class="string"><span class="delimiter">&quot;</span><span cla
     <span class="comment"># 特定の銘柄コードのデータに絞る</span>
     price_data = price[price[<span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>] == code]
     <span class="comment"># 終値のみに絞る</span>
-    feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]].copy()
+    feats = price_data[[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>]]
+    <span class="comment"># 特徴量の生成対象期間を指定</span>
+    feats = feats.loc[pd.Timestamp(start_dt) - pd.offsets.BDay(n) :].copy()
+
     <span class="comment"># 終値の20営業日リターン</span>
     feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">return_1month</span><span class="delimiter">&quot;</span></span>] = feats[<span class="string"><span class="delimiter">&quot;</span><span class="content">EndOfDayQuote ExchangeOfficialClose</span><span class="delimiter">&quot;</span></span>].pct_change(<span class="integer">20</span>)
     <span class="comment"># 終値の40営業日リターン</span>
@@ -3309,14 +3326,18 @@ columns = {
     <span class="string"><span class="delimiter">&quot;</span><span class="content">fundamental+technical</span><span class="delimiter">&quot;</span></span>: <span class="predefined">list</span>(fundamental_cols) + <span class="predefined">list</span>(technical_cols),
 }
 
+<span class="comment"># 学習済みモデル保存用</span>
+trained_models = <span class="predefined">dict</span>()
 <span class="comment"># 結果保存用</span>
 all_results = <span class="predefined">dict</span>()
 <span class="comment"># モデル毎に処理</span>
 <span class="keyword">for</span> model <span class="keyword">in</span> tqdm(models.keys()):
     all_results[model] = <span class="predefined">dict</span>()
+    trained_models[model] = <span class="predefined">dict</span>()
     <span class="comment"># データセット毎に処理</span>
-    <span class="keyword">for</span> col <span class="keyword">in</span> columns.keys():
+    <span class="keyword">for</span> col <span class="keyword">in</span> tqdm(columns.keys()):
         result = <span class="predefined">dict</span>()
+        trained_models[model][col] = <span class="predefined">dict</span>()
         <span class="comment"># 目的変数毎に処理</span>
         <span class="keyword">for</span> label <span class="keyword">in</span> tqdm(labels):
             <span class="keyword">if</span> <span class="predefined">len</span>(test_X[label][columns[col]]) &gt; <span class="integer">0</span>:
@@ -3324,6 +3345,8 @@ all_results = <span class="predefined">dict</span>()
                 pred_model = models[model](random_state=<span class="integer">0</span>)
                 <span class="comment"># 学習</span>
                 pred_model.fit(train_X[label][columns[col]].values, train_y[label])
+                <span class="comment"># 学習済みモデル保存</span>
+                trained_models[model][col][label] = pred_model
                 <span class="comment"># 結果データ作成</span>
                 result[label] = test_X[label][[<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>]].copy()
                 result[label][<span class="string"><span class="delimiter">&quot;</span><span class="content">datetime</span><span class="delimiter">&quot;</span></span>] = test_X[label][columns[col]].index
@@ -3548,16 +3571,43 @@ agg</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="python">model = [保存対象の学習済みモデル]
-<span class="comment"># モデル保存先ディレクトリのパスを定義</span>
-model_path = <span class="string"><span class="delimiter">'</span><span class="content">../model</span><span class="delimiter">'</span></span>
-label = <span class="string"><span class="delimiter">&quot;</span><span class="content">label_high_20</span><span class="delimiter">&quot;</span></span>
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># モデル保存用にメソッドを定義します</span>
+<span class="keyword">def</span> <span class="function">save_model</span>(model, label, model_path=<span class="string"><span class="delimiter">&quot;</span><span class="content">../model</span><span class="delimiter">&quot;</span></span>):
+    <span class="comment"># モデル保存先ディレクトリを作成</span>
+    os.makedirs(model_path, exist_ok=<span class="predefined-constant">True</span>)
+    <span class="keyword">with</span> <span class="predefined">open</span>(os.path.join(model_path, f<span class="string"><span class="delimiter">&quot;</span><span class="content">my_model_{label}.pkl</span><span class="delimiter">&quot;</span></span>), <span class="string"><span class="delimiter">&quot;</span><span class="content">wb</span><span class="delimiter">&quot;</span></span>) <span class="keyword">as</span> f:
+        <span class="comment"># モデルをpickle形式で保存</span>
+        pickle.dump(model, f)</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 保存した学習済みモデルから、提出するモデルを選択してpickle形式で保存します。</span>
+<span class="comment"># 使用するモデルや特徴量を変更する際は、学習時と推論時で同一の特徴量をモデルに</span>
+<span class="comment"># 入力するために提出用のpredictor.pyについても変更する必要があることにご注意ください。</span>
 
-<span class="comment"># モデル保存先ディレクトリを作成</span>
-os.makedirs(model_path, exist_ok=<span class="predefined-constant">True</span>)
-<span class="keyword">with</span> <span class="predefined">open</span>(os.path.join(model_path, f<span class="string"><span class="delimiter">&quot;</span><span class="content">my_model_{label}.pkl</span><span class="delimiter">&quot;</span></span>), <span class="string"><span class="delimiter">&quot;</span><span class="content">wb</span><span class="delimiter">&quot;</span></span>) <span class="keyword">as</span> f:
-    <span class="comment"># モデルをpickle形式で保存</span>
-    pickle.dump(model, f)</code></pre>
+<span class="comment"># モデルの保存先を指定します。</span>
+model_path = <span class="string"><span class="delimiter">&quot;</span><span class="content">archive/model</span><span class="delimiter">&quot;</span></span>
+<span class="comment"># モデルの種類</span>
+models = [<span class="string"><span class="delimiter">&quot;</span><span class="content">rf</span><span class="delimiter">&quot;</span></span>]
+<span class="comment"># 使用する特徴量カラム</span>
+columns = [<span class="string"><span class="delimiter">&quot;</span><span class="content">fundamental+technical</span><span class="delimiter">&quot;</span></span>]
+<span class="comment"># 目的変数</span>
+labels = [
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">label_high_20</span><span class="delimiter">&quot;</span></span>,
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">label_low_20</span><span class="delimiter">&quot;</span></span>,
+]
+
+<span class="comment"># モデル毎に処理</span>
+<span class="keyword">for</span> model <span class="keyword">in</span> models:
+    <span class="comment"># 特徴量毎に処理</span>
+    <span class="keyword">for</span> col <span class="keyword">in</span> columns:
+        <span class="comment"># 目的変数毎に処理</span>
+        <span class="keyword">for</span> label <span class="keyword">in</span> labels:
+            <span class="comment"># 学習済みモデルを取得</span>
+            pred_model = trained_models[model][col][label]
+            <span class="comment"># モデルを保存</span>
+            save_model(pred_model, label, model_path=model_path)</code></pre>
 </div>
 </div>
 </div>
@@ -3863,6 +3913,29 @@ headerはなし、B列C列はfloat64</code></pre>
         <span class="keyword">return</span> feats
 
     <span class="decorator">@classmethod</span>
+    <span class="keyword">def</span> <span class="function">get_feature_columns</span>(cls, dfs, train_X, column_group=<span class="string"><span class="delimiter">&quot;</span><span class="content">fundamental+technical</span><span class="delimiter">&quot;</span></span>):
+        <span class="comment"># 特徴量グループを定義</span>
+        <span class="comment"># ファンダメンタル</span>
+        fundamental_cols = dfs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_fin</span><span class="delimiter">&quot;</span></span>].select_dtypes(<span class="string"><span class="delimiter">&quot;</span><span class="content">float64</span><span class="delimiter">&quot;</span></span>).columns
+        fundamental_cols = fundamental_cols[
+            fundamental_cols != <span class="string"><span class="delimiter">&quot;</span><span class="content">Result_Dividend DividendPayableDate</span><span class="delimiter">&quot;</span></span>
+        ]
+        fundamental_cols = fundamental_cols[fundamental_cols != <span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>]
+        <span class="comment"># 価格変化率</span>
+        returns_cols = [x <span class="keyword">for</span> x <span class="keyword">in</span> train_X.columns <span class="keyword">if</span> <span class="string"><span class="delimiter">&quot;</span><span class="content">return</span><span class="delimiter">&quot;</span></span> <span class="keyword">in</span> x]
+        <span class="comment"># テクニカル</span>
+        technical_cols = [
+            x <span class="keyword">for</span> x <span class="keyword">in</span> train_X.columns <span class="keyword">if</span> (x <span class="keyword">not</span> <span class="keyword">in</span> fundamental_cols) <span class="keyword">and</span> (x != <span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>)
+        ]
+        columns = {
+            <span class="string"><span class="delimiter">&quot;</span><span class="content">fundamental_only</span><span class="delimiter">&quot;</span></span>: fundamental_cols,
+            <span class="string"><span class="delimiter">&quot;</span><span class="content">return_only</span><span class="delimiter">&quot;</span></span>: returns_cols,
+            <span class="string"><span class="delimiter">&quot;</span><span class="content">technical_only</span><span class="delimiter">&quot;</span></span>: technical_cols,
+            <span class="string"><span class="delimiter">&quot;</span><span class="content">fundamental+technical</span><span class="delimiter">&quot;</span></span>: <span class="predefined">list</span>(fundamental_cols) + <span class="predefined">list</span>(technical_cols),
+        }
+        <span class="keyword">return</span> columns[column_group]
+
+    <span class="decorator">@classmethod</span>
     <span class="keyword">def</span> <span class="function">create_model</span>(cls, dfs, codes, label):
         <span class="docstring"><span class="delimiter">&quot;&quot;&quot;</span><span class="content">
 </span><span class="content">        Args:</span><span class="content">
@@ -3881,9 +3954,11 @@ headerはなし、B列C列はfloat64</code></pre>
         train_X, train_y, _, _, _, _ = cls.get_features_and_label(
             dfs, codes, feature, label
         )
+        <span class="comment"># 特徴量カラムを指定</span>
+        feature_columns = cls.get_feature_columns(dfs, train_X)
         <span class="comment"># モデル作成</span>
         model = RandomForestRegressor(random_state=<span class="integer">0</span>)
-        model.fit(train_X, train_y)
+        model.fit(train_X[feature_columns], train_y)
 
         <span class="keyword">return</span> model
 
@@ -4004,10 +4079,13 @@ headerはなし、B列C列はfloat64</code></pre>
         <span class="comment"># 出力対象列を定義</span>
         output_columns = [<span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>]
 
+        <span class="comment"># 特徴量カラムを指定</span>
+        feature_columns = cls.get_feature_columns(cls.dfs, feats)
+
         <span class="comment"># 目的変数毎に予測</span>
         <span class="keyword">for</span> label <span class="keyword">in</span> labels:
             <span class="comment"># 予測実施</span>
-            df[label] = cls.models[label].predict(feats)
+            df[label] = cls.models[label].predict(feats[feature_columns])
             <span class="comment"># 出力対象列に追加</span>
             output_columns.append(label)
 
@@ -5124,8 +5202,8 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 
 <span class="comment"># Codeを指定する場合</span>
 paramdict = {}
-paramdict[<span class="string"><span class="delimiter">&quot;</span><span class="content">from</span><span class="delimiter">&quot;</span></span>] = <span class="string"><span class="delimiter">&quot;</span><span class="content">2020-02-01</span><span class="delimiter">&quot;</span></span>
-paramdict[<span class="string"><span class="delimiter">&quot;</span><span class="content">to</span><span class="delimiter">&quot;</span></span>] = <span class="string"><span class="delimiter">&quot;</span><span class="content">2020-02-28</span><span class="delimiter">&quot;</span></span>
+paramdict[<span class="string"><span class="delimiter">&quot;</span><span class="content">datefrom</span><span class="delimiter">&quot;</span></span>] = <span class="string"><span class="delimiter">&quot;</span><span class="content">2020-02-01</span><span class="delimiter">&quot;</span></span>
+paramdict[<span class="string"><span class="delimiter">&quot;</span><span class="content">dateto</span><span class="delimiter">&quot;</span></span>] = <span class="string"><span class="delimiter">&quot;</span><span class="content">2020-02-28</span><span class="delimiter">&quot;</span></span>
 paramdict[<span class="string"><span class="delimiter">&quot;</span><span class="content">includedetails</span><span class="delimiter">&quot;</span></span>] = <span class="string"><span class="delimiter">&quot;</span><span class="content">true</span><span class="delimiter">&quot;</span></span>
 call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&quot;</span><span class="content">stocklabels</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">1301</span><span class="delimiter">&quot;</span></span>)</code></pre>
 </div>

@@ -1673,7 +1673,7 @@ image::multiple_data_results.png[データのフォーマット]
 | *評価関数* | *説明*
 |RMSE| 二乗平均平方根
 |accuracy| 目的変数の符号と予測した目的変数の符号の精度
-|spearman_corr スピアマンの順位相関
+|spearman_corr| スピアマンの順位相関
 |corr| ピアソンの相関係数
 |R^2 score| 単回帰した時の直線と観測値のバラつき
 |===

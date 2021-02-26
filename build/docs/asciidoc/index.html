@@ -621,7 +621,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <pre>2021-01-29: 初版リリース
 2021-02-05: 誤字や表記の修正を中心に改良
 2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記
-2021-02-19: predictor.pyの修正、stocklabelsAPIの修正</pre>
+2021-02-19: predictor.pyの修正、stocklabelsAPIの修正
+2021-02-26: 予測対象のエッジケースにおいて追記</pre>
 </div>
 </div>
 </div>
@@ -851,6 +852,9 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>な&#8203;お、&#8203;あ&#8203;る&#8203;同&#8203;一&#8203;銘&#8203;柄&#8203;に&#8203;つ&#8203;い&#8203;て、&#8203;こ&#8203;れ&#8203;ら&#8203;の&#8203;条&#8203;件&#8203;を&#8203;満&#8203;た&#8203;す&#8203;決&#8203;算&#8203;短&#8203;信&#8203;が&#8203;複&#8203;数&#8203;存&#8203;在&#8203;す&#8203;る&#8203;場&#8203;合&#8203;は、&#8203;最&#8203;も&#8203;新&#8203;し&#8203;く&#8203;開&#8203;示&#8203;さ&#8203;れ&#8203;た&#8203;も&#8203;の&#8203;の&#8203;み&#8203;を&#8203;予&#8203;測&#8203;の&#8203;対&#8203;象&#8203;と&#8203;し&#8203;ま&#8203;す。</p>
 </div>
 <div class="paragraph">
+<p>（追&#8203;記：&#8203;予&#8203;測&#8203;対&#8203;象&#8203;期&#8203;間&#8203;の&#8203;20&#8203;営&#8203;業&#8203;日&#8203;の&#8203;全&#8203;て&#8203;に&#8203;お&#8203;い&#8203;て、&#8203;株&#8203;価&#8203;が&#8203;存&#8203;在&#8203;し&#8203;な&#8203;い&#8203;銘&#8203;柄&#8203;は、&#8203;評&#8203;価&#8203;の&#8203;対&#8203;象&#8203;外&#8203;と&#8203;し&#8203;ま&#8203;す。）</p>
+</div>
+<div class="paragraph">
 <p>以&#8203;上&#8203;を&#8203;踏&#8203;ま&#8203;え、&#8203;各&#8203;決&#8203;算&#8203;短&#8203;信&#8203;等&#8203;（訂&#8203;正&#8203;開&#8203;示&#8203;等&#8203;を&#8203;含&#8203;み&#8203;ま&#8203;す。）&#8203;が&#8203;予&#8203;測&#8203;対&#8203;象&#8203;に&#8203;該&#8203;当&#8203;す&#8203;る&#8203;か&#8203;ど&#8203;う&#8203;か&#8203;の&#8203;事&#8203;例&#8203;を、&#8203;図&#8203;に&#8203;示&#8203;し&#8203;ま&#8203;す。</p>
 </div>
 <div class="imageblock">
@@ -899,7 +903,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </div>
 <div class="paragraph">
 <p>そ&#8203;の&#8203;上&#8203;で、&#8203;そ&#8203;れ&#8203;ぞ&#8203;れ&#8203;の&#8203;順&#8203;位&#8203;相&#8203;関&#8203;係&#8203;数&#8203;を&#8203;以&#8203;下&#8203;の&#8203;（算&#8203;出&#8203;式&#8203;２）&#8203;を&#8203;用&#8203;い&#8203;て&#8203;算&#8203;出&#8203;し&#8203;た&#8203;統&#8203;合&#8203;ス&#8203;コ&#8203;ア&#8203;を&#8203;最&#8203;終&#8203;ス&#8203;コ&#8203;ア&#8203;と&#8203;し&#8203;て&#8203;評&#8203;価&#8203;し&#8203;ま&#8203;す。&#8203;<br>
-な&#8203;お、&#8203;最&#8203;終&#8203;ス&#8203;コ&#8203;ア&#8203;は&#8203;0～8&#8203;の&#8203;値&#8203;を&#8203;と&#8203;り、&#8203;精&#8203;度&#8203;が&#8203;高&#8203;い&#8203;ほ&#8203;ど&#8203; <strong>&#8203;小&#8203;さ&#8203;な&#8203;値&#8203;</strong> &#8203;と&#8203;な&#8203;り&#8203;ま&#8203;す。</p>
+な&#8203;お、&#8203;最&#8203;終&#8203;ス&#8203;コ&#8203;ア&#8203;は&#8203;0～8&#8203;の&#8203;値&#8203;を&#8203;と&#8203;り、&#8203;精&#8203;度&#8203;が&#8203;高&#8203;い&#8203;ほ&#8203;ど&#8203; <strong>&#8203;小&#8203;さ&#8203;な&#8203;値&#8203;</strong> &#8203;と&#8203;な&#8203;り&#8203;ま&#8203;す。
+（た&#8203;だ&#8203;し、&#8203;予&#8203;測&#8203;対&#8203;象&#8203;期&#8203;間&#8203;の&#8203;20&#8203;営&#8203;業&#8203;日&#8203;の&#8203;全&#8203;て&#8203;に&#8203;お&#8203;い&#8203;て、&#8203;株&#8203;価&#8203;が&#8203;存&#8203;在&#8203;し&#8203;な&#8203;い&#8203;銘&#8203;柄&#8203;は、&#8203;評&#8203;価&#8203;の&#8203;対&#8203;象&#8203;外&#8203;と&#8203;し&#8203;ま&#8203;す。）</p>
 </div>
 <div class="exampleblock">
 <div class="content">
@@ -3996,16 +4001,13 @@ headerはなし、B列C列はfloat64</code></pre>
             cls.models = {}
         <span class="keyword">if</span> labels <span class="keyword">is</span> <span class="predefined-constant">None</span>:
             labels = cls.TARGET_LABELS
-        <span class="keyword">try</span>:
-            <span class="keyword">for</span> label <span class="keyword">in</span> labels:
-                m = os.path.join(model_path, f<span class="string"><span class="delimiter">&quot;</span><span class="content">my_model_{label}.pkl</span><span class="delimiter">&quot;</span></span>)
-                <span class="keyword">with</span> <span class="predefined">open</span>(m, <span class="string"><span class="delimiter">&quot;</span><span class="content">rb</span><span class="delimiter">&quot;</span></span>) <span class="keyword">as</span> f:
-                    <span class="comment"># pickle形式で保存されているモデルを読み込み</span>
-                    cls.models[label] = pickle.load(f)
-            <span class="keyword">return</span> <span class="predefined-constant">True</span>
-        <span class="keyword">except</span> <span class="exception">Exception</span> <span class="keyword">as</span> e:
-            print(e)
-            <span class="keyword">return</span> <span class="predefined-constant">False</span>
+        <span class="keyword">for</span> label <span class="keyword">in</span> labels:
+            m = os.path.join(model_path, f<span class="string"><span class="delimiter">&quot;</span><span class="content">my_model_{label}.pkl</span><span class="delimiter">&quot;</span></span>)
+            <span class="keyword">with</span> <span class="predefined">open</span>(m, <span class="string"><span class="delimiter">&quot;</span><span class="content">rb</span><span class="delimiter">&quot;</span></span>) <span class="keyword">as</span> f:
+                <span class="comment"># pickle形式で保存されているモデルを読み込み</span>
+                cls.models[label] = pickle.load(f)
+
+        <span class="keyword">return</span> <span class="predefined-constant">True</span>
 
     <span class="decorator">@classmethod</span>
     <span class="keyword">def</span> <span class="function">train_and_save_model</span>(
@@ -5465,7 +5467,7 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 </div>
 <div id="footer">
 <div id="footer-text">
-最終更新 2021-02-12 18:31:45 +0900
+最終更新 2021-02-26 17:52:58 +0900
 </div>
 </div>
 <script type="text/x-mathjax-config">

@@ -7,4 +7,5 @@ include::../attribute.adoc[]
 2021-02-05: 誤字や表記の修正を中心に改良
 2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記
 2021-02-19: predictor.pyの修正、stocklabelsAPIの修正
+2021-02-26: 予測対象のエッジケースにおいて追記
 ----

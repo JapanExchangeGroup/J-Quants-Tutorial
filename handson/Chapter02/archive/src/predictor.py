@@ -340,16 +340,13 @@ class ScoringService(object):
             cls.models = {}
         if labels is None:
             labels = cls.TARGET_LABELS
-        try:
-            for label in labels:
-                m = os.path.join(model_path, f"my_model_{label}.pkl")
-                with open(m, "rb") as f:
-                    # pickle形式で保存されているモデルを読み込み
-                    cls.models[label] = pickle.load(f)
-            return True
-        except Exception as e:
-            print(e)
-            return False
+        for label in labels:
+            m = os.path.join(model_path, f"my_model_{label}.pkl")
+            with open(m, "rb") as f:
+                # pickle形式で保存されているモデルを読み込み
+                cls.models[label] = pickle.load(f)
+
+        return True
 
     @classmethod
     def train_and_save_model(

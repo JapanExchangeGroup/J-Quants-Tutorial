@@ -5,7 +5,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.12">
-<meta name="author" content="本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。">
 <meta property="og:url" content="https://japanexchangegroup.github.io/J-Quants-Tutorial/" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="J-Quants-Tutorial" />
@@ -628,7 +627,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <pre>2021-01-29: 初版リリース
 2021-02-05: 誤字や表記の修正を中心に改良
 2021-02-12: ランタイム環境のデータの扱い、GoogleColaboratoryについて追記
-2021-02-19: predictor.pyの修正、stocklabelsAPIの修正</pre>
+2021-02-19: predictor.pyの修正、stocklabelsAPIの修正
+2021-02-26: 予測対象のエッジケースにおいて追記</pre>
 </div>
 </div>
 </div>
@@ -858,6 +858,9 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <p>なお、ある同一銘柄について、これらの条件を満たす決算短信が複数存在する場合は、最も新しく開示されたもののみを予測の対象とします。</p>
 </div>
 <div class="paragraph">
+<p>（追記：予測対象期間の20営業日の全てにおいて、株価が存在しない銘柄は、評価の対象外とします。）</p>
+</div>
+<div class="paragraph">
 <p>以上を踏まえ、各決算短信等（訂正開示等を含みます。）が予測対象に該当するかどうかの事例を、図に示します。</p>
 </div>
 <div class="imageblock">
@@ -906,7 +909,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 </div>
 <div class="paragraph">
 <p>その上で、それぞれの順位相関係数を以下の（算出式２）を用いて算出した統合スコアを最終スコアとして評価します。<br>
-なお、最終スコアは0～8の値をとり、精度が高いほど <strong>小さな値</strong> となります。</p>
+なお、最終スコアは0～8の値をとり、精度が高いほど <strong>小さな値</strong> となります。
+（ただし、予測対象期間の20営業日の全てにおいて、株価が存在しない銘柄は、評価の対象外とします。）</p>
 </div>
 <div class="exampleblock">
 <div class="content">
@@ -4003,16 +4007,13 @@ headerはなし、B列C列はfloat64</code></pre>
             cls.models = {}
         <span class="keyword">if</span> labels <span class="keyword">is</span> <span class="predefined-constant">None</span>:
             labels = cls.TARGET_LABELS
-        <span class="keyword">try</span>:
-            <span class="keyword">for</span> label <span class="keyword">in</span> labels:
-                m = os.path.join(model_path, f<span class="string"><span class="delimiter">&quot;</span><span class="content">my_model_{label}.pkl</span><span class="delimiter">&quot;</span></span>)
-                <span class="keyword">with</span> <span class="predefined">open</span>(m, <span class="string"><span class="delimiter">&quot;</span><span class="content">rb</span><span class="delimiter">&quot;</span></span>) <span class="keyword">as</span> f:
-                    <span class="comment"># pickle形式で保存されているモデルを読み込み</span>
-                    cls.models[label] = pickle.load(f)
-            <span class="keyword">return</span> <span class="predefined-constant">True</span>
-        <span class="keyword">except</span> <span class="exception">Exception</span> <span class="keyword">as</span> e:
-            print(e)
-            <span class="keyword">return</span> <span class="predefined-constant">False</span>
+        <span class="keyword">for</span> label <span class="keyword">in</span> labels:
+            m = os.path.join(model_path, f<span class="string"><span class="delimiter">&quot;</span><span class="content">my_model_{label}.pkl</span><span class="delimiter">&quot;</span></span>)
+            <span class="keyword">with</span> <span class="predefined">open</span>(m, <span class="string"><span class="delimiter">&quot;</span><span class="content">rb</span><span class="delimiter">&quot;</span></span>) <span class="keyword">as</span> f:
+                <span class="comment"># pickle形式で保存されているモデルを読み込み</span>
+                cls.models[label] = pickle.load(f)
+
+        <span class="keyword">return</span> <span class="predefined-constant">True</span>
 
     <span class="decorator">@classmethod</span>
     <span class="keyword">def</span> <span class="function">train_and_save_model</span>(
@@ -5472,7 +5473,7 @@ call_jquants_api(paramdict, idtk, <span class="string"><span class="delimiter">&
 </div>
 <div id="footer">
 <div id="footer-text">
-最終更新 2021-02-12 18:31:45 +0900
+最終更新 2021-02-26 17:52:58 +0900
 </div>
 </div>
 <script type="text/x-mathjax-config">

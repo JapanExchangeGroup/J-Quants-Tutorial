@@ -143,13 +143,13 @@ feats[:21]
     output_columns = ["code", "label_high_20", "label_low_20"]
     ```
 
-1. 結果を出力します。Nanが含まれないように `dropna()` しています。
+1. 結果を出力します。出力対象を2020年以降に限定し、Nanが含まれないように `dropna()` しています。
 
-   ```python
+    ```python
     out = io.StringIO()
-    df[output_columns].dropna().to_csv(out, header=False, index=False)
+    df[output_columns].loc["2020-01-01":].dropna().to_csv(out, header=False, index=False)
 
-    out.getvalue()[-100:]
+    print("\n".join(out.getvalue().split("\n")[:10]))
     ```
 
 ## パッケージ化
@@ -186,7 +186,7 @@ feats[:21]
             df.loc[:, "label_low_20"] = feats
             output_columns = ["code", "label_high_20", "label_low_20"]
             out = io.StringIO()
-            df[output_columns].dropna().to_csv(out, header=False, index=False)
+            df[output_columns].loc["2020-01-01":].dropna().to_csv(out, header=False, index=False)
 
             return out.getvalue()
     ```
@@ -202,7 +202,9 @@ feats[:21]
 1. predict をテストします。
 
     ```python
-    assert out.getvalue() == ScoringService.predict(inputs)
+    actual = ScoringService.predict(inputs)
+    assert out.getvalue() == actual
+    print("\n".join(actual.split("\n")[:10]))
     ```
 
 1. パッケージの構造を再確認します。

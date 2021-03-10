@@ -46,6 +46,6 @@ class ScoringService(object):
         output_columns = ["code", "label_high_20", "label_low_20"]
 
         out = io.StringIO()
-        df[output_columns].dropna().to_csv(out, header=False, index=False)
+        df[output_columns].loc["2020-01-01":].dropna().to_csv(out, header=False, index=False)
 
         return out.getvalue()

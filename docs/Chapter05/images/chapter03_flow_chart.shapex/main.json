@@ -1,0 +1,202 @@
+{
+  "shapes" : [
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 270}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 70}\",\n  \"identifier\" : \"6E897B6E-460E-4447-ADF2-BDB820108C76\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"BERTモデルの入力ベクトルビルド - input_idsビルド - token_type_idsビルド - attention_maskビルド\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 365}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 45}\",\n  \"identifier\" : \"6053B108-F351-41D3-B88F-D22171110384\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"font\" : \"AppleSDGothicNeo-Regular,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"ベクトルをBERTに入力し、特徴量抽出\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 365}\",\n  \"identifier\" : \"5D4659F4-2780-4A3D-A06D-B8423C169A01\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"Helvetica,9.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, -0.5}\"\n  },\n  \"sourcePoint\" : \"{110, 340}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 575}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 70}\",\n  \"identifier\" : \"2458C63D-0422-4DA9-AC9B-F149ACF48EE0\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"学習、評価データビルド - 週グループ化特徴量 - 週グループ化ラベル\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 670}\",\n  \"identifier\" : \"63FCA0F1-2B9F-4241-9DC2-9660EDBE1341\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"Helvetica,9.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, -0.5}\"\n  },\n  \"sourcePoint\" : \"{110, 645}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{45, 670}\",\n  \"angle\" : 0,\n  \"size\" : \"{130, 75}\",\n  \"identifier\" : \"E6BF5A6F-B0AE-4484-AFA4-5AC8D5F5A4D3\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"特徴量抽出機及び、特徴量抽出機の学習、推論のhandlerを定義 - Pytorch Dataset - FeatureCombiner - FeatureCombinerHandler\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 480}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 70}\",\n  \"identifier\" : \"40EACF21-21E5-43E2-B543-5CD571A15E31\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"font\" : \"AppleSDGothicNeo-Regular,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"ラベルビルド - Universe計算 - Market forward return 計算\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 610}\",\n  \"identifier\" : \"70624F5B-56F6-475A-9E72-AA693862C84E\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  },\n  \"sourcePoint\" : \"{110, 515}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  }\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 35}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 70}\",\n  \"identifier\" : \"9C853745-1187-4D24-AA40-9A5BD48343EE\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"textAlignment\" : 2,\n    \"font\" : \"AppleSDGothicNeo-Regular,9.0\"\n  },\n  \"value\" : \"データセットの読み込み - ニュースデータ\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 170}\",\n  \"identifier\" : \"CBFF6551-47C9-4C6F-9091-252505D420C8\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,12.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  },\n  \"sourcePoint\" : \"{110, 70}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  }\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 135}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 70}\",\n  \"identifier\" : \"A1617562-857E-429F-8823-339527E06DF8\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"font\" : \"AppleSDGothicNeo-Regular,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"データセットの前処理 - 欠損値除去 - テキスト正規化 - unicode正規化 - 記号正規化\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{195, 170}\",\n  \"identifier\" : \"D6023F35-D0E5-4981-86AE-9BB82166037B\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,12.0\",\n    \"strokeColor\" : \"#941751FF\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{-0.5, 0}\"\n  },\n  \"sourcePoint\" : \"{165, 170}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0.5, 0}\"\n  }\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{195, 135}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 70}\",\n  \"identifier\" : \"63BC8B52-2579-47C9-B22B-C02194820797\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"textColor\" : \"#941751FF\",\n    \"strokeColor\" : \"#941751FF\",\n    \"textAlignment\" : 2,\n    \"fillColor2\" : \"#941751FF\",\n    \"font\" : \"ArialMT,9.0\",\n    \"fillMode\" : 1\n  },\n  \"value\" : \"データセットの可視化 - 品詞情報解析 - 単語頻度解析 - トピック解析\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{335, 145}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 50}\",\n  \"identifier\" : \"6E159218-8D1E-4A1E-859C-A4464A83BDE3\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"textColor\" : \"#941751FF\",\n    \"strokeColor\" : \"#941751FF\",\n    \"textAlignment\" : 2,\n    \"font\" : \"ArialMT,9.0\"\n  },\n  \"value\" : \"データセットの追加処理 - 「人事」を含むテキスト除去\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{335, 170}\",\n  \"identifier\" : \"299651C3-E6C9-4BAB-85E0-6BCECF7BA363\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,12.0\",\n    \"strokeColor\" : \"#941751FF\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{-0.5, 0}\"\n  },\n  \"sourcePoint\" : \"{305, 170}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0.5, 0}\"\n  }\n}"
+    },
+    {
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{175, 325}\",\n  \"identifier\" : \"FF8261FA-5366-4C7A-968A-F59F4F2CF76C\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"textColor\" : \"#941751FF\",\n    \"strokeColor\" : \"#941751FF\",\n    \"font\" : \"ArialMT,12.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0.5, 0}\"\n  },\n  \"sourcePoint\" : \"{390, 195}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}",
+      "class" : "connector"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{109.84444407121191, 235}\",\n  \"identifier\" : \"9A04D0C1-C6D5-4ECD-8662-BC13CA8DB1DD\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,12.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  },\n  \"sourcePoint\" : \"{109.84444407121191, 205}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  }\n}"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"layout\" : \"container\",\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"container1\",\n  \"position\" : \"{45, 235}\",\n  \"angle\" : 0,\n  \"size\" : \"{130, 180}\",\n  \"identifier\" : \"EA343777-9AE5-4685-8753-035CCB27755D\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_1\",\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"BERT特徴量抽出\",\n  \"isRelative\" : false\n}",
+      "children" : "[\n  \"6E897B6E-460E-4447-ADF2-BDB820108C76\",\n  \"6053B108-F351-41D3-B88F-D22171110384\",\n  \"5D4659F4-2780-4A3D-A06D-B8423C169A01\"\n]"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"layout\" : \"container\",\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"container1\",\n  \"position\" : \"{35, 445}\",\n  \"angle\" : 0,\n  \"size\" : \"{150, 360}\",\n  \"identifier\" : \"EEC9F30C-84CE-430F-8150-98084986EBF3\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_1\",\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,9.0\",\n    \"textAlignment\" : 2\n  },\n  \"value\" : \"LSTMによる可変特徴量合成\",\n  \"isRelative\" : false\n}",
+      "children" : "[\n  \"2458C63D-0422-4DA9-AC9B-F149ACF48EE0\",\n  \"63FCA0F1-2B9F-4241-9DC2-9660EDBE1341\",\n  \"E6BF5A6F-B0AE-4484-AFA4-5AC8D5F5A4D3\",\n  \"40EACF21-21E5-43E2-B543-5CD571A15E31\",\n  \"70624F5B-56F6-475A-9E72-AA693862C84E\"\n]"
+    },
+    {
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 445}\",\n  \"identifier\" : \"217ADE37-15D5-436E-BF16-17AA46303160\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,12.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, -0.5}\"\n  },\n  \"sourcePoint\" : \"{110, 415}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}",
+      "class" : "connector"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{241.90267377242674, 104.8193526467652}\",\n  \"value\" : {\n    \"labels\" : [\n      {\n        \"string\" : \"Optional\",\n        \"offset\" : \"{0, -10}\",\n        \"position\" : 0,\n        \"positionType\" : 1\n      }\n    ]\n  },\n  \"identifier\" : \"22B3CB60-38D4-4ABC-B55E-D43A70596C85\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"textAlignment\" : 0,\n    \"crossStyle\" : \"round\",\n    \"connectorMode\" : 2,\n    \"strokeDash\" : 0,\n    \"strokeWidth\" : 2,\n    \"strokeColor\" : \"#941751FF\",\n    \"font\" : \"ArialMT,9.0\",\n    \"textColor\" : \"#941751FF\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  },\n  \"sourcePoint\" : \"{194.78909064516279, 105.13529072674737}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  }\n}"
+    },
+    {
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{205, 825}\",\n  \"identifier\" : \"437C0638-139D-4959-BF99-BF5CF3B3A233\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"ArialMT,12.0\",\n    \"strokeColor\" : \"#941751FF\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{-0.5, 0}\"\n  },\n  \"sourcePoint\" : \"{165, 845}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0.5, 0}\"\n  }\n}",
+      "class" : "connector"
+    },
+    {
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{205, 790}\",\n  \"angle\" : 0,\n  \"size\" : \"{110.00000000000001, 70}\",\n  \"identifier\" : \"0030C5B3-826E-435C-8CDE-66AE9538B78C\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"textColor\" : \"#941751FF\",\n    \"textAlignment\" : 2,\n    \"strokeColor\" : \"#941751FF\",\n    \"font\" : \"ArialMT,9.0\",\n    \"fillMode\" : 1\n  },\n  \"value\" : \"合成特徴量解析 - 相関係数 - regplot - barplot\",\n  \"isRelative\" : false\n}",
+      "class" : "dia-node"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 830}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 30.000000000000004}\",\n  \"identifier\" : \"D3D1BAC1-2348-4DBE-B84E-119F8A2C289C\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"textAlignment\" : 2,\n    \"font\" : \"AppleSDGothicNeo-Regular,9.0\"\n  },\n  \"value\" : \"合成特徴量\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 830}\",\n  \"identifier\" : \"30340C86-133D-4EB1-9D5F-BE2A6937E6F3\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, -0.5}\"\n  },\n  \"sourcePoint\" : \"{110, 799.45340953310665}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}",
+      "class" : "connector"
+    },
+    {
+      "class" : "dia-node",
+      "attrs" : "{\n  \"lockAspectRatio\" : false,\n  \"shape\" : \"rect\",\n  \"position\" : \"{55, 769.45340953310665}\",\n  \"angle\" : 0,\n  \"size\" : \"{110, 30.000000000000004}\",\n  \"identifier\" : \"D7ADAB97-E903-4B4F-A192-9C81483262DA\",\n  \"tag\" : 0,\n  \"connectable\" : true,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"isTemplate\" : false,\n  \"themeStyle\" : \"variant_4\",\n  \"privateStyle\" : {\n    \"textAlignment\" : 2,\n    \"font\" : \"AppleSDGothicNeo-Regular,9.0\"\n  },\n  \"value\" : \"特徴量抽出機学習\",\n  \"isRelative\" : false\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 784.45340953310665}\",\n  \"identifier\" : \"9CF32E68-CB9C-4ABF-8BDF-65461A8B1152\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"font\" : \"Helvetica-Bold,9.0\",\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0}\"\n  },\n  \"sourcePoint\" : \"{110, 745}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}"
+    },
+    {
+      "class" : "connector",
+      "attrs" : "{\n  \"isRelative\" : false,\n  \"points\" : [\n\n  ],\n  \"shape\" : \"connector\",\n  \"targetPoint\" : \"{110, 769.45340953310665}\",\n  \"identifier\" : \"19EC2C94-508A-4931-96BD-29C4E3958D04\",\n  \"tag\" : 0,\n  \"isLocked\" : false,\n  \"visible\" : true,\n  \"themeStyle\" : \"edge_11\",\n  \"isTemplate\" : false,\n  \"privateStyle\" : {\n    \"crossStyle\" : \"round\"\n  },\n  \"exitPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, -0.5}\"\n  },\n  \"sourcePoint\" : \"{110, 745}\",\n  \"entryPoint\" : {\n    \"offset\" : \"{0, 0}\",\n    \"direction\" : 0,\n    \"location\" : \"{0, 0.5}\"\n  }\n}"
+    }
+  ],
+  "frame" : [
+    [
+      0,
+      0
+    ],
+    [
+      470,
+      900
+    ]
+  ],
+  "terminals" : {
+    "30340C86-133D-4EB1-9D5F-BE2A6937E6F3" : [
+      "D7ADAB97-E903-4B4F-A192-9C81483262DA",
+      "D3D1BAC1-2348-4DBE-B84E-119F8A2C289C"
+    ],
+    "22B3CB60-38D4-4ABC-B55E-D43A70596C85" : [
+      "null",
+      "null"
+    ],
+    "299651C3-E6C9-4BAB-85E0-6BCECF7BA363" : [
+      "63BC8B52-2579-47C9-B22B-C02194820797",
+      "6E159218-8D1E-4A1E-859C-A4464A83BDE3"
+    ],
+    "9CF32E68-CB9C-4ABF-8BDF-65461A8B1152" : [
+      "E6BF5A6F-B0AE-4484-AFA4-5AC8D5F5A4D3",
+      "D7ADAB97-E903-4B4F-A192-9C81483262DA"
+    ],
+    "FF8261FA-5366-4C7A-968A-F59F4F2CF76C" : [
+      "6E159218-8D1E-4A1E-859C-A4464A83BDE3",
+      "EA343777-9AE5-4685-8753-035CCB27755D"
+    ],
+    "CBFF6551-47C9-4C6F-9091-252505D420C8" : [
+      "9C853745-1187-4D24-AA40-9A5BD48343EE",
+      "A1617562-857E-429F-8823-339527E06DF8"
+    ],
+    "D6023F35-D0E5-4981-86AE-9BB82166037B" : [
+      "A1617562-857E-429F-8823-339527E06DF8",
+      "63BC8B52-2579-47C9-B22B-C02194820797"
+    ],
+    "9A04D0C1-C6D5-4ECD-8662-BC13CA8DB1DD" : [
+      "null",
+      "null"
+    ],
+    "217ADE37-15D5-436E-BF16-17AA46303160" : [
+      "EA343777-9AE5-4685-8753-035CCB27755D",
+      "EEC9F30C-84CE-430F-8150-98084986EBF3"
+    ],
+    "63FCA0F1-2B9F-4241-9DC2-9660EDBE1341" : [
+      "2458C63D-0422-4DA9-AC9B-F149ACF48EE0",
+      "E6BF5A6F-B0AE-4484-AFA4-5AC8D5F5A4D3"
+    ],
+    "5D4659F4-2780-4A3D-A06D-B8423C169A01" : [
+      "6E897B6E-460E-4447-ADF2-BDB820108C76",
+      "6053B108-F351-41D3-B88F-D22171110384"
+    ],
+    "437C0638-139D-4959-BF99-BF5CF3B3A233" : [
+      "D3D1BAC1-2348-4DBE-B84E-119F8A2C289C",
+      "0030C5B3-826E-435C-8CDE-66AE9538B78C"
+    ],
+    "19EC2C94-508A-4931-96BD-29C4E3958D04" : [
+      "E6BF5A6F-B0AE-4484-AFA4-5AC8D5F5A4D3",
+      "D7ADAB97-E903-4B4F-A192-9C81483262DA"
+    ],
+    "70624F5B-56F6-475A-9E72-AA693862C84E" : [
+      "40EACF21-21E5-43E2-B543-5CD571A15E31",
+      "2458C63D-0422-4DA9-AC9B-F149ACF48EE0"
+    ]
+  },
+  "design" : {
+    "connectorPathStyle" : "rounded",
+    "themeName" : "no",
+    "paper" : {
+      "rightMargin" : 20,
+      "bottomMargin" : 20,
+      "topMargin" : 20,
+      "name" : "custom(0, 0, 470.0, 900.0",
+      "leftMargin" : 20,
+      "ori" : true
+    },
+    "autoFrame" : true,
+    "showPageMarker" : true
+  },
+  "showsGrids" : true,
+  "version" : "0.0.2"
+}

@@ -1,0 +1,2283 @@
+include::../attribute.adoc[]
+
+== BERT特徴量を用いてポートフォリオを構築しよう
+
+　5章ではBERTを用いた特徴量抽出および簡単なPCAによるスコア化の手法を紹介しました。PCAは次元圧縮の代表的な手法ですが、次元圧縮時に目的関数を設定することができないために、特定の目的に合わせたスコアではありません。
+
+　そのため，本章ではLSTMを用いて、週毎の可変な特徴量を統合し単一のスコアにする手法を紹介します。この手法を紹介する理由は、LSTMは目的関数を設定することができ、BERT特徴量から特定の目的に合致したスコアを構築することが可能となるためです。実際に特徴量を活用する場合は、その特徴量を用いて何かを予測したいと考えることが多く、目的変数を設定できるレイヤーを構築して、用途に特化したスコアを活用することがを可能となり、応用可能性が広がります。
+
+　なお、本章はLSTMのようなディープニューラルネットワークを活用することに習熟している方を対象としており、アドバンスな知識を前提とした章となります。そのため、ディープニューラルネットワーク自体の説明はありません。5章で抽出した特徴量でも様々な活用が可能ですので、本章は発展的な内容としてご活用ください。
+
+　本章の最後では、5章および6章のコードを使用したポートフォリオ構築モデルの実装例と動作確認方法を記載しているため、ご自身のモデルを実装される際に参考としてご活用ください。
+
+=== 予測対象の検討
+
+　5章でBERT特徴量の抽出を行いましたが、特徴量はニュース毎に取得できますので、毎週数千のニュースに対してそれぞれ特徴量が出力されることになります。まずは、この特徴量を活用して何を予測するか目的を決めます。
+
+　シンプルに次の週にどの銘柄が値上がりするかを予測できれば、手っ取り早く収益を上げることができそうです。ただし、各週の数千個のニュースを利用して、次の週に値上がりする銘柄を予測するには、ニュース数と銘柄数のバランスを考えても少し難しい課題になりそうです。また、本コンペティションの課題においては、購入原資産全てを銘柄購入に利用する必要はなく、一部は現金で保持できることに着目します。
+
+　マーケット全体が値下がりするときにすべての現金を銘柄購入に利用すると収益が低下する可能性があります。つまり、次の週にマーケットが下落することがわかれば、現金比率を高めることによって、マーケット全体の下落の影響を低減することができるはずです。実際に、マーケットの状況に応じて現金比率を操作する運用を実施するファンドも存在しています。
+
+　以上の考察から、ニュースから抽出した特徴量を利用する予測モデルの予測対象としては、投資対象のユニバースの週次の平均リターンとし、BERT特徴量から下落の予兆を検知した場合は、現金比率を上げるという手法を採用することにします。他にもセクター（33業種分類など）のリターンを予測し、値上がりが予想されるセクターの代表的な銘柄を購入するなど様々な手法が考えられます。
+
+==== 可変な特徴量を扱う方法
+
+　各週で公表されるニュースの数は可変であるため、ニュースデータから毎週抽出できる特徴量の次元数も可変となります。一般的にモデル構築するときは投入する特徴量の次元数は固定化する必要がありますので、可変な特徴量を用いてモデルを設計する場合には工夫が必要です。例えば、以下のような方法が考えられます。
+
+- 予測時点から直近X個のニュースを解析対象にすることで、特徴量の次元数を固定化する
+- 特徴量をPCAなどの次元圧縮手法を用いて一つのスコアにする(5章で紹介した方法)
+- LSTMのような可変長の入力が可能なレイヤーを作る
+
+　本章では、学習時に目的関数を設定でき、特定の目的に特化したスコアを設計することができるLSTMを可変長入力が可能なレイヤーとして活用する方法を紹介します。
+
+
+=== LSTMによる可変特徴量の統合処理
+
+　この節では、LSTMのモデル作成及び、学習の方法を説明し、最終的にBERT特徴量を単一な特徴量として抽出する方法を説明します。
+
+==== BERT特徴量ロード
+
+　まずはBERT特徴量をロードします。BERT特徴量は5章でご自分で保存したもの、もしくは、 link:https://signate.jp/competitions/443/data[こちら] からダウンロードしたものをご利用ください。
+
+[source,python]
+----
+headline_features = pd.read_pickle(f'{CONFIG["base_path"]}/headline_features/headline_features.pkl')
+keywords_features = pd.read_pickle(f'{CONFIG["base_path"]}/keywords_features/keywords_features.pkl')
+
+# 確認する。
+headline_features.head(3)
+keywords_features.head(3)
+----
+
+==== データのロード
+
+　LSTMの学習時に用いるラベル(投資対象のユニバースの平均の週次リターン)を作成するため、株の価格情報と銘柄情報をロードします。
+
+[source,python]
+----
+# stock_priceとstock_listをロードします。
+stock_price = pd.read_csv(CONFIG["stock_price_path"])
+stock_list = pd.read_csv(CONFIG["stock_list_path"])
+
+# 確認する
+stock_price.head(3)
+stock_list.head(3)
+----
+
+　stock_listから投資対象銘柄を取得します。
+
+[source,python]
+----
+codes = stock_list[stock_list["universe_comp2"] == True][
+    "Local Code"
+].values
+----
+
+　投資対象銘柄を使用してstock_priceの銘柄を絞り込みます。
+
+[source,python]
+----
+stock_price = stock_price.loc[stock_price.loc[:, "Local Code"].isin(codes)]
+----
+
+　ロードしたデータの生成を行います。まず、stock_priceを扱いやすい形に変換します。データのうち ['EndOfDayQuote Date', 'Local Code', "EndOfDayQuote Open", "EndOfDayQuote ExchangeOfficialClose"] のcolumnをラベル作成のために使用します。
+
+- EndOfDayQuote Date: データの日付
+
+- Local Code: 銘柄コード
+
+- EndOfDayQuote Open: 始値
+
+- EndOfDayQuote ExchangeOfficialClose: 終値
+
+[source,python]
+----
+stock_price = stock_price[['EndOfDayQuote Date', 'Local Code', "EndOfDayQuote Open", "EndOfDayQuote ExchangeOfficialClose"]]
+
+# それぞれのcolumn名をわかりやすく変更する
+stock_price = stock_price.rename(columns={
+    'EndOfDayQuote Date': 'date',
+    'Local Code': 'asset',
+    'EndOfDayQuote Open': 'open',
+    'EndOfDayQuote ExchangeOfficialClose': 'close',
+})
+
+# データごとにindex形式が異なると大変扱いにくい。下記のコードより特徴量と同様のindexの形式を変更する。
+# pd.to_datetimeより、string形式の日付をpd.Timestamp形式に変換する
+# pd.Timestamp形式をpd.DatetimeIndex形式に変更し、time zoneをheadline_featuresと同様に設定する。
+# この際、headline_featuresとkeywords_featuresはarticlesのindexを使用しているため、timezoneが一致している。どちらを用いても良い。
+stock_price['date'] = pd.to_datetime(stock_price['date'])
+stock_price['date'] = pd.DatetimeIndex(stock_price['date']).tz_localize(headline_features.index.tz)
+
+# indexを['date', 'asset']順のpd.MultiIndex形式として設定する。
+stock_price = stock_price.set_index(['date', 'asset']).sort_index()
+
+# unstack()より銘柄情報をcolumnに移動させる。
+stock_price = stock_price.unstack()
+
+# 今回使用するデータは2020年以降のデータであるので、2020年以前のデータを切り捨てる。
+stock_price = stock_price['2020-01-01':]
+
+# 確認する
+display(stock_price.head())
+----
+
+　出力結果は以下の通りです。stock_priceを以下のような形式を持つように変更しました。
+
+image::1_9_stock_price.png[1_9_stock_price]
+
+==== 週ごとにグループされた特徴量とラベルの作成
+
+　各週ごとの特徴量を統合するためには、週ごとの全ての特徴量をグループ化すると扱いやすくなります。ここでは、週ごとに特徴量と価格情報をグループ化する方法を説明します。また、週ごとの価格情報をグループ化し、週次の平均リターンを計算し、ラベルを作成する方法を説明します。
+
+
+==== 本番提出用のクラスへ組み込み
+
+``SentimentGenerator``クラスに ""_build_weekly_group"" 関数を追加します。
+
+[source,python]
+----
+@classmethod
+def _build_weekly_group(cls, df):
+    # index情報から、(year, week)の情報を得る。
+    return pd.Series(list(zip(df.index.year, df.index.week)), index=df.index)
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator._build_weekly_group = _build_weekly_group
+
+# 特徴量に適用してみる
+display_markdown('#### features', raw=True)
+features = headline_features
+weekly_group = SentimentGenerator._build_weekly_group(df=features)
+display(weekly_group.head(3))
+display(weekly_group.tail(3))
+
+# プライスに適用してみる。
+# stock priceの2020年の1週目は、データが存在しないため、2020年の２週目から存在することがわかる。
+# これらのindexをマッチさせる方法は後ほど説明する。
+display_markdown('#### stock price', raw=True)
+weekly_group = SentimentGenerator._build_weekly_group(stock_price)
+display(weekly_group.head(3))
+display(weekly_group.tail(3))
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+features
+publish_datetime
+2020-01-01 00:00:00+09:00    (2020, 1)
+2020-01-01 00:00:00+09:00    (2020, 1)
+2020-01-01 00:00:00+09:00    (2020, 1)
+dtype: object
+publish_datetime
+2020-12-31 23:00:00+09:00    (2020, 53)
+2020-12-31 23:12:31+09:00    (2020, 53)
+2020-12-31 23:26:35+09:00    (2020, 53)
+dtype: object
+
+labels
+index
+2020-01-06 00:00:00-05:00    (2020, 2)
+2020-01-07 00:00:00-05:00    (2020, 2)
+2020-01-08 00:00:00-05:00    (2020, 2)
+dtype: object
+index
+2021-01-27 00:00:00-05:00    (2021, 4)
+2021-01-28 00:00:00-05:00    (2021, 4)
+2021-01-29 00:00:00-05:00    (2021, 4)
+dtype: object
+----
+
+　特徴量を週ごとにグループ化してみましょう。
+
+[source,python]
+----
+weekly_group = SentimentGenerator._build_weekly_group(df=features)
+features = features.groupby(weekly_group).apply(lambda x: x[:])
+
+# 確認する
+features.head(3)
+----
+
+　出力結果は以下の通りです。週の情報がindexのlevel0に付与され、グループ化されていることが分かります。
+
+image::1_7_grouped_features.png[1_7_grouped_features]
+
+　続いて、trainとtestを区切る週をboundary_weekとして設定し、train用に用いられる特徴量と、test用に用いられる特徴量を区切ります。boundry_weekは26とし、trainとtestを52週の半分、つまり、2020年前半のニュースを訓練用データ、2020年後半のニュースをテストデータとしています。
+
+[source,python]
+----
+boundary_week = (2020, 26)
+train_features = features[features.index.get_level_values(0) <= boundary_week]
+test_features = features[features.index.get_level_values(0) > boundary_week]
+
+display_markdown('#### train_features', raw=True)
+display(train_features.head(3))
+display(train_features.tail(3))
+
+display_markdown('#### test_features', raw=True)
+display(test_features.head(3))
+display(test_features.tail(3))
+----
+
+　出力結果は以下の通りです。
+
+image::1_7_grouped_train_features.png[1_7_grouped_train_features]
+image::1_7_grouped_test_features.png[1_7_grouped_test_features]
+
+　ここでは、LSTMの学習に係るのラベルデータを作成するために、stock priceを週ごとにグループ化し、翌週の週初営業日の始値から週末営業日の終値にかけての平均リターンを作成する方法を説明します。まずは、当週の週初営業日の始値から週末営業日の終値にかけての平均リターンを作成してみましょう。週次の平均リターンを作成する関数を``_compute_weekly_return``として定義します。
+
+[source,python]
+----
+def _compute_weekly_return(x):
+    # その週の初営業日のopenから最終営業日のcloseまでのリターンを計算する。
+    weekly_return = ((x['close'].iloc[-1] - x['open'].iloc[0]) / x['open'].iloc[0])
+
+    # その日のvolumneが0であるデータは、openが0となっている。
+    # openが0の場合、np.infの値となっているため、np.nanに変換し除去する。
+    # 銘柄ごとのリターンを単純平均し、marketのweekly_returnを計算する。
+    return weekly_return.replace([np.inf, -np.inf], np.nan).dropna().mean()
+
+weekly_group = SentimentGenerator._build_weekly_group(df=stock_price)
+weekly_return = stock_price.groupby(weekly_group).apply(_compute_weekly_return)
+
+display(weekly_return.head(3))
+display(weekly_return.tail(3))
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+(2020, 2)    0.017291
+(2020, 3)   -0.007994
+(2020, 4)   -0.005600
+dtype: float64
+
+(2020, 51)    0.001516
+(2020, 52)   -0.009117
+(2020, 53)    0.005004
+dtype: float64
+----
+
+　ここで、weekly_returnをshift(-1)することにより、翌週のreturn情報が現在のindexに入るようになります。
+
+[source,python]
+----
+weekly_fwd_return = weekly_return.shift(-1).dropna()
+
+# 確認する
+display(weekly_fwd_return.head(3))
+display(weekly_fwd_return.tail(3))
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+(2020, 2)   -0.007994
+(2020, 3)   -0.005600
+(2020, 4)   -0.015110
+dtype: float64
+
+(2020, 50)    0.001516
+(2020, 51)   -0.009117
+(2020, 52)    0.005004
+dtype: float64
+----
+
+　ここで、ラベルデータを訓練期間/テスト期間に分割します。現在のデータは、2020年の第1週から第52週まであり、前半の第1週から第26週までを訓練期間、第27週から52週までをテスト期間とします。具体的には、訓練期間とテスト期間を区切る週を`boundary_week`として、訓練用に用いられる特徴量と、テスト用に用いられる特徴量を区切ります。
+
+[source,python]
+----
+boundary_week = (2020, 26)
+train_labels = weekly_fwd_return[weekly_fwd_return.index <= boundary_week]
+test_labels = weekly_fwd_return[weekly_fwd_return.index > boundary_week]
+
+display_markdown('#### train_labels', raw=True)
+display(train_labels.head(3))
+display(train_labels.tail(3))
+
+display_markdown('#### test_labels', raw=True)
+display(test_labels.head(3))
+display(test_labels.tail(3))
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+train_labels
+(2020, 2)   -0.007994
+(2020, 3)   -0.005600
+(2020, 4)   -0.015110
+dtype: float64
+(2020, 24)    0.016623
+(2020, 25)    0.001732
+(2020, 26)   -0.019522
+dtype: float64
+
+test_labels
+(2020, 27)   -0.017781
+(2020, 28)    0.016613
+(2020, 29)    0.001590
+dtype: float64
+(2020, 50)    0.001516
+(2020, 51)   -0.009117
+(2020, 52)    0.005004
+dtype: float64
+----
+
+　fwd_returnの上げ下げの情報のみをラベルとして用いるため、上げを1.0, 下げを0.0に変換します。
+
+[source,python]
+----
+train_labels = (train_labels >= 0) * 1.0
+test_labels = (test_labels >= 0) * 1.0
+
+display_markdown('#### train_labels', raw=True)
+display(train_labels.head(3))
+display(train_labels.tail(3))
+
+display_markdown('#### test_labels', raw=True)
+display(test_labels.head(3))
+display(test_labels.tail(3))
+----
+
+　出力結果は以下の通りです。うまく0.0と1.0に変換されています。
+
+[source,python]
+----
+train_labels
+(2020, 2)    0.0
+(2020, 3)    0.0
+(2020, 4)    0.0
+dtype: float64
+(2020, 24)    1.0
+(2020, 25)    1.0
+(2020, 26)    0.0
+dtype: float64
+
+test_labels
+(2020, 27)    0.0
+(2020, 28)    1.0
+(2020, 29)    1.0
+dtype: float64
+(2020, 50)    1.0
+(2020, 51)    0.0
+(2020, 52)    1.0
+dtype: float64
+----
+
+==== 本番提出用のクラスへ組み込み
+
+上記のコードを関数として、``SentimentGenerator`` クラスに追加します。
+
+[source,python]
+----
+@classmethod
+def build_weekly_features(cls, features, boundary_week):
+    assert isinstance(boundary_week, tuple)
+
+    weekly_group = cls._build_weekly_group(df=features)
+    features = features.groupby(weekly_group).apply(lambda x: x[:])
+
+    train_features = features[features.index.get_level_values(0) <= boundary_week]
+    test_features = features[features.index.get_level_values(0) > boundary_week]
+
+    return {'train': train_features, 'test': test_features}
+
+@classmethod
+def build_weekly_labels(cls, stock_price, boundary_week):
+    def _compute_weekly_return(x):
+        # その週の初営業日のopenから最終営業日のcloseまでのリターンを計算する。
+        weekly_return = ((x['close'].iloc[-1] - x['open'].iloc[0]) / x['open'].iloc[0])
+
+        # その日のvolumneが0であるデータは、openが0となっている。
+        # openが0の場合、np.infの値となっているため、np.nanに変換し除去する。
+        # 銘柄ごとのリターンを単純平均し、marketのweekly_returnを計算する。
+        return weekly_return.replace([np.inf, -np.inf], np.nan).dropna().mean()
+
+    assert isinstance(boundary_week, tuple)
+
+    weekly_group = cls._build_weekly_group(df=stock_price)
+    weekly_fwd_return = stock_price.groupby(weekly_group).apply(_compute_weekly_return).shift(-1).dropna()
+
+    train_labels = weekly_fwd_return[weekly_fwd_return.index <= boundary_week]
+    test_labels = weekly_fwd_return[weekly_fwd_return.index > boundary_week]
+
+    train_labels = (train_labels >= 0) * 1.0
+    test_labels = (test_labels >= 0) * 1.0
+
+    return {'train': train_labels, 'test': test_labels}
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.build_weekly_features = build_weekly_features
+SentimentGenerator.build_weekly_labels = build_weekly_labels
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.build_weekly_features = build_weekly_features
+SentimentGenerator.build_weekly_labels = build_weekly_labels
+----
+
+==== Pytorch Dataset作成
+
+　pytorchを用いたモデルを効率よく学習させるためには、custom Datasetクラスと、それを用いたDataloaderを定義する必要があります。ここでは、学習で用いるDatasetを定義する方法を説明します。Datasetの\__getitem__は、Dataloaderを介してデータを取得するときに呼ばれます。具体的には、\__init__で事前に定義したデータをidを用いて取得する仕組みになっています。そのため、idが与えられたら、そのidからfeatureとlabelを取得するような構造で\__init__でデータを事前に定義しておく必要があります。以下にPytorchのDataset及びDataLoaderに関する参考記事を少し紹介しています。
+
+|===
+|Pytorch関連記事
+|link:https://qiita.com/mathlive/items/2a512831878b8018db02[Qiita:pyTorchのtransforms,Datasets,Dataloaderの説明と自作Datasetの作成と使用]
+|link:https://qiita.com/takurooo/items/e4c91c5d78059f92e76d[Qiita:PyTorch transforms/Dataset/DataLoaderの基本動作を確認する]
+|===
+
+　ここでは、例としてtrainデータのみを用いて、Datasetを作っています。任意に特徴量としては、headlineを使い、boundary_weekに2020年の26週目を設定します。
+
+[source,python]
+----
+features = headline_features
+boundary_week = (2020, 26)
+
+# 上記で作成したコードを用いて週次の特徴量とラベルを作成
+weekly_features = SentimentGenerator.build_weekly_features(features=features, boundary_week=boundary_week)['train']
+weekly_labels = SentimentGenerator.build_weekly_labels(stock_price=stock_price, boundary_week=boundary_week)['train']
+
+# 共通する週のみのデータを使うため、共通するindex情報を取得する。
+mask_index = weekly_features.index.get_level_values(0).unique() & weekly_labels.index
+display(mask_index)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+Index([ (2020, 2),  (2020, 3),  (2020, 4),  (2020, 5),  (2020, 6),  (2020, 7),
+        (2020, 8),  (2020, 9), (2020, 10), (2020, 11), (2020, 12), (2020, 13),
+       (2020, 14), (2020, 15), (2020, 16), (2020, 17), (2020, 18), (2020, 19),
+       (2020, 20), (2020, 21), (2020, 22), (2020, 23), (2020, 24), (2020, 25),
+       (2020, 26)],
+      dtype='object')
+----
+
+　共通するindexのみのデータだけでreindexします。
+
+[source,python]
+----
+weekly_features = weekly_features[weekly_features.index.get_level_values(0).isin(mask_index)]
+weekly_labels = weekly_labels.reindex(mask_index)
+
+display_markdown('#### weekly_features', raw=True)
+display(weekly_features.head(3))
+display(weekly_features.tail(3))
+
+display_markdown('#### weekly_labels', raw=True)
+display(weekly_labels.head(3))
+display(weekly_labels.tail(3))
+----
+
+出力結果は以下の通りです。
+
+image::1_7_pytorch_dataset_reindex.png[1_7_pytorch_dataset_reindex]
+
+　idからweekの情報を取得できるよう、id_to_weekを作成します。
+
+[source,python]
+----
+id_to_week = {id: week for id, week in enumerate(sorted(weekly_labels.index))}
+id_to_week
+----
+
+出力結果は以下の通りです。
+
+[source,python]
+----
+{0: (2020, 2),
+ 1: (2020, 3),
+ 2: (2020, 4),
+ 3: (2020, 5),
+ 4: (2020, 6),
+ 5: (2020, 7),
+ 6: (2020, 8),
+ 7: (2020, 9),
+ 8: (2020, 10),
+ 9: (2020, 11),
+ 10: (2020, 12),
+ 11: (2020, 13),
+ 12: (2020, 14),
+ 13: (2020, 15),
+ 14: (2020, 16),
+ 15: (2020, 17),
+ 16: (2020, 18),
+ 17: (2020, 19),
+ 18: (2020, 20),
+ 19: (2020, 21),
+ 20: (2020, 22),
+ 21: (2020, 23),
+ 22: (2020, 24),
+ 23: (2020, 25),
+ 24: (2020, 26)}
+----
+
+\__getitem__で付与されたidから、データを取得するロジックを説明します。
+
+[source,python]
+----
+# 例として、任意的にid = 10を用いる。
+id = 10
+
+# idからweekの情報を取得する。
+week = id_to_week[id]
+
+# 学習時のリソース軽減のため、全ての特徴量を入力とするわけではなく、直近n個を入力とする。ここでは1000個として定義する。
+max_sequence_length = 1000
+
+x = weekly_features.xs(week, axis=0, level=0)[-max_sequence_length:]
+y = weekly_labels[week]
+
+# 上記のコードよりidが付与されたとき、idから週の情報を取得し、その週の情報から、特徴量とラベルを手にすることができた。
+display_markdown('#### 特徴量', raw=True)
+display(x.head(3))
+print('shape:', x.shape)
+
+display_markdown('#### ラベル', raw=True)
+display(y)
+----
+
+出力結果は以下の通りです。
+
+image::1_7_pytorch_dataset_get_item.png[1_7_pytorch_dataset_get_item]
+
+　pytorchを用いた学習・推論では、データをtorch.Tensorタイプとして扱うことが要求されます。以下で、np.ndarrayをtensor形式に変換することができます。
+
+[source,python]
+----
+x = torch.tensor(x.values, dtype=torch.float)
+y = torch.tensor(y, dtype=torch.float)
+
+display(x)
+display(y)
+----
+
+出力結果は以下の通りです。
+
+[source,python]
+----
+tensor([[-0.2525,  0.3046, -0.2245,  ..., -0.4402, -0.2707,  0.2823],
+        [ 0.0670,  0.1914, -0.1088,  ..., -0.0879, -0.2142,  0.1802],
+        [-0.2898, -0.3260, -0.1711,  ..., -0.1327, -0.2654,  0.1255],
+        ...,
+        [-0.2813, -0.0425,  0.0015,  ..., -0.7122,  0.1824, -0.0727],
+        [-0.7515,  0.1514, -0.0536,  ..., -0.5100, -0.3639, -0.2901],
+        [ 0.0920,  0.0485, -0.2583,  ..., -0.3228,  0.3854,  0.0924]])
+tensor(1.)
+----
+
+
+　今回、学習に用いる週次のデータセットにおいて、LSTMの学習には週毎のニュースの件数が若干不足している傾向にあることから、過学習防止のため、少し工夫をしています。具体的には、全体的な特徴量(ニュースの情報)の順序は維持しつつ複数に分割し、その分割の中でシャッフルを行う方法を取ります。この方法を用いることで、モデルに入力するデータを増やすことでき、過学習を防止に繋がる効果が期待できます。
+
+[source,python]
+----
+def _shuffle_by_local_split(x, split_size=50):
+    return torch.cat([splitted[torch.randperm(splitted.size()[0])] for splitted in x.split(split_size, dim=0)], dim=0)
+
+x = _shuffle_by_local_split(x=x)
+display(x)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+tensor([[-0.1477,  0.1549, -0.0650,  ...,  0.0304,  0.0071,  0.3565],
+        [-0.2660,  0.6258, -0.1581,  ..., -0.2906, -0.3727,  0.0437],
+        [-0.2384, -0.1165, -0.2715,  ..., -0.3553, -0.6599, -0.1545],
+        ...,
+        [-0.7515,  0.1514, -0.0536,  ..., -0.5100, -0.3639, -0.2901],
+        [-0.1901,  0.2114, -0.2073,  ..., -0.3650, -0.3166,  0.2325],
+        [-0.4610,  0.4689, -0.0572,  ..., -0.2271, -0.2781, -0.1097]])
+----
+
+　学習中においては、データを1つずつ読み込んで学習を行うより、複数個を同時に並列演算を行う方(mini batch)が時間短縮に繋がります。そのためには、データ行列を重ねる必要があり、データのsequenceが同一である必要があります。本節では、このようなシークエンスの異なるデータを扱うため、max_sequence_lengthを決め、最大のsequenceに合わせます。また、sequenceがmax_sequence_lengthに達しない場合は、前から0を埋め(zero padding)、sequenceを合わせています。なお、本節ではmax_sequence_lengthは1000と定義してあります。
+
+[source,python]
+----
+# sequenceがmax_sequence_lengthに達しないrandomのtensorをxとして、定義し、以下のコードでzero paddingを行ってみる。
+x = torch.randn(100, 768)
+display_markdown('#### Padding前', raw=True)
+display(x)
+display(x.shape)
+
+if x.size()[0] < max_sequence_length:
+    x = F.pad(x, pad=(0, 0, max_sequence_length - x.size()[0], 0))
+
+display_markdown('#### Padding後', raw=True)
+display(x)
+display(x.shape)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+Padding前
+tensor([[-0.0767,  1.8950, -0.9323,  ...,  0.1885, -1.3335,  0.3923],
+        [-0.5709,  0.4231,  0.4268,  ..., -0.8555, -0.6662, -0.0097],
+        [ 0.3191, -0.3961, -0.9253,  ..., -1.0401,  0.4225, -0.2478],
+        ...,
+        [-0.0769, -0.0747, -0.2437,  ...,  0.3740,  0.0970,  0.6437],
+        [ 1.1534,  0.8583,  1.2623,  ...,  0.0882,  0.5125, -0.1485],
+        [ 2.1272,  0.8173,  0.8997,  ..., -0.5132,  0.5023,  0.3106]])
+torch.Size([100, 768])
+
+Padding後
+tensor([[ 0.0000,  0.0000,  0.0000,  ...,  0.0000,  0.0000,  0.0000],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0000,  0.0000,  0.0000],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0000,  0.0000,  0.0000],
+        ...,
+        [-0.0769, -0.0747, -0.2437,  ...,  0.3740,  0.0970,  0.6437],
+        [ 1.1534,  0.8583,  1.2623,  ...,  0.0882,  0.5125, -0.1485],
+        [ 2.1272,  0.8173,  0.8997,  ..., -0.5132,  0.5023,  0.3106]])
+torch.Size([1000, 768])
+----
+
+　上記のコードをまとめて、pytorchのDatasetクラスを作成します。
+
+[source,python]
+----
+class Dataset(_Dataset):
+    def __init__(self, weekly_features, weekly_labels, max_sequence_length):
+        # 共通する週のみを使うため、共通するindex情報を取得する
+        mask_index = (
+            weekly_features.index.get_level_values(0).unique() & weekly_labels.index
+        )
+
+        # 共通するindexのみのデータだけでreindexを行う。
+        self.weekly_features = weekly_features[
+            weekly_features.index.get_level_values(0).isin(mask_index)
+        ]
+        self.weekly_labels = weekly_labels.reindex(mask_index)
+
+        # idからweekの情報を取得できるよう、id_to_weekをビルドする
+        self.id_to_week = {
+            id: week for id, week in enumerate(sorted(weekly_labels.index))
+        }
+
+        self.max_sequence_length = max_sequence_length
+
+    def _shuffle_by_local_split(self, x, split_size=50):
+        return torch.cat(
+            [
+                splitted[torch.randperm(splitted.size()[0])]
+                for splitted in x.split(split_size, dim=0)
+            ],
+            dim=0,
+        )
+
+    def __len__(self):
+        return len(self.weekly_labels)
+
+    def __getitem__(self, id):
+        # 付与されたidから週の情報を取得し、その週の情報から、特徴量とラベルを取得する。
+        week = self.id_to_week[id]
+        x = self.weekly_features.xs(week, axis=0, level=0)[-self.max_sequence_length :]
+        y = self.weekly_labels[week]
+
+        # pytorchでは、データをtorch.Tensorタイプとして扱うことが要求される。
+        # 全体的な特徴量(ニュースの情報)の順序は維持しつつ、入力とする特徴量を数分割し、その分割の中でシャッフルを行う。
+        x = self._shuffle_by_local_split(torch.tensor(x.values, dtype=torch.float))
+        y = torch.tensor(y, dtype=torch.float)
+
+        # max_sequence_lengthに最大のsequenceを合わせ、sequenceがmax_sequence_lengthに達しない場合は、前から0を埋め、sequenceを合わせる
+        if x.size()[0] < self.max_sequence_length:
+            x = F.pad(x, pad=(0, 0, self.max_sequence_length - x.size()[0], 0))
+
+        return x, y
+----
+
+==== LSTMによる特徴量合成モデル作成
+
+　LSTMを用いて上げ下げの確率を出力とするモデルを定義し、binary_cross_entropyを損失関数として学習を行います。モデルへの入力Sequenceがかなり長いため、入力の最初の方の情報の消失が激しいと想定されます。そのため今回は、LSTMにおいて ``bidirectional`` を利用しています。具体的なLSTMの定義は以下のソースコードを確認してください。出力層でのsentiment score（上げ下げの情報）及び出力の直前の層の高次元の情報を抽出し、特徴量として用いることを想定しています。
+
+[source,python]
+----
+class FeatureCombiner(nn.Module):
+    def __init__(self, input_size, hidden_size, compress_dim=4, num_layers=2):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        # LSTMの定義
+        # batch_firstより、出力次元の最初がbatchとなる。
+        # dropoutを用いて、内部状態のconnectionをdropすることより過学習を防ぐ。
+        # Sequenceがかなり長く、入力の始めの方の情報の消失を防ぐため、bidirectionalのモデルを使う。
+        self.cell = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=0.5,
+            bidirectional=True,
+        )
+
+        # より高次元の特徴量を抽出できるようにするため、classifierの手前で、compress_dim次元への線形圧縮を行う。
+        self.compressor = nn.Linear(hidden_size * 2, compress_dim)
+
+        # sentiment probabilityの出力層。
+        self.classifier = nn.Linear(compress_dim, 1)
+
+        # outputの範囲を[0, 1]とする。
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        # 入力値xから出力までの流れを定義する。
+        output, _ = self.cell(x)
+        output = self.sigmoid(self.classifier(self.compressor(output[:, -1, :])))
+        return output
+
+    def extract_feature(self, x):
+        # 入力値xから特徴量抽出までの流れを定義する。
+        output, _ = self.cell(x)
+        output = self.compressor(output[:, -1, :])
+        return output
+----
+
+==== 特徴量合成モデルのハンドラー作成
+
+　前節において、データのインデクシングロジックや、特徴量合成モデルは作成しました。しかし、これらだけではモデル学習は行えません。学習のロジックや、学習されたモデルのセーブ及びロード、推定、特徴量抽出を実装する必要があります。本節では、これらを実装するためにFeatureCombinerHandlerのクラスを定義しています。
+
+[source,python]
+----
+class FeatureCombinerHandler:
+    def __init__(self, feature_combiner_params, store_dir):
+        # モデル学習及び推論に用いるデバイスを定義する
+        if torch.cuda.device_count() >= 1:
+            self.device = 'cuda'
+            print("[+] Set Device: GPU")
+        else:
+            self.device = 'cpu'
+            print("[+] Set Device: CPU")
+
+        # モデルのcheckpointや抽出した特徴量及びsentimentをstoreする場所を定義する。
+        self.store_dir = store_dir
+        os.makedirs(store_dir, exist_ok=True)
+
+        # 上記で作成したfeaturecombinerを定義する。
+        self.feature_combiner = FeatureCombiner(**feature_combiner_params).to(
+            self.device
+        )
+
+        # 学習に用いるoptimizerを定義する。
+        self.optimizer = torch.optim.Adam(
+            params=self.feature_combiner.parameters(), lr=0.001,
+        )
+
+        # ロス関数の定義
+        self.criterion = nn.BCELoss().to(self.device)
+
+        # モデルのcheck pointが存在する場合、モデルをロードする
+        self._load_model()
+
+    # 学習に必要なデータ(並列のためbatch化されたもの)をサンプルする。
+    def _sample_xy(self, data_type):
+        assert data_type in ("train", "val")
+
+        # data_typeより、data_typeに合致したデータを取得するようにしている。
+        if data_type == "train":
+            # dataloaderをiteratorとして定義し、next関数として毎時のデータをサンプルすることができる。
+            # Iteratorは全てのデータがサンプルされると、StopIterationのエラーを発するが、そのようなエラーが出たとき、
+            # Iteratorを再定義し、データをサンプルするようにしている。
+            try:
+                x, y = next(self.iterable_train_dataloader)
+            except StopIteration:
+                self.iterable_train_dataloader = iter(self.train_dataloader)
+                x, y = next(self.iterable_train_dataloader)
+
+        elif data_type == "val":
+            try:
+                x, y = next(self.iterable_val_dataloader)
+            except StopIteration:
+                self.iterable_val_dataloader = iter(self.val_dataloader)
+                x, y = next(self.iterable_val_dataloader)
+
+        return x.to(self.device), y.to(self.device)
+
+    # モデルのパラメータをアップデートするロジック
+    def _update_params(self, loss):
+        # ロスから、gradientを逆伝播し、パラメータをアップデートする
+        loss.backward()
+        self.optimizer.step()
+
+    # 学習されたfeature_combinerのパラメータをcheck_pointとしてstoreするロジック
+    def _save_model(self, epoch):
+        torch.save(
+            self.feature_combiner.state_dict(),
+            os.path.join(self.store_dir, f"{epoch}.ckpt"),
+        )
+        print(f"[+] Epoch: {epoch}, Model is saved.")
+
+    # 学習されたcheckpointが存在す場合、feature_combinerにそのパラメータをロードするロジック
+    def _load_model(self):
+        # cudaで学習されたモデルなどを、cpu環境下でロードするときはこのパラメータが必要となる。
+        params_to_load = {}
+        if self.device == "cpu":
+            params_to_load["map_location"] = torch.device("cpu")
+
+        # .ckptファイルを探し、古い順から新しい順にソートする。
+        check_points = glob(os.path.join(self.store_dir, "*.ckpt"))
+        check_points = sorted(
+            check_points, key=lambda x: int(x.split("/")[-1].replace(".ckpt", "")),
+        )
+
+        # check_pointが存在しない場合は、スキップする。
+        if len(check_points) == 0:
+            print("[!] No exists checkpoint")
+            return
+
+        # 複数個のchieck_pointが存在する場合、一番最新のものを使い、モデルのパラメータをロードする
+        check_point = check_points[-1]
+        self.feature_combiner.load_state_dict(torch.load(check_point, **params_to_load))
+        print("[+] Model is loaded")
+
+    # Datasetからdataloaderを定義するロジック
+    def _build_dataloader(
+        self, dataloader_params, weekly_features, weekly_labels, max_sequence_length
+    ):
+        # 上記3で作成したしたdatasetを定義する
+        dataset = Dataset(
+            weekly_features=weekly_features,
+            weekly_labels=weekly_labels,
+            max_sequence_length=max_sequence_length,
+        )
+
+        # datasetのdataをiterableにロードできるよう、dataloaderを定義する、このとき、shuffle=Trueを渡すことで、データはランダムにサンプルされるようになる。
+        return DataLoader(dataset=dataset, shuffle=True, **dataloader_params)
+
+    # train用に、featuresとlabelsを渡し、datasetを定義し、dataloaderを定義するロジック
+    def set_train_dataloader(
+        self, dataloader_params, weekly_features, weekly_labels, max_sequence_length
+    ):
+        self.train_dataloader = self._build_dataloader(
+            dataloader_params=dataloader_params,
+            weekly_features=weekly_features,
+            weekly_labels=weekly_labels,
+            max_sequence_length=max_sequence_length,
+        )
+
+        # dataloaderからiteratorを定義する
+        # iteratorはnext関数よりデータをサンプルすることが可能となる。
+        self.iterable_train_dataloader = iter(self.train_dataloader)
+
+    # validation用に、featuresとlabelsを渡し、datasetを定義し、dataloaderを定義するロジック
+    def set_val_dataloader(
+        self, dataloader_params, weekly_features, weekly_labels, max_sequence_length
+    ):
+        self.val_dataloader = self._build_dataloader(
+            dataloader_params=dataloader_params,
+            weekly_features=weekly_features,
+            weekly_labels=weekly_labels,
+            max_sequence_length=max_sequence_length,
+        )
+
+        # dataloaderからiteratorを定義する
+        # iteratorはnext関数よりデータをサンプルすることが可能となる。
+        self.iterable_val_dataloader = iter(self.val_dataloader)
+
+    # 学習ロジック
+    def train(self, n_epoch):
+        # n_epochの回数分、全学習データを複数回用いて学習する。
+        for epoch in range(n_epoch):
+
+            # 各々のepochごとのaverage lossを表示するため、lossをstoreするリストを定義する。
+            train_losses = []
+            test_losses = []
+
+            # train_dataloaderの長さは、全ての学習データを一度用いるときの長さと同様である。
+            # batchを組むと、その分train_dataloaderの長さは可変し、ちょうど一度全てのデータで学習できる長さを返す。
+            for iter_ in tqdm(range(len(self.train_dataloader))):
+                # パラメータをtrainableにするため、feature_combinerをtrainモードにする。
+                self.feature_combiner.train()
+
+                # trainデータをサンプルする。
+                x, y = self._sample_xy(data_type="train")
+
+                # feature_combinerに特徴量を入力し、sentiment scoreを取得する。
+                preds = self.feature_combiner(x=x)
+
+                # sentiment scoreとラベルとのロスを計算する。
+                train_loss = self.criterion(preds, y.view(-1, 1))
+
+                # 計算されたロスは、後ほどepochごとのdisplayに使用するため、storeしておく。
+                train_losses.append(train_loss.detach().cpu())
+
+                # lossから、gradientを逆伝播させ、パラメータをupdateする。
+                self._update_params(loss=train_loss)
+
+                # validation用のロースを計算する。
+                # 毎回計算を行うとコストがかかってくるので、iter_毎5回ごとに計算を行う。
+                if iter_ % 5 == 0:
+
+                    # 学習を行わないため、feature_combinerをevalモードにしておく。
+                    # evalモードでは、dropoutの影響を受けない。
+                    self.feature_combiner.eval()
+
+                    # 各パラメータごとのgradientを計算するとリソースが高まる。
+                    # evaluationの時には、gradient情報を持たせないことで、メモリーの節約に繋がる。
+                    with torch.no_grad():
+                        # validationデータをサンプルする
+                        x, y = self._sample_xy(data_type="val")
+
+                        # feature_combinerに特徴量を入力し、sentiment scoreを取得する。
+                        preds = self.feature_combiner(x=x)
+
+                        # sentiment scoreとラベルとのロスを計算する。
+                        test_loss = self.criterion(preds, y.view(-1, 1))
+
+                        # 計算されたロスは、後ほどepochごとのdisplayに使用するため、storeしておく。
+                        test_losses.append(test_loss.detach().cpu())
+
+            # 毎epoch終了後、平均のロスをプリントする。
+            print(
+                f"epoch: {epoch}, train_loss: {np.mean(train_losses):.4f}, val_loss: {np.mean(test_losses):.4f}"
+            )
+
+            # 毎epoch終了後、モデルのパラメータをstoreする。
+            self._save_model(epoch=epoch)
+
+    # 特徴量から、合成特徴量を抽出するロジック
+    def combine_features(self, features):
+        # 学習を行わないため、feature_combinerをevalモードにしておく。
+        self.feature_combiner.eval()
+
+        # gradient情報を持たせないことで、メモリーの節約する。
+        with torch.no_grad():
+
+            # 特徴量をfeature_combinerのextract_feature関数に入力し、出力層手前の特徴量を抽出する。
+            # 抽出するとき、tensorをcpu上に落とし、np.ndarray形式に変換する。
+            return (
+                self.feature_combiner.extract_feature(
+                    x=torch.tensor(features, dtype=torch.float).to(self.device)
+                )
+                .cpu()
+                .numpy()
+            )
+
+    # 特徴量から、翌週のsentimentを予測するロジック
+    def predict_sentiment(self, features):
+        # 学習を行わないため、feature_combinerをevalモードにしておく。
+        self.feature_combiner.eval()
+
+        # gradient情報を持たせないことで、メモリーの節約する。
+        with torch.no_grad():
+
+            # 特徴量をfeature_combinerに入力し、sentiment scoreを抽出する。
+            # 抽出するとき、tensorをcpu上に落とし、np.ndarray形式に変換する。
+            return (
+                self.feature_combiner(x=torch.tensor(features, dtype=torch.float).to(self.device))
+                .cpu()
+                .numpy()
+            )
+
+    # weeklyグループされた特徴量を入力に、合成特徴量もしくは、sentiment scoreを抽出するロジック
+    def generate_by_weekly_features(
+        self, weekly_features, generate_target, max_sequence_length
+    ):
+        assert generate_target in ("features", "sentiment")
+        generate_func = getattr(
+            self,
+            {"features": "combine_features", "sentiment": "predict_sentiment"}[
+                generate_target
+            ],
+        )
+
+        # グループごとに特徴量もしくは、sentiment scoreを抽出し、最終的に重ねて返すため、リストを作成する。
+        outputs = []
+
+        # ユニークな週indexを取得する。
+        weeks = sorted(weekly_features.index.get_level_values(0).unique())
+
+        for week in tqdm(weeks):
+            # 各週ごとの特徴量を取得し、直近から、max_sequence_length分切る。
+            features = weekly_features.xs(week, axis=0, level=0)[-max_sequence_length:]
+
+            # 特徴量をモデルに入力し、合成特徴量もしくは、sentiment scoreを抽出し、outputsにappendする。
+            # np.expand_dims(features, axis=0)を用いる理由は、特徴量合成機の入力期待値は、dimention0がbatchであるが、
+            # featuresは、[1000, 768]の次元をもち、これらをunsqueezeし、[1, 1000, 768]に変換する必要がある。
+            outputs.append(generate_func(features=np.expand_dims(features, axis=0)))
+
+        # outputsを重ね、indexの情報とともにpd.DataFrame形式として返す。
+        return pd.DataFrame(np.concatenate(outputs, axis=0), index=weeks)
+----
+
+==== 特徴量合成モデルの学習及び特徴量合成
+
+　本節では、実際作成したコードを元に、特徴量合成機の学習を行います。さらに、学習されたモデルを用いて、特徴量とsentiment scoreを抽出します。本実装では、モデルの過学習を防止するため、二つのランダム性を与えています。これは、学習のたびに異なるランダム性を与えられ、学習の再現は不可能となります。
+
+　学習における再現可能性を重要視する場合、ランダム性を固定する必要があります。しかし、本実装においては二つのランダム性を同時に固定しないといけないことから、そのための実装を実施するとコードの難易度が高まってしまいます。以上のことから、本チュートリアルではランダム性の固定を省略しています。学習の実行毎に少し異なるモデルが構築されることに留意しましょう。ただし、推論処理においてはここで固定化しなかったランダム性の影響はありませんので、同一のモデルを利用する限りは同一の予測結果が取得されます。推論処理の再現可能性はバックテスト評価において重要です。
+
+　まずは、上記で作成したFeatureCombinerHandlerをインスタンス化します。そのとき、feature_combiner_paramsに{"input_size": 768, "hidden_size": 128}を渡していますが、これはBERTから抽出した特徴量のサイズが768であるためです。LSTMが持つ内部状態のパラメータの次元においては、適切な値を設定しましょう。ここでは、128次元と設置しているのですが、過学習の恐れが高いときやパラメータを減らしても十分学習可能な時には、より低い値をセットしてみましょう。
+
+[source,python]
+----
+feature_combiner_handler = FeatureCombinerHandler(feature_combiner_params={"input_size": 768, "hidden_size": 128}, store_dir=f'{CONFIG["base_path"]}/test')
+----
+
+　続いて、学習用とvalidation用のデータを構築します。一般的に、データは学習に用いられるTrainデータと、パラメータなどの調整のため用いられるvalidationデータ、学習後のモデルを評価するためのtestデータに分けることが多いですが、本チュートリアルでは、LSTMを十分に学習するにはデータ数が少ないため、TrainとTestデータに分割し、validation lossの算出時にもtestデータを用います。まずは、上記で作成したbuild_weekly_featuresとbuild_weekly_labelsを用いて、データセットを生成します。
+
+[source,python]
+----
+boundary_week = (2020, 26)
+weekly_features = SentimentGenerator.build_weekly_features(features, boundary_week)
+weekly_labels = SentimentGenerator.build_weekly_labels(stock_price, boundary_week)
+----
+
+　学習を行う前に、データのサンプル及び、batch処理を行ってくれるDataloaderをビルドする必要があります。このとき、batch_sizeを4にすることで、4つのデータを並列に学習し、num_workersを2にすることでdataloaderはcpu 2coreを用いて、並列的に読み込まれます。max_sequence_lengthを1,000にすることで、学習中には1,000個のsequenceをmaxとして入力します。
+
+[source,python]
+----
+# train dataloaderをsetする。
+feature_combiner_handler.set_train_dataloader(
+    dataloader_params={
+        "batch_size": 4,
+        "num_workers": 2,
+    },
+    weekly_features=weekly_features['train'],
+    weekly_labels=weekly_labels['train'],
+    max_sequence_length=1000
+)
+
+# validation dataloaderをsetする。
+feature_combiner_handler.set_val_dataloader(
+    dataloader_params={
+        "batch_size": 4,
+        "num_workers": 2,
+    },
+    weekly_features=weekly_features['test'],
+    weekly_labels=weekly_labels['test'],
+    max_sequence_length=1000
+)
+----
+
+　学習を行ってみましょう。n_epochは全てのデータを一度用いた学習回数を表し、ここでは、テストであるため1と設定しています。
+
+[source,python]
+----
+feature_combiner_handler.train(n_epoch=1)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+epoch: 0, train_loss: 0.7934, val_loss: 0.6816
+[+] Epoch: 0, Model is saved.
+----
+
+　学習後、特徴量抽出機から、特徴量やsentiment scoreを抽出することができます。今回は、一度学習されたモデルをロードし、特徴量とsentiment scoreを抽出してみます。上で定義した、feature_combiner_handlerを同様に定義すると、check_pointを探し、モデルがロードされます。
+
+[source,python]
+----
+feature_combiner_handler = FeatureCombinerHandler(feature_combiner_params={"input_size": 768, "hidden_size": 128}, store_dir=f'{CONFIG["base_path"]}/test')
+----
+
+　sentiment scoreは以下のように取得できます。max_sequence_lengthは学習時と同様に、直近から利用する特徴量の最大の数を決めることができますが、評価時には、十分長い(全部かほぼ全部)の特徴量を合成するため、10,000を与えます。
+
+[source,python]
+----
+sentiment_score = feature_combiner_handler.generate_by_weekly_features(weekly_features=weekly_features['test'], generate_target='sentiment', max_sequence_length=10000)
+
+display(sentiment_score.head(3))
+display(sentiment_score.tail(3))
+----
+
+出力結果は以下の通りです。
+
+image::1_7_lstm_test_sentiment_score.png[1_7_lstm_test_sentiment_score, width=20%]
+
+また、より高次元の特徴量は以下のように取得できます。
+
+[source,python]
+----
+combined_features = feature_combiner_handler.generate_by_weekly_features(weekly_features=weekly_features['test'], generate_target='features', max_sequence_length=10000)
+
+display(combined_features.head(3))
+display(combined_features.tail(3))
+----
+
+出力結果は以下の通りです。
+
+image::1_7_lstm_test_features.png[1_7_lstm_test_features, width=50%]
+
+上で作成したFeatureCombinerHandlerは、本番環境においても特徴量の合成時に用います。``SentimentGenerator`` クラスに、インスタンスとしてビルドしておきましょう。
+
+[source,python]
+----
+SentimentGenerator.headline_feature_combiner_handler = FeatureCombinerHandler(feature_combiner_params={"input_size": 768, "hidden_size": 128}, store_dir=f'{CONFIG["base_path"]}/headline_features')
+SentimentGenerator.keywords_feature_combiner_handler = FeatureCombinerHandler(feature_combiner_params={"input_size": 768, "hidden_size": 128}, store_dir=f'{CONFIG["base_path"]}/keywords_features')
+----
+
+上記のコードをまとめ、headlineとkeywordsそれぞれにおいて、特徴量合成機を学習し、特徴量を抽出するコードを作成します。
+
+[source,python]
+----
+boundary_week = (2020, 26)
+for features, feature_type in [(headline_features, 'headline_features'), (keywords_features, 'keywords_features')]:
+    # feature_typeに合致するfeature_combiner_handlerをSentimentGeneratorから取得する。
+    feature_combiner_handler = {
+        'headline_features': SentimentGenerator.headline_feature_combiner_handler,
+        'keywords_features': SentimentGenerator.keywords_feature_combiner_handler,
+    }[feature_type]
+
+    # 学習及び、validationに用いる、データをビルドする
+    weekly_features = SentimentGenerator.build_weekly_features(features, boundary_week)
+    weekly_labels = SentimentGenerator.build_weekly_labels(stock_price, boundary_week)
+
+    # train dataloaderをsetする。
+    # このとき、batch_sizeを4にすることで、4つのデータを並列に学習し、
+    # num_workersを2にすることでdataloaderはcpu 2coreを用いて、並列的にロードされる。
+    feature_combiner_handler.set_train_dataloader(
+        dataloader_params={
+            "batch_size": 4,
+            "num_workers": 2,
+        },
+        weekly_features=weekly_features['train'],
+        weekly_labels=weekly_labels['train'],
+        max_sequence_length=1000
+    )
+
+    # validation dataloaderをsetする。
+    feature_combiner_handler.set_val_dataloader(
+        dataloader_params={
+            "batch_size": 4,
+            "num_workers": 2,
+        },
+        weekly_features=weekly_features['test'],
+        weekly_labels=weekly_labels['test'],
+        max_sequence_length=1000
+    )
+
+    # 学習
+    feature_combiner_handler.train(n_epoch=20)
+
+    # 特徴量及びsentiment scoreを抽出し、pickleとしてstoreする。
+    feature_combiner_handler.generate_by_weekly_features(weekly_features=weekly_features['test'], generate_target='sentiment', max_sequence_length=10000).to_pickle(os.path.join(f'{CONFIG["base_path"]}/{feature_type}', 'LSTM_sentiment.pkl'))
+    feature_combiner_handler.generate_by_weekly_features(weekly_features=weekly_features['test'], generate_target='features', max_sequence_length=10000).to_pickle(os.path.join(f'{CONFIG["base_path"]}/{feature_type}', 'LSTM_features.pkl'))
+----
+
+==== 本番提出用のクラス作成
+
+　ここまでの、ニュースデータの読み込み、前処理、BERT特徴量、LSTMによる特徴量合成までの一連の処理を `generate_lstm_features` 関数として、``SentimentGenerator``クラスに追加します。
+
+[source,python]
+----
+@classmethod
+def generate_lstm_features(
+    cls,
+    article_path,
+    start_dt=None,
+    boundary_week=(2020, 26),
+    target_feature_types=None,
+):
+    # target_feature_typesが指定されなかったらデフォルト値設定
+    dfault_target_feature_types = [
+        "headline",
+        "keywords",
+    ]
+    if target_feature_types is None:
+        target_feature_types = dfault_target_feature_types
+    # feature typeが想定通りであることを確認
+    assert set(target_feature_types).issubset(dfault_target_feature_types)
+
+    # ニュースデータをロードする。
+    articles = cls.load_articles(start_dt=start_dt, path=article_path)
+
+    # 前処理を行う。
+    articles = cls.normalize_articles(articles)
+    articles = cls.handle_punctuations_in_articles(articles)
+    articles = cls.drop_remove_list_words(articles)
+
+    # headlineとkeywordsの特徴量をdict型で返す。
+    lstm_features = {}
+
+    for feature_type in target_feature_types:
+        # コーパス全体のBERT特徴量を抽出する。
+        features = cls.generate_features_by_texts(texts=articles[feature_type])
+
+        # feature_typeに合致するfeature_combiner_handlerをclsから取得する。
+        feature_combiner_handler = {
+            "headline": cls.headline_feature_combiner_handler,
+            "keywords": cls.keywords_feature_combiner_handler,
+        }[feature_type]
+
+        # 特徴量を週毎のグループ化する。
+        weekly_features = cls.build_weekly_features(features, boundary_week)["test"]
+
+        # Sentiment scoreを抽出する。
+        lstm_features[
+            f"{feature_type}_features"
+        ] = feature_combiner_handler.generate_by_weekly_features(
+            weekly_features=weekly_features,
+            generate_target="sentiment",
+            max_sequence_length=10000,
+        )
+
+    return lstm_features
+----
+
+　ここまで``SentimentGenerator``に追加したclass methodをまとめ、``SentimentGenerator``クラスを仕上げます。5章で実装した処理も一部利用してることに注意してください。
+
+[source,python]
+----
+class SentimentGenerator(object):
+    article_columns = None
+    device = None
+    feature_extractor = None
+    headline_feature_combiner_handler = None
+    keywords_feature_combiner_handler = None
+    punctuation_replace_dict = None
+    punctuation_remove_list = None
+
+    @classmethod
+    def initialize(cls, base_dir="../model"):
+        # 使用するcolumnをセットする。
+        cls.article_columns = ["publish_datetime", "headline", "keywords"]
+
+        # BERT特徴量抽出機をセットする。
+        cls._set_device()
+        cls._build_feature_extractor()
+        cls._build_tokenizer()
+
+        # LSTM特徴量合成機をセットする。
+        cls.headline_feature_combiner_handler = FeatureCombinerHandler(
+            feature_combiner_params={"input_size": 768, "hidden_size": 128},
+            store_dir=f"{base_dir}/headline_features",
+        )
+        cls.keywords_feature_combiner_handler = FeatureCombinerHandler(
+            feature_combiner_params={"input_size": 768, "hidden_size": 128},
+            store_dir=f"{base_dir}/keywords_features",
+        )
+
+        # 置換すべき記号のdictionaryを作成する。
+        JISx0208_replace_dict = {
+            "髙": "高",
+            "﨑": "崎",
+            "濵": "浜",
+            "賴": "頼",
+            "瀨": "瀬",
+            "德": "徳",
+            "蓜": "配",
+            "昻": "昂",
+            "桒": "桑",
+            "栁": "柳",
+            "犾": "犹",
+            "琪": "棋",
+            "裵": "裴",
+            "魲": "鱸",
+            "羽": "羽",
+            "焏": "丞",
+            "祥": "祥",
+            "曻": "昇",
+            "敎": "教",
+            "澈": "徹",
+            "曺": "曹",
+            "黑": "黒",
+            "塚": "塚",
+            "閒": "間",
+            "彅": "薙",
+            "匤": "匡",
+            "冝": "宜",
+            "埇": "甬",
+            "鮏": "鮭",
+            "伹": "但",
+            "杦": "杉",
+            "罇": "樽",
+            "柀": "披",
+            "﨤": "返",
+            "寬": "寛",
+            "神": "神",
+            "福": "福",
+            "礼": "礼",
+            "贒": "賢",
+            "逸": "逸",
+            "隆": "隆",
+            "靑": "青",
+            "飯": "飯",
+            "飼": "飼",
+            "緖": "緒",
+            "埈": "峻",
+        }
+
+        cls.punctuation_replace_dict = {
+            **JISx0208_replace_dict,
+            "《": "〈",
+            "》": "〉",
+            "『": "「",
+            "』": "」",
+            "“": '"',
+            "!!": "!",
+            "〔": "[",
+            "〕": "]",
+            "χ": "x",
+        }
+
+        # 取り除く記号リスト。
+        cls.punctuation_remove_list = [
+            "|",
+            "■",
+            "◆",
+            "●",
+            "★",
+            "☆",
+            "♪",
+            "〃",
+            "△",
+            "○",
+            "□",
+        ]
+
+    @classmethod
+    def _set_device(cls):
+        # 使用可能なgpuがある場合、そちらを利用し特徴量抽出を行う
+        if torch.cuda.device_count() >= 1:
+            cls.device = "cuda"
+            print("[+] Set Device: GPU")
+        else:
+            cls.device = "cpu"
+            print("[+] Set Device: CPU")
+
+    @classmethod
+    def _build_feature_extractor(cls):
+        # 特徴量抽出のため事前学習済みBERTモデルを用いる。
+        # ここでは、"cl-tohoku/bert-base-japanese-whole-word-masking"モデルを使用しているが、異なる日本語BERTモデルを用いても良い。
+        cls.feature_extractor = transformers.BertModel.from_pretrained(
+            "cl-tohoku/bert-base-japanese-whole-word-masking",
+            return_dict=True,
+            output_hidden_states=True,
+        )
+
+        # 使用するdeviceを指定
+        cls.feature_extractor = cls.feature_extractor.to(cls.device)
+
+        # 今回、学習は行わない。特徴量抽出のためなので、評価モードにセットする。
+        cls.feature_extractor.eval()
+
+        print("[+] Built feature extractor")
+
+    @classmethod
+    def _build_tokenizer(cls):
+        # BERTモデルの入力とするコーパスはそのBERTモデルが学習された時と同様の前処理を行う必要がある。
+        # 今回使用する"cl-tohoku/bert-base-japanese-whole-word-masking"モデルは、mecab-ipadic-NEologdによりトークナイズされ、その後Wordpiece subword encoderよりsubword化している。
+        # Subwordとは形態素の類似な概念として、単語をより小さい意味のある単位に変換したものである。
+        # transformersのBertJapaneseTokenizerは、その事前学習モデルの学習時と同様の前処理を簡単に使用することができる。
+        # この章ではBertJapaneseTokenizerを利用し、トークナイズ及びsubword化を行う。
+        cls.bert_tokenizer = BertJapaneseTokenizer.from_pretrained(
+            "cl-tohoku/bert-base-japanese-whole-word-masking"
+        )
+        print("[+] Built bert tokenizer")
+
+    @classmethod
+    def load_articles(cls, path, start_dt=None, end_dt=None):
+        # csvをロードする
+        # headline、keywordsをcolumnとして使用。publish_datetimeをindexとして使用。
+        articles = pd.read_csv(path)[cls.article_columns].set_index("publish_datetime")
+
+        # str形式のdatetimeをpd.Timestamp形式に変換
+        articles.index = pd.to_datetime(articles.index)
+
+        # NaN値を取り除く
+        articles = articles.dropna()
+
+        # 必要な場合、使用するデータの範囲を指定する
+        return articles[start_dt:end_dt]
+
+    @classmethod
+    def normalize_articles(cls, articles):
+        articles = articles.copy()
+
+        # 欠損値を取り除く
+        articles = articles.dropna()
+
+        for column in articles.columns:
+            # スペース(全角スペースを含む)はneologdn正規化時に全て除去される。
+            # ここでは、スペースの情報が失われないように、スペースを全て改行に書き換え、正規化後スペースに再変換する。
+            articles[column] = articles[column].apply(lambda x: "\n".join(x.split()))
+
+            # neologdnを使って正規化を行う。
+            articles[column] = articles[column].apply(lambda x: neologdn.normalize(x))
+
+            # 改行をスペースに置換する。
+            articles[column] = articles[column].str.replace("\n", " ")
+
+        return articles
+
+    @classmethod
+    def handle_punctuations_in_articles(cls, articles):
+        articles = articles.copy()
+
+        for column in articles.columns:
+            # punctuation_remove_listに含まれる記号を除去する
+            articles[column] = articles[column].str.replace(
+                fr"[{''.join(cls.punctuation_remove_list)}]", ""
+            )
+
+            # punctuation_replace_dictに含まれる記号を置換する
+            for replace_base, replace_target in cls.punctuation_replace_dict.items():
+                articles[column] = articles[column].str.replace(
+                    replace_base, replace_target
+                )
+
+            # unicode正規化を行う
+            articles[column] = articles[column].apply(
+                lambda x: unicodedata.normalize("NFKC", x)
+            )
+
+        return articles
+
+    @classmethod
+    def drop_remove_list_words(cls, articles, remove_list_words=["人事"]):
+        articles = articles.copy()
+
+        for remove_list_word in remove_list_words:
+            # headlineもしくは、keywordsどちらかでremove_list_wordを含むニュース記事のindexマスクを作成。
+            drop_mask = articles["headline"].str.contains(remove_list_word) | articles[
+                "keywords"
+            ].str.contains(remove_list_word)
+
+            # remove_list_wordを含まないニュースだけに精製する。
+            articles = articles[~drop_mask]
+
+        return articles
+
+    @classmethod
+    def build_inputs(cls, texts, max_length=512):
+        input_ids = []
+        token_type_ids = []
+        attention_mask = []
+        for text in texts:
+            encoded = cls.bert_tokenizer.encode_plus(
+                text,
+                None,
+                add_special_tokens=True,
+                max_length=max_length,
+                padding="max_length",
+                return_token_type_ids=True,
+                truncation=True,
+            )
+
+            input_ids.append(encoded["input_ids"])
+            token_type_ids.append(encoded["token_type_ids"])
+            attention_mask.append(encoded["attention_mask"])
+
+        # torchモデルに入力するためにはtensor形式に変え、deviceを指定する必要がある。
+        input_ids = torch.tensor(input_ids, dtype=torch.long).to(cls.device)
+        token_type_ids = torch.tensor(token_type_ids, dtype=torch.long).to(cls.device)
+        attention_mask = torch.tensor(attention_mask, dtype=torch.long).to(cls.device)
+
+        return input_ids, token_type_ids, attention_mask
+
+    @classmethod
+    def generate_features(cls, input_ids, token_type_ids, attention_mask):
+        output = cls.feature_extractor(
+            input_ids=input_ids,
+            token_type_ids=token_type_ids,
+            attention_mask=attention_mask,
+        )
+        features = output["hidden_states"][-2].mean(dim=1).cpu().detach().numpy()
+
+        return features
+
+    @classmethod
+    def generate_features_by_texts(cls, texts, batch_size=2, max_length=512):
+        n_batch = math.ceil(len(texts) / batch_size)
+
+        features = []
+        for idx in tqdm(range(n_batch)):
+            input_ids, token_type_ids, attention_mask = cls.build_inputs(
+                texts=texts[batch_size * idx : batch_size * (idx + 1)],
+                max_length=max_length,
+            )
+
+            features.append(
+                cls.generate_features(
+                    input_ids=input_ids,
+                    token_type_ids=token_type_ids,
+                    attention_mask=attention_mask,
+                )
+            )
+
+        features = np.concatenate(features, axis=0)
+
+        # 抽出した特徴量はnp.ndarray形式となっており、これらは、日付の情報を失っているため、pd.DataFrame形式に変換する。
+        return pd.DataFrame(features, index=texts.index)
+
+    @classmethod
+    def _build_weekly_group(cls, df):
+        # index情報から、(year, week)の情報を得る。
+        return pd.Series(list(zip(df.index.year, df.index.week)), index=df.index)
+
+    @classmethod
+    def build_weekly_features(cls, features, boundary_week):
+        assert isinstance(boundary_week, tuple)
+
+        weekly_group = cls._build_weekly_group(df=features)
+        features = features.groupby(weekly_group).apply(lambda x: x[:])
+
+        train_features = features[features.index.get_level_values(0) <= boundary_week]
+        test_features = features[features.index.get_level_values(0) > boundary_week]
+
+        return {"train": train_features, "test": test_features}
+
+    @classmethod
+    def generate_lstm_features(
+        cls,
+        article_path,
+        start_dt=None,
+        boundary_week=(2020, 26),
+        target_feature_types=None,
+    ):
+        # target_feature_typesが指定されなかったらデフォルト値設定
+        dfault_target_feature_types = [
+            "headline",
+            "keywords",
+        ]
+        if target_feature_types is None:
+            target_feature_types = dfault_target_feature_types
+        # feature typeが想定通りであることを確認
+        assert set(target_feature_types).issubset(dfault_target_feature_types)
+
+        # ニュースデータをロードする。
+        articles = cls.load_articles(start_dt=start_dt, path=article_path)
+
+        # 前処理を行う。
+        articles = cls.normalize_articles(articles)
+        articles = cls.handle_punctuations_in_articles(articles)
+        articles = cls.drop_remove_list_words(articles)
+
+        # headlineとkeywordsの特徴量をdict型で返す。
+        lstm_features = {}
+
+        for feature_type in target_feature_types:
+            # コーパス全体のBERT特徴量を抽出する。
+            features = cls.generate_features_by_texts(texts=articles[feature_type])
+
+            # feature_typeに合致するfeature_combiner_handlerをclsから取得する。
+            feature_combiner_handler = {
+                "headline": cls.headline_feature_combiner_handler,
+                "keywords": cls.keywords_feature_combiner_handler,
+            }[feature_type]
+
+            # 特徴量を週毎のグループ化する。
+            weekly_features = cls.build_weekly_features(features, boundary_week)["test"]
+
+            # Sentiment scoreを抽出する。
+            lstm_features[
+                f"{feature_type}_features"
+            ] = feature_combiner_handler.generate_by_weekly_features(
+                weekly_features=weekly_features,
+                generate_target="sentiment",
+                max_sequence_length=10000,
+            )
+
+        return lstm_features
+----
+
+=== 合成特徴量の解析
+
+　前章においてLSTMモデルを作成し、合成特徴量であるfeaturesとsentiment scoreを抽出しました。sentiment scoreは、featuresから線形次元圧縮されたものであり、featuresと比べより低次元の情報を保持しています。しかし、使用時の容易性を考慮し、以降のチュートリアルにおいては、sentiment scoreのみを用いてマーケット予測のモデリングを行います。本節では、sentiment scoreがどのような性質を持っているかを確認するため、予測対象となるマーケットのforward returnとの関係性を解析します。
+
+==== 合成特徴量のデータのロード
+
+　抽出したsentiment scoreを読み込みます。columnは、次元順に付与されたidを表します。sentimentの場合は1次元のみのデータとなっているため、0でインデクシングし、解析ではpd.series形式として扱います。
+
+[source,python]
+----
+headline_features = pd.read_pickle(f'{CONFIG["base_path"]}/headline_features/LSTM_sentiment.pkl')[0].rename('features')
+keywords_features = pd.read_pickle(f'{CONFIG["base_path"]}/keywords_features/LSTM_sentiment.pkl')[0].rename('features')
+
+display(headline_features.head())
+display(keywords_features.head())
+----
+
+　出力結果は以下の通りです。現在、LSTMの出力値は、値上がりと値下がりの確率となり、値下がり時は０、値上がり時は１に近い値を出力するように学習しています。十分なデータを揃えてモデルの学習を収束することができれば、実際に0に近い値、1に近い値なども出力するようになりますが、今回のように収束するほどのデータ量がない場合、学習時に観察したラベルの平均値や0.5近辺にモデルの出力は近くなります。マーケットデータのような一般的に学習の難しいデータでは、この現象が起きやすいことに注意してください。ただし、出力自体はきちんと入力データに対して変化していることが確認できるので、相対的な出力の強さを計測することでスコア化することもでき、相関係数や順位相関係数を用いてスコアの評価を実施することも可能です。
+
+[source,python]
+----
+(2020, 27)    0.601928
+(2020, 28)    0.606229
+(2020, 29)    0.603833
+(2020, 30)    0.601890
+(2020, 31)    0.605760
+Name: features, dtype: float32
+
+(2020, 27)    0.506807
+(2020, 28)    0.508067
+(2020, 29)    0.506754
+(2020, 30)    0.506794
+(2020, 31)    0.507054
+Name: features, dtype: float32
+----
+
+==== 評価用ラベルをビルド
+　上記で作成したマーケットのweekly_fwd_returnの作成ロジックと同様に、評価用ラベルである次週のマーケットのリターンを作成します。
+
+[source,python]
+----
+# boundary_weekを学習時境界と同様に設定し、weekly_fwd_returnsをビルドする。
+weekly_group = SentimentGenerator._build_weekly_group(df=stock_price)
+weekly_returns = stock_price.groupby(weekly_group).apply(_compute_weekly_return)
+weekly_fwd_returns = weekly_returns.shift(-1).rename('weekly_fwd_returns')
+
+# 特徴量の期間と同様の期間のデータのみを使用する。
+weekly_fwd_returns = weekly_fwd_returns.reindex(headline_features.index)
+
+display(weekly_fwd_returns)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+(2020, 27)   -0.017781
+(2020, 28)    0.016613
+(2020, 29)    0.001590
+(2020, 30)   -0.048742
+(2020, 31)    0.029370
+(2020, 32)    0.039417
+(2020, 33)    0.000009
+(2020, 34)   -0.006018
+(2020, 35)    0.003958
+(2020, 36)    0.023614
+(2020, 37)    0.021705
+(2020, 38)   -0.000459
+(2020, 39)   -0.024606
+(2020, 40)    0.017951
+(2020, 41)   -0.022318
+(2020, 42)    0.000046
+(2020, 43)   -0.033692
+(2020, 44)    0.040975
+(2020, 45)    0.000463
+(2020, 46)   -0.004318
+(2020, 47)    0.008869
+(2020, 48)   -0.002206
+(2020, 49)   -0.003282
+(2020, 50)    0.001516
+(2020, 51)   -0.009117
+(2020, 52)    0.005004
+Name: weekly_fwd_returns, dtype: float64
+----
+
+==== 合成特徴量とラベル間の相関の確認
+
+　合成特徴量と上で作成したラベル間の相関を調べます。
+
+[source,python]
+----
+# 二つのpd.Seriesをconcatenateする。
+# indexの違いがあるため、片方だけ存在するデータはドロップする。
+df = pd.concat([headline_features, weekly_fwd_returns], axis=1, sort=True).dropna()
+
+# 二つのコラムのシークエンス間の相関は、以下のように取得できる。
+display(df.corr()[df.columns[0]][df.columns[-1]])
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+0.6040216860152573
+----
+
+次に、corr関数にmethodを指定して、pearsonの相関係数及びspearmanの順位相関係数を計算します。
+
+[source,python]
+----
+def display_corr(df):
+    display(pd.Series(
+        {
+            "pearson": df.corr(method='pearson')[df.columns[0]][df.columns[-1]],
+            "spearman": df.corr(method='spearman')[df.columns[0]][df.columns[-1]]
+        }
+    ))
+
+display_corr(df)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+pearson     0.604022
+spearman    0.566496
+dtype: float64
+----
+
+　上記の関数をheadline, keywords両方に適用し、ラベルとの相関を表示します。
+
+[source,python]
+----
+for features, feature_type in [(headline_features, 'headline_features'), (keywords_features, 'keywords_features')]:
+    display_markdown(f'#### feature_type: {feature_type}', raw=True)
+    df = pd.concat([features, weekly_fwd_returns], axis=1, sort=True).dropna()
+    display_corr(df)
+----
+
+　出力結果は以下の通りです。headline_featuresはpearson相関係数が0.60、spearmanの相関係数が0.57となっています。keywords_featuresは若干相関係数が下がりますが、それでも十分に高い相関係数を保持しています。
+
+　参考までに相関係数0.6というのは株式予測における予測スコアと未来の変化率の相関係数としては高い数値です。通常、株式の予測モデル(高値・安値の予測モデルではないことに注意してください)と未来の変化率の相関係数(情報係数ともよばれます)は、10年程度の十分に長い期間で検定した時は0.1から0.2に到達すれば優秀なモデルといわれています(シストレのススメ 3.5.投資指標の探索要領より引用 http://we.love-profit.com/entry/2018/04/01/152750 )。
+
+　0.6という今回の結果は、2020年後半という非常に限定された期間のバックテスト結果ですので、この手法によるスコアが未来まで高いパフォーマンスを発揮するかは現時点で判断できません。これは学習に利用した2020年前半のデータ・ラベルの分布と評価に利用した期間のデータ・ラベルの分布が似通っていることが原因だろうと推測されます。5章でコーパスを確認したときも、「コロナウィルス」などが頻出単語として登場しましたが、2020年のように年間を通して一つの「コロナウィルス」という単語がニュースデータで支配的であることは稀であり、この非常に高いパフォーマンスは2020年のデータ・ラベルの分布が原因であろうと考察されます。
+
+[source,python]
+----
+feature_type: headline_features
+pearson     0.604022
+spearman    0.566496
+dtype: float64
+
+feature_type: keywords_features
+pearson     0.565515
+spearman    0.474872
+dtype: float64
+----
+
+=== 結果の可視化
+
+　結果の妥当性を検証するため、さらに詳しい可視化を実施していきます。結果の可視化は主に以下の観点のために必要です。
+
+- 時系列的に予測の方向性などが集中していないか
+- 上げ・下げのどちらかにスコアが偏っていないか
+- どの時期に精度が高く、どの時期に精度が低いか
+
+　実際に相関係数や精度は単一の評価軸であり、可視化を通して、その結果が本当に妥当性が高いかを検証するのは非常に重要な作業です。
+
+
+==== 回帰分析による可視化
+
+　回帰分析による可視化を行います。
+
+[source,python]
+----
+# 回帰を行うため、xとyとなるコラムを設定する。
+x_column = 'features'
+y_column = 'weekly_fwd_returns'
+
+# stats.linregressを用いて、単回帰直線の係数とバイアスを取得する。
+df = pd.concat([headline_features, weekly_fwd_returns], axis=1, sort=True).dropna()
+
+coef, bias, _, _, _ = stats.linregress(x=df[x_column], y=df[y_column])
+print(f'coef: {coef:.4f}, bias: {bias:.4f}')
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+coef: 6.6302, bias: -4.0035
+----
+
+　これらの情報をseabornのregression plotと共に表示します。
+
+[source,python]
+----
+def display_regplot(df, x_column='features', y_column='weekly_fwd_returns'):
+    # stats.linregressを用いて、単回帰直線の係数とバイアスを取得する。
+    coef, bias, _, _, _ = stats.linregress(x=df[x_column], y=df[y_column])
+
+    # seabornのregplotを用いて、単回帰直線及び、scatter sampleを表示する。
+    _, ax = plt.subplots(1, 1, figsize=(6, 4))
+    sns.regplot(
+        x=x_column,
+        y=y_column,
+        data=df,
+        ax=ax,
+        line_kws={
+            "label": "y={0:.4f}x+{1:.4f}".format(coef, bias), # 取得した係数とバイアスを用いて単項式を表示する。
+        },
+    )
+    plt.legend()
+    plt.show()
+
+for features, feature_type in [(headline_features, 'headline_features'), (keywords_features, 'keywords_features')]:
+    display_markdown(f'#### feature_type: {feature_type}', raw=True)
+    df = pd.concat([features, weekly_fwd_returns], axis=1, sort=True).dropna()
+    display_regplot(df=df)
+----
+
+　出力結果は以下の通りです。headline_featuresは、x軸のfeaturesがkeywords_featuresより若干ですが幅広に分布しており、keywords_featuresよりも上手く学習が出来た可能性を示しています。また。スコアが低い時にy軸の次の週の投資対象のユニバースの平均変化率が低く、スコアが高い時に平均変化率が高い傾向がはっきりと確認できます。また、スコアが中間の場合は平均変化率も0近辺に集中しており、全体的に信頼性の高い結果となっていることがわかります。keywords_featuresの結果も良いものですが、headline_featuresほどは優れていません。お互いの相関が低ければ、アンサンブルを考慮する価値はありそうですので、時系列の可視化を実施してみます。
+
+image::1_7_vis_regplot.png[1_7_vis_regplot, width=50%]
+
+==== 時系列的な関係の可視化
+
+　barplotにより、特徴量とラベル間での時系列的な関係を確認します。
+
+[source,python]
+----
+df.plot(kind='bar', figsize=(16, 3))
+----
+
+　出力結果は以下の通りです。
+
+image::1_7_vis_barplot_without_norm.png[1_7_vis_barplot_without_norm]
+
+　二つのデータを一つの軸上で単純にプロットすると値のノルム、平均、分散の違いから、相互的な動きを確認しにくいです。ここでは、手元にあるデータを平均と分散を用いてノーマライズしたzscore標準化( https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.zscore.html )を使って相互の関係を可視化してみましょう。
+
+[source,python]
+----
+def normalize(df):
+    # zscore normalizeする。
+    return pd.DataFrame(stats.zscore(df), index=df.index, columns=[f'Z({column})' for column in df.columns])
+
+
+def display_bar_plot(df):
+    # zscore normalizeしたデータを用いてbarplotする。
+    normalize(df).plot(kind='bar', figsize=(16, 3))
+    plt.show()
+
+
+for features, feature_type in [(headline_features, 'headline_features'), (keywords_features, 'keywords_features')]:
+    display_markdown(f'#### feature_type: {feature_type}', raw=True)
+    df = pd.concat([features, weekly_fwd_returns], axis=1, sort=True).dropna()
+    display_bar_plot(df=df)
+----
+
+　出力結果は以下の通りです。headline_featuresは時系列的に上下の予測が固まっておらず、安定的に分布しており次の週のマーケットのセンチメントを的確に捉えている可能性が高そうです。headline_featuresとkeywords_featuresの予測スコアは時系列的に似通っているため、無理にアンサンブルなどは実施せず、以降はシンプルにheadline_featuresを活用するものとします。
+
+image::1_7_vis_barplot_with_norm.png[1_7_vis_barplot_with_norm]
+
+
+=== ストラテジーへの適用の実装例
+
+　ここでは、予測スコアを利用して現金比率を操作するサンプルコードを示します。本章はLSTMにより目的関数を設定したスコアをニュースデータから取得することが目的であり、バックテストコードを紹介することが目的ではないため、ここではサンプル実装を示す程度にとどめます。以下の実装例では、データを扱いやすくするためにzscore標準化を実施し、その分布に応じて現金比率を操作するロジックを実装しています。
+
+[source,python]
+----
+def get_cash_ratio(cls, df_sentiment):
+    """
+    headline_m2_sentimentの値が低い時はリスクとみなし
+    現金保有量を多くする。
+
+    入力:
+      センチメント (DataFrame): センチメント情報
+    出力:
+      現金比率 (Dataframe): 入力値に現金比率を追加したもの
+    """
+    # リスク値マッピング用の分布取得期間
+    DIST_START_DT = "2020-06-29"
+    DIST_END_DT = "2020-09-25"
+    # リスク値を計算する期間
+    USE_START_DT = "2020-10-02"
+
+    # 出力用にコピー
+    df_sentiment = df_sentiment.copy()
+    # headline_m2_sentiment_0の値が高いほどポジティブなので符号反転させる
+    sentiment_dist = sorted(df_sentiment.loc[DIST_START_DT:DIST_END_DT, "headline_m2_sentiment_0"].values * -1)
+    sentiment_use = df_sentiment.loc[USE_START_DT:, "headline_m2_sentiment_0"].values * -1
+
+    display(sentiment_dist)
+    display(sentiment_use)
+
+    # DIST_START_DT:DIST_END_DTの分布を使用してリスク判定する
+    z = zscore(sentiment_dist)
+    # 閾値を決定
+    p = np.percentile(z, [25, 50, 75])
+    # リスク値を計算する
+    u = zscore(sentiment_use)
+    # 分布から現金比率の割合を決定
+    d = np.digitize(u, p)
+    # 出力用に整形して 0, 10, 20, 30 のいずれか返すようにする
+    df_sentiment.loc[USE_START_DT:, "risk"] = d * 10
+    return df_sentiment
+----
+
+　現金比率の操作以外の活用方法としては、LSTMのような学習レイヤーが存在すると、ユニバースの時価総額やROEが高い銘柄と低い銘柄のどちらがより多くのリターンを産み出すかを予測させるようなストラテジーを構築することもできます。是非自由な発想でBERT特徴量を活用してみてください。
+
+=== 投稿用コードの実装例
+
+　5章からここまでで、ニュースデータから現金比率を操作するまでのコードを提示してきました。これまで提示したコードを組み合わせて実装することで、ランタイム環境で動作する投稿用のモデルを作ることができますが、具体的な実装方法に悩まれるかもしれません。本チュートリアルでは実際に投稿してリーダーボードで動作を確認可能な実装例を `handson/Chapter06/archive/src` 配下に配置しています。本チュートリアル内では実装例の詳細な解説はいたしませんが、実装例のコードをご覧いただくことで独自実装や改良等のヒントとなるかもしれません。
+
+　以下では、実装例のコードを実際に動作させるために必要なファイルの配置や投稿のためのパッケージ作成を解説いたします。本作業内容は `handson/Chapter06/20210224_chapter06_tutorial_test_predictor.ipynb` として nootbook にも記載していますので、実際の動作確認などはそちらをご使用ください。なお、実装例の確認については Google Colab 環境で実施します。
+
+*実装例の配置場所*
+
+[source]
+----
+handson/Chapter06/
+|-- 20210224_chapter06_tutorial_test_predictor.ipynb  <= 実装例の動作確認用ノートブック
+|-- 20210226_chapter06_tutorial.ipynb  <= 本章の作業用ノートブック
+`-- archive
+    |-- model
+    |   `-- 本ディレクトリ内に事前学習済みのモデルやパラメーターを配置します。
+    |-- requirements.txt  <= 実装例を動作させるために必要なモジュールを記載しています。
+    `-- src
+        |-- module.py  <= 5章/6章のコードをまとめたもの
+        `-- predictor.py  <= 4章で作成したScoringServiceクラスに現金比率操作用コード追加した実装例
+----
+
+==== 事前準備
+
+本ノートブックは Google Colaboratory で実行することを想定しています。実行時には以下の事前準備が必要です。
+
+1. コンペティションページから必要なファイルのダウンロード
+2. Google Drive に必要ファイルを配置
+
+==== コンペティションページから必要なファイルのダウンロード
+
+■以下の10個のファイルを本コンペティションのデータタブから取得します。
+https://signate.jp/competitions/443/data
+
+2章で作成した学習済みモデル
+
+- 01 my_model_label_high_20.pkl
+- 02 my_model_label_low_20.pkl
+
+LSTMモデルの学習済みパラメータ (headline_features)
+
+- 03 19.ckpt
+
+LSTMモデルの出力 (headline_features)
+
+- 04 LSTM_sentiment.pkl
+
+動作確認用データ
+
+- 05 nikkei_article.csv.gz
+- 06 stock_fin.csv.gz
+- 07 stock_fin_price.csv.gz
+- 08 stock_list.csv.gz
+- 09 stock_price.csv.gz
+- 10 tdnet.csv.gz
+
+■以下の4つのファイルをチュートリアルのリポジトリから取得します。
+https://github.com/JapanExchangeGroup/J-Quants-Tutorial/tree/main/handson/Chapter06
+
+動作確認用ノートブック (本ノートブック)
+
+- 11 20210224_chapter06_tutorial_test_predictor.ipynb
+
+実装例のrequirements.txt
+
+- 12 archive/requirements.txt
+
+実装例のコード
+
+- 13 archive/src/module.py
+- 14 archive/src/predictor.py
+
+
+==== Google Drive に必要なファイルを配置
+
+　Google Drive の My Drive 配下に以下のフォルダ構造でファイルを配置します。ファイル名の後ろに「download:数字」として、先程のダウンロード時の説明で使用した番号を記載しています。
+
+[source]
+----
+MyDrive/JPX_competition/
+├── Chapter06
+│   ├── 20210224_chapter06_tutorial_test_predictor.ipynb <= 本ノートブック download:11
+│   └── archive  <= 投稿用パッケージの起点となるフォルダ
+│       ├── model
+│       │   ├── headline_features
+│       │   │   ├── 19.ckpt  <= 6章で作成した LSTM モデルの学習済みパラメータ download:03
+│       │   │   └── LSTM_sentiment.pkl  <= 6章で作成したセンチメント download:04
+│       │   ├── my_model_label_high_20.pkl  <= 2章で作成した最高値予測モデル download:01
+│       │   ├── my_model_label_low_20.pkl  <= 2章で作成した最安値予測モデル download:02
+│       ├── src
+│       │   ├── module.py  <= 5章/6章のコードをまとめたもの download:13
+│       │   └── predictor.py  <= 4章のコードに一部追記してニュースデータを使用して現金比率操作を追記したもの download:14
+│       └── requirements.txt
+└── data_dir_comp2
+     ├── nikkei_article.csv.gz  <= download:05
+     ├── stock_fin.csv.gz  <= download:06
+     ├── stock_fin_price.csv.gz  <= download:07
+     ├── stock_list.csv.gz  <= download:08
+     ├── stock_price.csv.gz  <= download:09
+     └── tdnet.csv.gz  <= download:10
+----
+
+==== 実行環境設定
+
+　本ノートブックを実行するにあたって必要な環境設定を実施します。
+
+- Google Driveのマウント
+- モジュールをimportするためにsys.pathを追加
+- autoreload 拡張有効化
+- 必要なライブラリのインストール
+- 使用するディレクトリの設定
+- 入力パラメータ作成
+- BERTの事前学習済みモデルをダウンロード
+
+===== Google Driveのマウント
+
+　Google Driveをマウントします。
+
+[source,python]
+----
+import sys
+
+if 'google.colab' in sys.modules:
+    # Google Drive をマウントします
+    from google.colab import drive
+    mount_dir = "/content/drive"
+    drive.mount(mount_dir)
+----
+
+===== 使用するディレクトリの設定
+
+　環境に応じて使用するディレクトリを設定します。配置した.pyファイルをimportできるようにsys.pathに配置先のディレクトリを追加しています。
+
+[source,python]
+----
+if 'google.colab' in sys.modules:
+    # Google Colab環境では上記に示したディレクトリ設定を使用します。
+    # archiveディレクトリを指定します。
+    archive_path = f"{mount_dir}/MyDrive/JPX_competition/Chapter06/archive"
+    # 実装例のコードを配置したディレクトリを指定します。
+    src_path = f"{mount_dir}/MyDrive/JPX_competition/Chapter06/archive/src"
+    # sys.pathを設定
+    sys.path.append(src_path)
+    # ダウンロードしてきたデータを配置したディレクトリを設定します。
+    dataset_dir = f"{mount_dir}/MyDrive/JPX_competition/data_dir_comp2"
+    # 2章のモデルを配置したディレクトリを設定します。
+    # このディレクトリにBERTの事前学習済みモデルをダウンロードして保存します。
+    model_path = f"{mount_dir}/MyDrive/JPX_competition/Chapter06/archive/model"
+    # テスト用に出力したポートフォリオを保存するディレクトリを設定します
+    output_path = f"{mount_dir}/MyDrive/JPX_competition/Chapter06"
+else:
+    # archiveディレクトリを指定します。
+    archive_path = "archive"
+    # 実装例のコードを配置したディレクトリを指定します。
+    src_path = "archive/src"
+    # sys.pathを設定
+    sys.path.append(src_path)
+    # ダウンロードしてきたデータを配置したディレクトリを設定します。
+    dataset_dir = "/notebook/data_dir_comp2"
+    # 2章のモデルを配置したディレクトリを設定します。
+    # このディレクトリにBERTの事前学習済みモデルをダウンロードして保存します。
+    model_path = "archive/model"
+    # テスト用に出力したポートフォリオを保存するディレクトリを設定します
+    output_path = "."
+----
+
+===== 必要なライブラリのインストール
+
+　必要なライブラリをインストールします。
+
+[source]
+----
+# neologdnのためにg++をインストール
+! apt-get update
+! apt-get install -y --no-install-recommends g++
+----
+
+[source]
+----
+# 必要なライブラリをインストール
+!pip install -r $archive_path/requirements.txt
+----
+
+===== 入力パラメータ作成
+
+　ランタイム環境でpredictメソッドが呼ばれるときに渡される inputs パラメーターを実行環境に合わせて作成します。
+
+[source,python]
+----
+# predictメソッドへの入力パラメーターを設定します。
+# ランタイム環境での実行時と同一フォーマットにします
+inputs = {
+    "stock_list": f"{dataset_dir}/stock_list.csv.gz",
+    "stock_price": f"{dataset_dir}/stock_price.csv.gz",
+    "stock_fin": f"{dataset_dir}/stock_fin.csv.gz",
+    "stock_fin_price": f"{dataset_dir}/stock_fin_price.csv.gz",
+    # ニュースデータ
+    "tdnet": f"{dataset_dir}/tdnet.csv.gz",
+    "disclosureItems": f"{dataset_dir}/disclosureItems.csv.gz",
+    "nikkei_article": f"{dataset_dir}/nikkei_article.csv.gz",
+    "article": f"{dataset_dir}/article.csv.gz",
+    "industry": f"{dataset_dir}/industry.csv.gz",
+    "industry2": f"{dataset_dir}/industry2.csv.gz",
+    "region": f"{dataset_dir}/region.csv.gz",
+    "theme": f"{dataset_dir}/theme.csv.gz",
+    # 目的変数データ
+    "stock_labels": f"{dataset_dir}/stock_labels.csv.gz",
+    # 購入日指定データ
+    "purchase_date": f"{dataset_dir}/purchase_date.csv"
+}
+----
+
+==== BERTの事前学習済みモデルをダウンロード
+
+　ランタイム環境ではインターネットにアクセスできないため、BERTの事前学習済みモデルを {model_path}/transformers 配下にダウンロードしておきます。
+
+　SentimentGeneratorのload_feature_extractorおよびload_bert_tokenizerメソッドにdownloadおよびsave_localパラメータをTrueとして実行することで、BERTの事前学習済みモデルをダウンロードおよび保存します。次にSentimentGenratorを読み込みます。
+
+[source,python]
+----
+from module import SentimentGenerator
+----
+
+　事前学習済みのBERTモデルをダウンロードして保存します。
+
+[source,python]
+----
+SentimentGenerator.load_feature_extractor(model_path, download=True, save_local=True)
+----
+
+　事前学習時に使用したTokenizerも合わせてダウンロードして保存します。
+
+[source,python]
+----
+SentimentGenerator.load_bert_tokenizer(model_path, download=True, save_local=True)
+----
+
+　BERTの事前学習済みモデルが保存されていることを確認します。
+
+[source,shell]
+----
+! ls -lhR $model_path
+----
+
+出力
+
+[source]
+----
+/content/drive/MyDrive/JPX_competition/comp2/chapter06/archive/model:
+total 71M
+drwx------ 2 root root 4.0K Mar 11 07:37 headline_features
+-rw------- 1 root root  36M Mar 11 07:37 my_model_label_high_20.pkl
+-rw------- 1 root root  36M Mar 11 07:37 my_model_label_low_20.pkl
+drwx------ 3 root root 4.0K Mar 11 07:37 transformers_pretrained
+
+/content/drive/MyDrive/JPX_competition/comp2/chapter06/archive/model/headline_features:
+total 5.1M
+-rw------- 1 root root 5.1M Mar 11 07:37 19.ckpt
+-rw------- 1 root root  958 Mar 11 07:37 LSTM_sentiment.pkl
+
+/content/drive/MyDrive/JPX_competition/comp2/chapter06/archive/model/transformers_pretrained:
+total 4.0K
+drwx------ 3 root root 4.0K Mar 11 07:37 cl-tohoku
+
+/content/drive/MyDrive/JPX_competition/comp2/chapter06/archive/model/transformers_pretrained/cl-tohoku:
+total 4.0K
+drwx------ 2 root root 4.0K Mar 11 07:37 bert-base-japanese-whole-word-masking
+
+/content/drive/MyDrive/JPX_competition/comp2/chapter06/archive/model/transformers_pretrained/cl-tohoku/bert-base-japanese-whole-word-masking:
+total 423M
+-rw------- 1 root root  707 Mar 11 07:37 config.json
+-rw------- 1 root root 423M Mar 11 07:37 pytorch_model.bin
+-rw------- 1 root root  112 Mar 11 07:37 special_tokens_map.json
+-rw------- 1 root root  397 Mar 11 07:37 tokenizer_config.json
+-rw------- 1 root root 252K Mar 11 07:37 vocab.txt
+----
+
+==== ランタイム環境を想定したテスト実行
+
+ランタイム環境で実行されるのと同等の呼び出し方でテストを行います。まずは、ScoringServiceクラスを読み込みます。
+
+[source,python]
+----
+from predictor import ScoringService
+----
+
+get_modelメソッドを呼び出すことで以下を実施します。
+
+1. BERTの事前学習済みモデルを読み込み
+2. BERTの事前学習済みモデルに使用したTokenizerを読み込み
+3. 事前学習済みの最高値・最安値モデルを読み込み
+
+[source,python]
+----
+ScoringService.get_model(model_path)
+----
+
+　今回はランタイム環境と同一のデータセットを使用していないため、ダウンロードしたデータを使用して動作確認するために予測出力対象日 (start_dt) を 2020-12-28 と指定したpurchase_dateファイルを作成します。このコードを実行することで既に purchase_date.csv が存在している場合は上書きされることに注意してください。
+
+[source,bash]
+----
+! echo "Purchase Date" > $dataset_dir/purchase_date.csv
+! echo "2020-12-28" >> $dataset_dir/purchase_date.csv
+----
+
+予測を実行します。
+
+[source,python]
+----
+ret = ScoringService.predict(inputs)
+----
+
+
+==== 出力の確認
+
+予測出力の実行結果を確認します。確認ポイントは以下になります。
+
+- 出力のフォーマットが規定されているものと一致していること
+
+[source,python]
+----
+print("\n".join(ret.split("\n")[:10]))
+----
+
+出力
+
+[source]
+----
+date,Local Code,budget
+2020-12-28,4165,20000
+2020-12-28,7694,20000
+2020-12-28,4167,20000
+2020-12-28,3677,20000
+2020-12-28,4493,20000
+2020-12-28,7358,20000
+2020-12-28,8848,20000
+2020-12-28,3328,20000
+2020-12-28,6050,20000
+----
+
+[source,python]
+----
+# 出力を保存
+with open(f"{output_path}/chapter06-tutorial-1.csv", mode="w") as f:
+    f.write(ret)
+----
+
+==== 投稿用パッケージを作成
+
+　上記で動作確認したモデルを投稿用にパッケージ化します。
+
+[source,python]
+----
+import os
+import zipfile
+
+# 提出用パッケージ名
+package_file = "chapter06-model.zip"
+# パッケージファイルパス
+package_path = f"{output_path}/{package_file}"
+
+# zipファイルを作成
+with zipfile.ZipFile(package_path, "w") as f:
+    # requirements.txt を追加
+    print(f"[+] add {archive_path}/requirements.txt to requirements.txt")
+    f.write(f"{archive_path}/requirements.txt", "requirements.txt")
+
+    # model/配下を追加
+    for root, dirs, files in os.walk(model_path):
+        for file in files:
+            add_path = os.path.join(root, file)
+            rel_path = os.path.relpath(
+                os.path.join(root, file),
+                os.path.join(model_path, '..')
+            )
+            print(f"[+] add {add_path} to {rel_path}")
+            f.write(add_path, rel_path)
+
+    # src/module.py を追加
+    print(f"[+] add {src_path}/module.py to src/module.py")
+    f.write(f"{src_path}/module.py", "src/module.py")
+    # src/predictor.py を追加
+    print(f"[+] add {src_path}/predictor.py to src/predictor.py")
+    f.write(f"{src_path}/predictor.py", "src/predictor.py")
+
+print(f"[+] please check {package_path}")
+----
+
+　上記コードを最後まで実行するとGoogle Drive に投稿用の `chapter06-model.zip` ファイルが作成されているため、そちらをダウンロードして投稿しましょう。

@@ -24,7 +24,8 @@ NOTE: 本プロジェクトの概要やハンズオンで使うソースコー�
 |======
 プロジェクト概要,https://www.jpx-jquants-info.com/
 チュートリアル,https://github.com/JapanExchangeGroup/J-Quants-Tutorial
-Jupyterノートブック,https://github.com/JapanExchangeGroup/J-Quants-Tutorial/tree/main/handson/Chapter02
+Jupyterノートブック,https://github.com/JapanExchangeGroup/J-Quants-Tutorial/tree/main/handson/
 J-QuantsAPI,https://jpx-jquants.com/
-コンペティションサイト,https://signate.jp/competitions/423
+ファンダメンタルズ分析チャレンジ,https://signate.jp/competitions/423
+ニュース分析チャレンジ,https://signate.jp/competitions/443
 |======

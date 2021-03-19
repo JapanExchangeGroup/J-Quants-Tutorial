@@ -1,0 +1,555 @@
+include::../attribute.adoc[]
+== J-QuantsAPI
+
+=== 概要
+この章では、各種データをダウンロードできるJ-QuantsAPIについてご紹介します。APIの詳細な仕様はこちら("https://jpx-jquants.com/apidoc.html")をご確認ください。
+
+=== APIの利用
+APIを利用するには、SIGNATEでのコンペティションへのご登録とJ-QuantsAPIの利用登録が必要となります。
+
+=== 必要なパッケージのインポート
+[source, python]
+----
+import os
+import json
+import requests
+import base64
+----
+[options="header, autowidth"]
+|===
+| *パッケージ名* | *目的*　
+| os | ディレクトリ、ファイル操作のため
+| json | レスポンスの加工のため
+| requests | APIのGETやPOSTを利用するため
+| base64 | TDnetのファイルダウンロードAPIでBase64形式で返ってくるデータをデコードするため
+|===
+
+=== Refresh API
+はじめに、idTokenをリフレッシュするRefresh API("/refresh")をご紹介します。このAPIでは、J-Quantsのログイン後の画面でご確認いただくことができるrefreshTokenを使用します。
+
+Refresh APIを使うためのサンプルコードは以下のようになります。
+[source, python]
+----
+def call_refresh_api(refreshtoken: str):
+    """
+    idTokenをリフレッシュするメソッド。
+
+    Parameters
+    ----------
+    refreshtoken : str
+        refreshtoken。ログイン後の画面からご確認いただけます。
+
+    Returns
+    -------
+    resjson : dict
+        新しいidtokenが格納されたAPIレスポンス(json形式)
+    """
+    headers = {"accept": "application/json"}
+    data = {"refresh-token": refreshtoken}
+
+    response = requests.post(
+        "https://api.jpx-jquants.com/refresh", headers=headers, data=json.dumps(data)
+    )
+
+    resjson = json.loads(response.text)
+    return resjson
+----
+このAPIを使うことで新しいidtokenを払い出すことができます。使用例は以下の通りです。
+[source, python]
+----
+refreshtoken = <Your refreshtoken>
+call_refresh_api(refreshtoken)
+----
+以下のようなレスポンスが返ります。なお、idtokenの有効期限は１時間（3600sec）となっております。
+
+[source, json]
+----
+{"idToken": "<Your New idtoken>",
+"expiresIn": 3600}
+----
+
+
+=== 共通で使用するメソッド
+ここでは、API共通の関数を用意しております。
+
+サンプルコードは以下の通りです。引数"apitype"に各APIを指定することで呼び出すことができます。
+
+[source, json]
+----
+def call_jquants_api(params: dict, idtoken: str, apitype: str, code: str = None):
+    """
+    J-QuantsのAPIを試すメソッド。
+
+    Parameters
+    ----------
+    params : dict
+        リクエストパラメータ。
+    idtoken : str
+        idTokenはログイン後の画面からご確認いただけます。
+    apitype: str
+        APIの種類。"news", "prices", "lists"などがあります。
+    code: str
+        銘柄を指定するAPIの場合に設定します。
+
+    Returns
+    -------
+    resjson : dict
+        APIレスポンス(json形式)
+    """
+    datefrom = params.get("datefrom", None)
+    dateto = params.get("dateto", None)
+    date = params.get("date", None)
+    includedetails = params.get("includedetails", "false")
+    keyword = params.get("keyword", None)
+    headline = params.get("headline", None)
+    paramcode = params.get("code", None)
+    nexttoken = params.get("nextToken", None)
+    headers = {"accept": "application/json", "Authorization": idtoken}
+    data = {
+        "from": datefrom,
+        "to": dateto,
+        "includeDetails": includedetails,
+        "nextToken": nexttoken,
+        "date": date,
+        "keyword": keyword,
+        "headline": headline,
+        "code": paramcode,
+    }
+
+    if code:
+        code = "/" + code
+        r = requests.get(
+            "https://api.jpx-jquants.com/" + apitype + code,
+            params=data,
+            headers=headers,
+        )
+    else:
+        r = requests.get(
+            "https://api.jpx-jquants.com/" + apitype, params=data, headers=headers
+        )
+    resjson = json.loads(r.text)
+    return resjson
+----
+
+=== Stock Lists API
+銘柄一覧を取得するAPIについて紹介いたします。
+
+
+このAPIでは、企業名や業種区分などの基本情報を取得することができます。全銘柄の一覧を取得する"/lists"と銘柄コードを指定した"/lists/{code}"が利用できます。
+
+[source, python]
+----
+idtk=<your idtoken>
+# Codeを指定しない場合
+paramdict = {}
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "lists")
+
+# Codeを指定する場合
+paramdict = {}
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "lists", "8697")
+----
+レスポンスは以下のようになります。
+[source, json]
+----
+{"list": [{"33 Sector(name)": "Other Financing Business",
+    "Effective Date": "20201230",
+    "prediction_target": "True",
+    "Section/Products": "First Section (Domestic)",
+    "33 Sector(Code)": 7200.0,
+    "Name (English)": "Japan Exchange Group,Inc.",
+    "IssuedShareEquityQuote IssuedShare": 536351448.0,
+    "Local Code": "8697"}]}
+----
+
+=== Prices API
+株価情報を取得するPrice APIをご紹介します。
+
+
+検索期間や銘柄コードを指定することで、四本値、売買高、前日比変化率などを取得することができます。銘柄コードを指定する場合は"/prices/{code}"でAPIをご利用ください。"includeDetails"をTrueにした場合は、全てのデータ系列を取得します。
+
+[source, python]
+----
+idtk=<your idtoken>
+# Codeを指定しない場合
+paramdict = {}
+paramdict["date"] = "2020-12-30"
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "prices")
+
+# Codeを指定する場合
+paramdict = {}
+paramdict["datefrom"] = "2020-01-17"
+paramdict["dateto"] = "2020-01-31"
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "prices", "8697")
+----
+
+レスポンスのサンプルは以下の通りです。
+[source, json]
+----
+{"prices": [{"EndOfDayQuote Open": 2005.0,
+    "EndOfDayQuote PreviousClose": 1972.0,
+    "EndOfDayQuote CumulativeAdjustmentFactor": 1.0,
+    "EndOfDayQuote VWAP": 1994.792,
+    "EndOfDayQuote Low": 1989.0,
+    "EndOfDayQuote PreviousExchangeOfficialClose": 1972.0,
+    "EndOfDayQuote High": 2008.0,
+    "EndOfDayQuote Date": "2020/01/20",
+    "EndOfDayQuote Close": 1990.0,
+    "EndOfDayQuote PreviousExchangeOfficialCloseDate": "2020/01/17",
+    "EndOfDayQuote ExchangeOfficialClose": 1990.0,
+    "EndOfDayQuote ChangeFromPreviousClose": 18.0,
+    "EndOfDayQuote PercentChangeFromPreviousClose": 0.913,
+    "EndOfDayQuote PreviousCloseDate": "2020/01/17",
+    "Local Code": "8697",
+    "EndOfDayQuote Volume": 528600.0},
+    {"EndOfDayQuote Open": 1989.0,
+    "EndOfDayQuote PreviousClose": 1990.0,
+    "EndOfDayQuote CumulativeAdjustmentFactor": 1.0,
+    "EndOfDayQuote VWAP": 1976.539,
+    "EndOfDayQuote Low": 1965.0,
+    "EndOfDayQuote PreviousExchangeOfficialClose": 1990.0,
+    "EndOfDayQuote High": 1995.0,
+    "EndOfDayQuote Date": "2020/01/21",
+    "EndOfDayQuote Close": 1977.0,
+    "EndOfDayQuote PreviousExchangeOfficialCloseDate": "2020/01/20",
+    "EndOfDayQuote ExchangeOfficialClose": 1977.0,
+    "EndOfDayQuote ChangeFromPreviousClose": -13.0,
+    "EndOfDayQuote PercentChangeFromPreviousClose": -0.653,
+    "EndOfDayQuote PreviousCloseDate": "2020/01/20",
+    "Local Code": "8697",
+    "EndOfDayQuote Volume": 571000.0},
+    ...]}
+----
+
+=== Stock Fins API
+各銘柄の財務諸表データを取得するAPIをご紹介します。
+
+
+特定の日の全銘柄の情報を取得する"/stockfins"と１銘柄の情報を取得する"/stockfins/{code}"がございます。
+
+[source, python]
+----
+idtk=<your idtoken>
+# Codeを指定しない場合
+paramdict = {}
+paramdict["date"] = "2020-12-30"
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "stockfins")
+
+
+# Codeを指定する場合
+paramdict = {}
+paramdict["datefrom"] = "2020-01-01"
+paramdict["dateto"] = "2020-12-30"
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "stockfins", "8697")
+----
+レスポンスは以下のようになります。
+[source, json]
+----
+{"stockfin": [{"Result_FinancialStatement TotalAssets": 56671198.0,
+    "base_date": "2020/01/30",
+    "Result_FinancialStatement FiscalPeriodEnd": "2019/12",
+    "Result_FinancialStatement ReportType": "Q3",
+    "Result_FinancialStatement OrdinaryIncome": 48586.0,
+    "Result_FinancialStatement CashFlowsFromOperatingActivities": "",
+    "Local Code": "8697",
+    "Result_FinancialStatement NetSales": 87433.0,
+    "Result_FinancialStatement CashFlowsFromFinancingActivities": "",
+    "Result_FinancialStatement CashFlowsFromInvestingActivities": "",
+    "Result_FinancialStatement AccountingStandard": "ConsolidatedIFRS",
+    "Result_FinancialStatement NetIncome": 33317.0,
+    "Result_FinancialStatement OperatingIncome": 48176.0},
+    {"Result_FinancialStatement TotalAssets": 56671198.0,
+    "base_date": "2020/03/23",
+    "Result_FinancialStatement FiscalPeriodEnd": "2019/12",
+    "Result_FinancialStatement ReportType": "Q3",
+    "Result_FinancialStatement OrdinaryIncome": 48586.0,
+    "Result_FinancialStatement CashFlowsFromOperatingActivities": "",
+    "Local Code": "8697",
+    "Result_FinancialStatement NetSales": 87433.0,
+    "Result_FinancialStatement CashFlowsFromFinancingActivities": "",
+    "Result_FinancialStatement CashFlowsFromInvestingActivities": "",
+    "Result_FinancialStatement AccountingStandard": "ConsolidatedIFRS",
+    "Result_FinancialStatement NetIncome": 33317.0,
+    "Result_FinancialStatement OperatingIncome": 48176.0}]}
+----
+
+=== Stock Labels API
+基準日から一定期間の株価の最大上昇率、最大下落率を取得するAPIをご紹介します。
+
+
+Stock Labels APIは期間や銘柄コードを指定することで該当する株価騰落率のデータを取得できます。
+[source, python]
+----
+# Codeを指定しない場合
+paramdict = {}
+paramdict["date"] = "2018-05-31"
+paramdict["includedetails"] = "true"
+call_jquants_api(paramdict, idtk, "stocklabels")
+
+# Codeを指定する場合
+paramdict = {}
+paramdict["from"] = "2020-02-01"
+paramdict["to"] = "2020-02-28"
+paramdict["includedetails"] = "true"
+call_jquants_api(paramdict, idtk, "stocklabels", "1301")
+----
+レスポンスのサンプルは以下の通りです。
+
+[source, json]
+----
+{"labels": [{"label_low_10": -0.01748,
+    "label_low_20": -0.10699,
+    "label_low_5": 0.0021,
+    "label_high_20": 0.02203,
+    "base_date": "2020-02-04",
+    "label_high_10": 0.02203,
+    "label_date_5": "2020-02-12",
+    "label_date_10": "2020-02-19",
+    "label_high_5": 0.02203,
+    "label_date_20": "2020-03-05",
+    "Local Code": "1301"},
+    {"label_low_10": -0.02507,
+    "label_low_20": -0.11072,
+    "label_low_5": -0.00557,
+    "label_high_20": 0.01776,
+    "base_date": "2020-02-05",
+    "label_high_10": 0.01776,
+    "label_date_5": "2020-02-13",
+    "label_date_10": "2020-02-20",
+    "label_high_5": 0.01776,
+    "label_date_20": "2020-03-06",
+    "Local Code": "1301"}],
+    "scrollId": "eyJMb2NhbCBDb2RlIjogIjEzMDEiLCAiYmFzZV9kYXRlIjogIjIwMjAtMDItMDUifQ=="}
+----
+
+=== News API
+日経新聞の記事情報を取得するAPIをご紹介します。
+
+
+News APIはヘッドライン、キーワード、期間などで該当するニュース記事データを検索できます。
+
+[source, python]
+----
+idtk=<your idtoken>
+paramdict = {}
+paramdict["datefrom"] = "2020-02-01"
+paramdict["dateto"] = "2020-02-25"
+paramdict["code"] = "8697"
+paramdict["headline"] = "日本取引所"
+paramdict["keyword"] = "エネルギー"
+call_jquants_api(paramdict, idtk, "news")
+----
+レスポンスフィールドの詳細は以下の通りです。
+
+- media_code: 媒体の略号です。今回は"TNY"のデータのみ提供しております。
+- men_name: 面の名前です。地方経済面の場合などに収録されますが、今回は全て""です。
+- headline: 見出しです。改行コード"\n"が含まれます。
+- keywords: 記事の文中から主題語として切り出したキーワードです。改行コード"\n"でそれぞれのキーワードが区切られております。
+- classifications: 記事の分類です。当該記事に紐づくさまざまなコードが収録されております。マスタデータは
+https://jquantsmastertable.s3-ap-northeast-1.amazonaws.com/newsmaster.zip[こちら]からダウンロードいただけます。
+    * "＃W〜": 記事の主題を表す内容別の136分類です。分類体系は「企業活動」（大分類：企業）と「企業を取り巻く環境」（大分類：政治・経済・技術・社会）から構成しております。マスタデータはtheme.csvをご参照ください。
+    * "＃B〜": 記事の主題と関連する業界別の63分類です。日経新業種分類を元に定義しております。マスタデータはindustry.csvをご参照ください。
+    * "＃A〜": 記事の主題と関連する地域別に「海外地域」「国」「国内地域」単位で分類しております。マスタデータはregion.csvをご参照ください。
+    * "＃K〜": 記事種別です。記事のタイプ別に７種類に分類しております。
+    * "＃T〜": 株式コードです。
+    * "＃N〜": 日経会社コードです。
+    * "＃PD〜": 業界コードです。株式コードおよび一部主要企業の日経会社コードを一括して指定可能なコードです。マスタデータはindustry2.csvをご参照ください。
+    * コラム名: 主要なコラムや大型連載記事が検索可能です。例えば「春秋」など。
+    * "＄〜": 記事分類キーワードです。新聞を紙面単位で指定可能です。
+
+レスポンスのサンプルは以下の通りです。
+
+[source, json]
+----
+{"news": [{"article_id": "TDSKDBDGXLASFL21HM9_21022020000000",
+    "publish_datetime": "2020-02-21T16:34:00Z",
+    "media_code": "TNY",
+    "media_name": "日本経済新聞電子版",
+    "men_name": "",
+    "headline": "日本取引所ＣＥＯ、東商取のエネルギー市場「早期に統合したい」",
+    "keywords": "最高経営責任者\n東京商品取引所\n日本取引所グループ\n清田瞭\nエネルギー市場\n大阪取引所\n統合\n定例\n早期",
+    "classifications": "Ｔ８６９７\nＰＤ５２１\nＮ００４０４３１\nＮ００７５１０７\nＮ００４０７７９",
+    "stock_code": "8697"}],
+    "scrollId": "FGluY2x1ZGVfY29u"}
+----
+
+
+=== TDnet API
+適時開示を取得できるTDnetAPIを紹介します。
+
+
+TDnetAPIはTDnetで開示された資料に関する情報を取得、またはダウンロードすることができるapiです。
+
+
+資料に関する情報を取得するAPIは、通常は("/tdfiles")、銘柄コードを指定する場合は、”/tdnet/{code}でAPIをご利用ください。
+"includeDetails"をTrueにした場合は、全てのデータ系列を取得します。
+
+[source, python]
+----
+idtk=<your idtoken>
+# Codeを指定しない場合
+paramdict = {}
+paramdict["date"] = "2020-12-30"
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "tdnet")
+
+# Codeを指定する場合
+paramdict = {}
+paramdict["datefrom"] = "2020-01-01"
+paramdict["dateto"] = "2020-02-28"
+paramdict["includedetails"] = "True"
+call_jquants_api(paramdict, idtk, "tdnet", "8697")
+----
+
+レスポンスのサンプルは以下のようになります。なおdisclosureItemsは公開項目コードを示します。一覧はこちらからダウンロードください。
+
+[source, json]
+----
+{"tdnet": [{"pdfSumaryFlag": "1",
+    "modifiedHistory": "1",
+    "name": "ＪＰＸ",
+    "disclosureItems": ["11384"],
+    "code": "86970",
+    "disclosedDate": "2020-01-30",
+    "datetime": "2020-01-30:12:00:00",
+    "handlingType": None,
+    "disclosedTime": "12:00:00",
+    "pdfGeneralFlag": "1",
+    "disclosureNumber": "20200129453073",
+    "xbrlFlag": "1",
+    "title": "2020年３月期 第３四半期決算短信〔ＩＦＲＳ〕（連結） "},
+    {"pdfSumaryFlag": "0",
+    "modifiedHistory": "1",
+    "name": "ＪＰＸ",
+    "disclosureItems": ["11804"],
+    "code": "86970",
+    "disclosedDate": "2020-01-30",
+    "datetime": "2020-01-30:12:00:00",
+    "handlingType": None,
+    "disclosedTime": "12:00:00",
+    "pdfGeneralFlag": "1",
+    "disclosureNumber": "20200129453074",
+    "xbrlFlag": "0",
+    "title": "Consolidated financial results for the nine months ended December 31, 2019"},
+    ...]}
+----
+
+公開項目コードを用いると出力結果を絞ることが可能です。
+例えば、第三四半期決算短信（連結・日本基準・公開項目コード11310）は以下のようなコードとなります。
+
+[source, python]
+----
+resp = call_jquants_api({}, idtk, "tdnet")
+[f for f in resp["tdnet"] if "11310" in f["disclosureItems"]]
+----
+こちらのコードを実行すると、第3四半期決算短信のみ抽出することができます。
+[source, json]
+----
+[{"name": "Ｊ－インターライフ",
+    "disclosureItems": ["11310"],
+    "datetime": "2021-01-13:16:00:00",
+    "code": "14180",
+    "handlingType": None,
+    "disclosureNumber": "20210112443207",
+    "title": "2021年２月期\u3000第３四半期決算短信〔日本基準〕（連結）"},
+    {"name": "Ｓ\u3000ＦＯＯＤＳ",
+    "disclosureItems": ["11310"],
+    "datetime": "2021-01-13:15:00:00",
+    "code": "22920",
+    "handlingType": None,
+    "disclosureNumber": "20210113443358",
+    "title": "2021年２月期第３四半期決算短信〔日本基準〕(連結)"},
+    {"name": "いちご",
+    "disclosureItems": ["11310"],
+    "datetime": "2021-01-13:15:00:00",
+    "code": "23370",
+    "handlingType": None,
+    "disclosureNumber": "20210113443616",
+    "title": "2021年2月期 第3四半期 決算短信〔日本基準〕（連結）"},
+    ...]
+----
+
+このAPIのレスポンスのdisclosureNumberを用いることで、PDFファイルやXBRLファイルを取得する(/tdfiles)もございます。
+
+決算短信はサマリ-PDF("fileTypeFlag"が"s")やXBRL("fileTypeFlag"が"x")をダウンロードすることができます。そのほかの資料は全文PDFのみですので、("fileTypeFlag"が"g")をご指定ください。
+
+ただし、これらのファイルが取得できるものは2020年以降開示されたものに限ります。
+[source, python]
+----
+def call_tdfiles_api(params: dict, idtoken: str, outputdir: str = None):
+    """
+    TDnetで開示された資料をダウンロードするAPI。
+
+    Parameters
+    ----------
+    params : dict
+        リクエストパラメータ。
+    idtoken : str
+        idtokenはログイン後の画面からご確認いただけます。
+    outputdir : str
+        ダウンロードしたファイルを格納するフォルダパスを指定いただけます。
+    """
+    disclnum = params.get("disclosurenumber")
+    ftype = params.get("filetypeflag", "g")
+    if not outputdir:
+        outputdir = ""
+
+    headers = {"Authorization": idToken, "accept": "application/json"}
+    data = {"disclosureNumber": disclnum, "fileTypeFlag": ftype}
+
+    r = requests.get(
+        "https://api.jpx-jquants.com/tdfiles", params=data, headers=headers
+    )
+    resjson = json.loads(r.text)
+
+    if resjson["responseType"] == "1":
+        bjson = resjson["fileData"].encode()
+    elif resjson["responseType"] == "2":
+        filedata = requests.get(resjson["fileUrl"]).text
+        bjson = filedata.encode()
+
+    if ftype == "x":
+        fname = outputdir + "/x_" + disclnum + ".zip"
+    elif ftype == "g":
+        fname = outputdir + "/g_" + disclnum + ".pdf"
+    elif ftype == "s":
+        fname = outputdir + "/s_" + disclnum + ".pdf"
+
+    with open(fname, "wb") as theFile:
+        theFile.write(base64.b64decode(bjson))
+
+    print("Finish Download: " + disclnum)
+----
+このメソッドを利用することで、base64形式のデータをファイルに書き出すことが可能です。実際にこのメソッドを利用する方法は以下の通りです。
+
+[source, python]
+----
+
+idtk=<your idtoken>
+# 出力フォルダを指定
+outputdir = "./"
+# 全文PDFを取得する場合
+paramdict = {}
+paramdict["disclosurenumber"] = "20200129453073"
+paramdict["filetypeflag"] = "g"
+call_tdfiles_api(paramdict, idtk, outputdir)
+
+# サマリーPDFを取得する場合（決算短信で指定可能です）
+paramdict = {}
+paramdict["disclosurenumber"] = "20200129453073"
+paramdict["filetypeflag"] = "s"
+call_tdfiles_api(paramdict, idtk, outputdir)
+
+# XBRLデータを取得する場合（決算短信で指定可能です）
+paramdict = {}
+paramdict["disclosurenumber"] = "20200129453073"
+paramdict["filetypeflag"] = "x"
+call_tdfiles_api(paramdict, idtk, outputdir)
+----
+
+

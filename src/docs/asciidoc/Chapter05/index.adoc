@@ -1,386 +1,2224 @@
 include::../attribute.adoc[]
-== J-QuantsAPI
 
-=== 概要
-この章では、各種データをダウンロードできるJ-QuantsAPIについてご紹介します。APIの詳細な仕様はこちら(https://jpx-jquants.com/apidoc.html )をご確認ください。
+== ニュースデータから特徴量を抽出しよう
 
-=== APIの利用
-APIを利用するには、SIGNATEでのコンペティションへのご登録( https://signate.jp/competitions/423 )とJ-QuantsAPIの利用登録( https://jpx-jquants.com/ )が必要となります。
+　本章では、本コンペの大きな特徴であるニュースデータに注目し、ニュースデータから特徴量抽出を行う手法を紹介します。特徴量抽出を行うことでテキスト情報がスコア化されるため、予測モデルやポートフォリオに活用することが可能となります。
 
-=== 必要なパッケージのインポート
-[source, python]
+　本章ではニュースデータから特徴量抽出を行う手法として、BERT(Bidirectional Encoder Representations from Transformers)を採用しています。BERTはGoogleによって開発された、自然言語処理（NLP）の事前学習のためのTransformerベースの機械学習手法であり(引用:link:https://ja.wikipedia.org/wiki/BERT_(%E8%A8%80%E8%AA%9E%E3%83%A2%E3%83%87%E3%83%AB)[Wikipedia: BERT (言語モデル)])、近年様々な分野で高い性能を発揮しているニューラルネットを基盤とする言語モデルの一種です。
+
+　本チュートリアルでは、東北大学の乾・鈴木研究室が公開した訓練済み日本語BERTモデルを利用します(link:https://github.com/cl-tohoku/bert-japanese[こちら])。なお、BERTモデルへの入力であるコーパス(言語の標本を抽出した集合。テキストの集合を示します)は、そのBERTモデルが学習された時と同様の前処理を行う必要があることに注意が必要です。
+
+今回使用する"cl-tohoku/bert-base-japanese-whole-word-masking"モデルは、mecab-ipadic-NEologdによりトークナイズされ、その後Wordpiece subword encoderよりsubword化していますので、本チュートリアルでもその流れに沿った処理を実施しています。トークナイズとは、テキストを決めた基準のトークンに区切ることです(5.2に詳細記載)。他のBERTモデルを利用することも可能ですが、その場合は、そのBERTモデルの入力とするコーパスがどのように前処理が行われたかを確認し適切な前処理を実施するようにしてください。 +
+また、本コンペティションでは、以下のように外部データの利用を制限しております。こちらも合わせてご確認ください。
+
 ----
+・提供するデータ以外の外部データ（為替や金利データ等）や、提供するデータの期間外のヒストリカルデータを用いてモデルを学習することは禁止。（例として、2015年以前の株価や、2019年以前の適時開示データ等）
+
+・ただし、言語資源の外部データについては、第三者の権利を侵害しない、無償で誰でも利用可能なオープンなものに限り利用可能。（例として、形態素解析辞書や、BERTモデル）
+----
+
+=== テキストからの特徴量抽出方法の紹介
+
+　テキストデータに内在する情報を特徴量として抽出する方法としては、単語の頻度ベース、単語の分散表現ベース、言語モデルベース等の方法が存在します。下記では、それぞれについていくつかの方法を紹介します。
+
+*単語の頻度ベース*
+
+- テキストに登場する各単語の頻度を行列化した単語文書行列を用いる方法 （例）TF-IDF(Term Frequency–Inverse Document Frequency)
+
+- テキストの潜在意味を抽出するトピックモデリングの方法 （例）LSA(Latent Semantic Analysis), LDA(Latent Dirichlet Allocation)
+
+　これらの方法は、単語の頻度行列の使用を基盤としているため、コーパス内に単語が増えれば増えるほど高い計算リソースが要求されます。
+
+|===
+|モデリング名|説明|引用
+|LSA(Latent Semantic Analysis)|LSAはベクトル空間モデルを利用した自然言語処理の技法の1つで、文書群とそこに含まれる用語群について、それらに関連した概念の集合を生成することで、その関係を分析する技術である。|link:https://ja.wikipedia.org/wiki/%E6%BD%9C%E5%9C%A8%E6%84%8F%E5%91%B3%E8%A7%A3%E6%9E%90#:~:text=%E6%BD%9C%E5%9C%A8%E6%84%8F%E5%91%B3%E8%A7%A3%E6%9E%90%EF%BC%88%E8%8B%B1%3A%20Latent,%E6%BD%9C%E5%9C%A8%E7%9A%84%E6%84%8F%E5%91%B3%E8%A7%A3%E6%9E%90%E3%81%A8%E3%82%82%E3%80%82[Wikipedia:潜在意味解析]
+|LDA(Latent Dirichlet Allocation)|LDAは文章中の潜在的なトピックを推定し、文章分類や、文章ベクトルの次元削減等に用いられる技術です。|link:https://spjai.com/topic-model/[【入門】トピックモデルとは？トピック分析の３つの手法を解説]
+|===
+
+*単語の分散表現ベース*
+
+　単語の分散表現（あるいは単語埋め込み）とは、単語を高次元の実数ベクトルで表現する技術です(引用:link:https://sites.google.com/site/iwanamidatascience/vol2/word-embedding[岩波データサイエンス: 分散表現(単語埋め込み)])。次に挙げる方法は、単語を分散表現化する方法の一部です。
+
+|===
+| 手法 | 説明 | 論文例
+
+|Word2Vec(CBOW)|中心単語から周辺単語を予測し、前後単語との関係性を用いて分散表現を構築
+|link:https://arxiv.org/abs/1301.3781[Tomas Mikolov, Kai Chen, Greg Corrado, Jeffrey Dean, 2013, Efficient Estimation of Word Representations in Vector Space]
+
+|Glove|単語の頻度ベースのLSAと単語の分散表現ベースのWord2Vecを用いて分散表現を構築
+|link:https://arxiv.org/abs/1411.5595[Tianze Shi, Zhiyuan Liu, 2014, Linking GloVe with word2vec]
+
+|FastText|単語をSubword化することで、Out-Of-Vocabularyに頑健な分散表現を構築
+|link:https://arxiv.org/abs/1607.04606[Piotr Bojanowski, Edouard Grave, Armand Joulin, Tomas Mikolov, 2017, Enriching Word Vectors with Subword Information]
+
+|Elmo|RNNベースの言語モデルであるbiLMを用いて、文脈を反映する分散表現を構築
+|link:https://arxiv.org/abs/1802.05365[Matthew E. Peters, Mark Neumann, Mohit Iyyer, Matt Gardner, Christopher Clark, Kenton Lee, Luke Zettlemoyer, 2018, Deep contextualized word representations]
+|===
+
+
+*言語モデルベース(ニューラルネット基盤の言語モデルのみを説明)*
+
+- RNN基盤(LSTM, GRU, LMを含む)の内部状態を特徴量として抽出
+
+- Transformer(BERT等Attention機構を用いたモデルを含む)基盤の内部状態を特徴量として抽出
+
+　これらの方法は、膨大なパラメータを持つモデルを膨大なデータを用いて学習させるため、テキストデータについてより高次元の潜在表現を学習できることが知られています。また、このようなモデルから抽出した特徴量は多様なタスクにおいて適用でき、高いパフォーマンスを表すことが知られています。
+
+　本チュートリアルでは、上記観点からも最も汎用性が高いと思われるBERTモデルを利用した特徴量抽出に取り組みます。
+
+[[anchor-5.2]]
+=== 実行環境
+
+　本チュートリアルでは、CPUとGPUどちらの環境でも実行可能なモデルを使用しています。しかし、本チュートリアルで紹介するBERTの特徴量抽出の処理は、CPU環境ではかなりの時間がかかります。そのため、GPU環境をお持ちでない方は、多少の制限はあるものの実行環境として無料でGPU環境が使えるGoogle Colaboratoryを利用することを強くお勧めします。また、本章を実行しなくても問題なく特徴量をご利用いただけるように、本章で抽出したBERT特徴量はpklファイルとして link:http://signate.jp/competitions/443/data[こちら] でも提供しています。
+
+==== Google Colaboratoryの環境設定
+
+　本コンペの5章、6章のチュートリアルをGoogle Colaboratory上で動かすためには、まず以下の手順でGoogle Drive上にファイルを設置します。
+
+1. Google DriveのMy Driveに``JPX_competition``というフォルダーを作成します。
+
+2. 1で作成した``JPX_competition``フォルダーにデータを保存するための``data_dir_comp2``フォルダーを作成します。
+
+3. SIGNATEのコンペティションサイトよりダウンロードした各種データを2で作成した``data_dir_comp2``フォルダーにアップロードします。
+
+　次にGoogle Colaboratory上でチュートリアルのnotebookを展開します。本チュートリアルのnotebookはGoogle Colaboratory上でも実行可能となっております。各章のnotebookは以下のそれぞれのリンク先を開き、開いたページでRawを右クリックし、「リンク先を名前をつけて保存」を選択することでダウンロード可能です。
+
+link:https://github.com/JapanExchangeGroup/J-Quants-Tutorial/blob/main/handson/Chapter05/20210226_chapter05_tutorial.ipynb[5章のnotebook] +
+link:https://github.com/JapanExchangeGroup/J-Quants-Tutorial/blob/main/handson/Chapter06/20210226_chapter06_tutorial.ipynb[6章のnotebook] +
+link:https://github.com/JapanExchangeGroup/J-Quants-Tutorial/blob/main/handson/Chapter06/20210224_chapter06_tutorial_test_predictor.ipynb[6章の投稿ファイル実装例用notebook] +
+
+　以下、5章を例にGoogle Colaboratoryでチュートリアルのnoteboookを使用する方法を説明します。
+
+1. Google Drive の My Drive 内に作成した``JPX_competition``フォルダーに3章用のnotebookを保存するための``Chapter05``フォルダーを作成します。
+
+2. 上記のリンク先から5章のnotebookをダウンロードして、先程作成した``Chapter05``フォルダーに``20210226_chapter05_tutorial.ipyn``というファイル名で保存してください。
+
+3. Google Driveにアップロードした `20210226_chapter05_tutorial.ipynb` ファイルをダブルクリックして Google Colaboratory で開きます。
+
+4. Google Colaboratoryの環境で本チュートリアルを実行する場合、最初に以下のコードを実行して Google Colaboratory 上の notebook から Google Drive にアクセスできるようにしてください。
+
+[source,python]
+----
+# Google Colab環境ではGoogle Driveをマウントしてアクセスできるようにします。
+import sys
+
+if 'google.colab' in sys.modules:
+    # Google Drive をマウントします
+    from google.colab import drive
+    mount_dir = "/content/drive"
+    drive.mount(mount_dir)
+----
+
+==== 必要なライブラリのインストール
+
+　本チュートリアル内では、上記の実行環境には含まれていないライブラリを使用するため、以下のコマンドを使用して個別にインストールします。Notebookに記載がある通り、Google Colaboratory上においても実行できます。
+
+[source,bash]
+----
+# テキスト解析用にmecabをインストールします。
+# 日本語表記を含む可視化のため、フォントもインストールしています。
+apt-get update
+apt-get install -y build-essential sudo mecab libmecab-dev mecab-ipadic-utf8 fonts-ipafont-gothic file
+
+# 必要なライブラリをインストールします。
+pip install --no-cache-dir pandas==1.1.5 numpy==1.19.5 scattertext==0.1.0.0 wordcloud==1.8.1 torch==1.7.1 torchvision==0.8.2 transformers==4.2.2 mecab-python3==0.996.6rc1 ipadic==1.0.0 neologdn==0.4 fugashi==1.0.5 japanize-matplotlib==1.1.3 gensim==3.8.3 pyLDAvis==2.1.2
+# mecab用のipadic-neologd辞書をインストールします。
+# ipadic-neologd辞書は非常に頻繁に更新されるため、同様の解析結果が得られるようにバージョンを指定します。そのため、git clone時にバージョン(--branch v0.0.7 --single-branch)を指定します。
+# git cloneよりインストールファイルが入っているレポジトリをローカル環境に落とします。
+git clone https://github.com/neologd/mecab-ipadic-neologd.git --branch v0.0.7 --single-branch
+
+# インストールの途中、yesのコマンドを叩かないとインストールが実行されません。yesコマンドを使うことで、渡された引数を常に叩くようになります。
+yes yes | mecab-ipadic-neologd/bin/install-mecab-ipadic-neologd
+----
+
+==== ライブラリの読み込み
+　本チュートリアルで利用するライブラリを読み込みます。
+
+[source,python]
+----
+# 基本ライブラリ
+import re
 import os
+import sys
+import math
+import random
 import json
-import requests
-import base64
+import joblib
+import numpy as np
+import pandas as pd
+from scipy import stats
+import string
+from copy import copy
+from glob import glob
+from itertools import chain
+import gc
+
+# テキスト解析関連
+import MeCab
+import unicodedata
+import neologdn
+
+# 可視化関連
+from tqdm.auto import tqdm
+from IPython.display import display, display_markdown, IFrame
+import scattertext as st
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import japanize_matplotlib
+import seaborn as sns
+import gensim
+import pyLDAvis
+import pyLDAvis.gensim
+
+#PCA関連
+from sklearn.decomposition import PCA, KernelPCA
+
+# ニューラルネット関連
+import torch
+from torch import nn
+import torch.nn.functional as F
+import transformers
+from transformers import BertJapaneseTokenizer
+from torch.utils.data import DataLoader, Dataset as _Dataset
+
+# notebook上でpyLDAvisより可視化を行う場合の設定
+pyLDAvis.enable_notebook()
 ----
+
+==== ライブラリ解説
+
 [options="header, autowidth"]
 |===
-| *パッケージ名* | *目的*　
-| os | ディレクトリ、ファイル操作のため
-| json | レスポンスの加工のため
-| requests | APIのGETやPOSTを利用するため
-| base64 | TDnetのファイルダウンロードAPIでBase64形式で返ってくるデータをデコードするため
+|*ライブラリ名*| *目的* | *公式ドキュメント* |*入門解説*
+|re | データの処理 | https://docs.python.org/3/library/re.html[Regular expression operations] | https://note.nkmk.me/python-re-match-search-findall-etc/[Pythonの正規表現モジュールreの使い方]
+|numpy | データの処理 | https://numpy.org/doc/stable/user/tutorials_index.html[NumPy Tutorials] |https://qiita.com/jyori112/items/a15658d1dd17c421e1e2[Qiita:numpyの使い方]
+|pandas | データの処理 | https://pandas.pydata.org/docs/[pandas documentation] | https://qiita.com/ysdyt/items/9ccca82fc5b504e7913a[Qiita:データ分析で頻出のPandas基本操作]
+|scipy | 統計用のライブラリ | https://docs.scipy.org/doc/scipy/reference/tutorial/index.html[SciPy Tutorial] |https://amorphous.tf.chiba-u.jp/lecture.files/chem_computer/11_scipy%E3%81%AE%E5%9F%BA%E6%9C%AC%E3%81%A8%E5%BF%9C%E7%94%A8/11.html[千葉大: コンピュータ処理 ドキュメント 11. scipyの基本と応用]
+|glob | ファイルの検知 | https://docs.python.org/3/library/glob.html[glob — Unix style pathname pattern expansion] |https://qiita.com/HirosuguTakeshita/items/0e0850362c7eb3b10ea1[Qiita:【備忘録】globの使い方]
+|MeCab | テキスト解析 | https://taku910.github.io/mecab/[MeCab: Yet Another Part-of-Speech and Morphological Analyzer] | https://qiita.com/KROYO/items/931805e5f499753b546f[Qiita:初めての自然言語処理 入門 1 ~MeCabを動かしてみよう ~]
+|unicodedata | unicode正規化 | https://docs.python.org/3/library/unicodedata.html[Unicode Database] | https://qiita.com/fury00812/items/b98a7f9428d1395fc230[Qiita:Unicode正規化]
+|neologdn | テキスト正規化 | https://github.com/neologd/mecab-ipadic-neologd/wiki/Regexp.ja[neologdn] | https://diatonic.codes/blog/neologdn/[【ライブラリ紹介】テキスト正規化ライブラリ neologdn]
+|tqdm | 計算の進捗確認 | https://tqdm.github.io/[tqdm] |https://qiita.com/pontyo4/items/76145cb10e030ad8186a[Qiita:tqdmでプログレスバーを表示させる]
+|IPython.display | データ可視化 | https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html[Module: display — IPython 7.20.0 documentation] | https://qiita.com/alchemist/items/54b5768c964fd1eb6b54[Qiita:Jupyter Notebookでセルの途中でも値を出力するには]
+|scattertext | コーパス可視化 | https://github.com/JasonKessler/scattertext[scattertext]| https://ichi.pro/scattertext-no-kaishaku-tekisuto-o-purottosuru-tame-no-miwakuteki-na-tsu-ru-51217040558168[Scattertextの解釈：テキストをプロットするための魅惑的なツール]
+|wordcloud | コーパス可視化 | https://amueller.github.io/word_cloud/[WordCloud for Python documentation] | https://qiita.com/str32/items/4539e417a9cb333abd52[Qiita:wordcloudで遊んでみた！]
+|matplotlib | データの可視化 | https://matplotlib.org/tutorials/index.html[matplotlib tutorials] |https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9[Qiita:早く知っておきたかったmatplotlibの基礎知識、あるいは見た目の調整が捗るArtistの話]
+|japanize_matplotlib | データの可視化 | https://github.com/uehara1414/japanize-matplotlib[japanize-matplotlib] | https://qiita.com/uehara1414/items/6286590d2e1ffbf68f6c[pip install して import するだけで matplotlib を日本語表示対応させる]
+|seaborn | データの可視化 | https://seaborn.pydata.org/tutorial.html[User guide and tutorial] |https://qiita.com/hik0107/items/3dc541158fceb3156ee0[Qiita:pythonで美しいグラフ描画 -seabornを使えばデータ分析と可視化が捗る その1]
+|gensim | コーパス解析 | https://radimrehurek.com/gensim/auto_examples/index.html[Gensim topic modelling for humans] | https://openbook4.me/projects/193/sections/1154[openbook:データ解析: LDAの実装(gensim)]
+|pyLDAvis | コーパス可視化| https://pyldavis.readthedocs.io/en/latest/[Welcome to pyLDAvis’s documentation!] | http://www.ie110704.net/2018/12/29/wordcloudとpyldavisによるldaの可視化について[WordCloudとpyLDAvisによるLDAの可視化について]
+|torch | ニューラルネットモデリング | https://pytorch.org/docs/stable/index.html[PYTORCH DOCUMENTATION] | https://qiita.com/north_redwing/items/30f9619f0ee727875250[Qiita:PyTorch入門 [公式Tutorial:DEEP LEARNING WITH PYTORCH: A 60 MINUTE BLITZを読む]]
+|transformers | 事前学習言語処理モデル利用 | https://huggingface.co/transformers/[Transformers]|https://note.com/npaka/n/n5bb043191cc9[note:Huggingface Transformers 入門 (1) - 事始め]
 |===
 
-=== Refresh API
-はじめに、idTokenをリフレッシュするRefresh API("/refresh")をご紹介します。このAPIでは、J-Quantsのログイン後の画面でご確認いただくことができるrefreshTokenを使用します。
+==== notebook環境の構築
 
-Refresh APIを使うためのサンプルコードは以下のようになります。
+*ファイルパスの設定*
+
+　notebook実行時に使用するファイルパスを設定します。
+
+[source,python]
+----
+# colab環境で実行する場合
+if 'google.colab' in sys.modules:
+    CONFIG = {
+        'base_path': f'{mount_dir}/MyDrive/JPX_competition/workspace',
+        'article_path': f'{mount_dir}/MyDrive/JPX_competition/data_dir_comp2/nikkei_article.csv.gz',
+        'stock_price_path': f'{mount_dir}/MyDrive/JPX_competition/data_dir_comp2/stock_price.csv.gz',
+        'stock_list_path': f'{mount_dir}/MyDrive/JPX_competition/data_dir_comp2/stock_list.csv.gz',
+        'dict_path': '/usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd',
+        'font_path': '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf',
+    }
+else:
+    CONFIG = {
+        'base_path': '/notebook/workspace',
+        'article_path': '/notebook/data_dir_comp2/nikkei_article.csv.gz',
+        'stock_price_path': '/notebook/data_dir_comp2/stock_price.csv.gz',
+        'stock_list_path': '/notebook/data_dir_comp2/stock_list.csv.gz',
+        'dict_path': '/usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd',
+        'font_path': '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf',
+    }
+----
+
+*ディレクトリ作成*
+
+　アウトプットされた実行結果ファイルを保存するためのディレクトリを作成しておきます。
+
+[source,python]
+----
+for store_dir in ['headline_features', 'keywords_features', 'visualizations']:
+    os.makedirs(os.path.join(CONFIG["base_path"], store_dir), exist_ok=True)
+----
+
+[[anchor-5.2.6]]
+=== テキスト解析について
+
+==== 形態素解析・トークナイズ
+
+　自然言語処理において、コーパスが前処理されていない状態である場合、該当するデータを使用するに当たって用途に合わせたトークナイズを行います。トークンとは意味を持つ文字列であり、主に、単語や単語より小さい単位を持つ形態素というものが該当します。また、テキストデータを予め決めた基準のトークンに区切ることをトークナイズと言います。英語においては、スペースを単語と単語の区切りとみなすことでトークナイズは簡単に行えます。また、句読点を用いることで文章と文章を区切ることもできます。
+
+　しかし、英語と異なり日本語はスペースや句読点だけでトークナイズを行うことは困難ですが、pythonではMeCabというライブラリを用いることで、日本語におけるトークナイズ処理を簡単に行うことができます。MeCabの動作原理に関して興味がある方は link:https://techlife.cookpad.com/entry/2016/05/11/170000[こちら] をご参照ください。
+
+==== テキスト解析に用いるtaggerの構築
+
+　MeCabでトークナイズを行うクラス（トークナイザ）をtaggerと呼びます。MeCabのtaggerを構築する時は、その出力形式をオプションとして渡すことができます。オプションには、以下の４つがあります。
+
+- -Ochasen：ChaSen互換形式
+
+- -Owakati：分かち書きのみを出力
+
+- -Oyomi：読みのみ（振り仮名）を出力
+
+- -Odump：単語の全情報を出力
+
+その中でも、OwakatiとOchasenの2つがよく使用されています。Owakatiはテキストをトークナイズし、空白でテキストをトークン単位に区切ります。Ochasenはトークナイズを行うと共に、トークンの品詞情報や原型、活用型などを共に返します。以降の解析では、これらのtaggerを使用しますので、各々のtaggerに出力形式オプションを引数として設定しています。
+
 [source, python]
 ----
-def call_refresh_api(refreshtoken: str):
-    """
-    idTokenをリフレッシュするメソッド。
+owakati = MeCab.Tagger(f"-Owakati -d {CONFIG['dict_path']}")
+ochasen = MeCab.Tagger(f"-Ochasen -d {CONFIG['dict_path']}")
 
-    Parameters
-    ----------
-    refreshtoken : str
-        refreshtoken。ログイン後の画面からご確認いただけます。
+# taggerのparseを使うことで、各々の機能を確認することができます。
+text = 'taggerの役割を確認してみます。'
+print('owakati:\n' + owakati.parse(text))
+print('ochasen:\n' + ochasen.parse(text))
+----
 
-    Returns
-    -------
-    resjson : dict
-        新しいidtokenが格納されたAPIレスポンス(json形式)
-    """
-    headers = {"accept": "application/json"}
-    data = {"refresh-token": refreshtoken}
+　出力結果は以下の通りです。テキストのトークナイズ、品詞情報の取得に成功していることが確認できます。
 
-    response = requests.post(
-        "https://api.jpx-jquants.com/refresh", headers=headers, data=json.dumps(data)
+[source, python]
+----
+owakati:
+tagger の 役割 を 確認 し て み ます 。
+
+ochasen:
+tagger	タガー	tagger	名詞-固有名詞-一般
+の	ノ	の	助詞-連体化
+役割	ヤクワリ	役割	名詞-一般
+を	ヲ	を	助詞-格助詞-一般
+確認	カクニン	確認	名詞-サ変接続
+し	シ	する	動詞-自立	サ変・スル	連用形
+て	テ	て	助詞-接続助詞
+み	ミ	みる	動詞-非自立	一段	連用形
+ます	マス	ます	助動詞	特殊・マス	基本形
+。	。	。	記号-句点
+EOS
+----
+
+==== 本番提出用のクラス作成方法について
+
+　本章で構築するモデルは記述がとても長いため、3章及び4章のように最後に一気にモデル提出用のクラスを作成するのではなく、以下のように段階的にモデル提出用のクラスを作成していきます。まずは、ベースとなる基底クラス ``SentimentGenerator`` を定義しています。
+
+[source,python]
+----
+class SentimentGenerator(object):
+    # 各々の変数に関しては、後述のチュートリアル内で説明します。
+    article_columns = None
+    punctuation_replace_dict = None
+    punctuation_remove_list = None
+    device = None
+    feature_extractor = None
+    headline_feature_combiner_handler = None
+    keywords_feature_combiner_handler = None
+----
+
+=== ニュースデータ処理の流れ
+
+本チュートリアルでは、5章及び6章でニュースデータを以下のように処理していきます。
+
+image::chapter03_flow_chart.shapex.png[chapter03_flow_chart.shapex, width=60%]
+
+
+=== 利用するテキストデータについて
+
+　本節では、使用するテキストデータについてのデータの読み込みや内容について概観します。
+
+==== テキストデータの読み込み
+
+　本チュートリアルで用いるテキストデータを読み込み、確認します。
+[source,python]
+----
+articles = pd.read_csv(CONFIG['article_path'])
+display(articles.head(3))
+----
+
+==== テキストデータの内容を概観
+
+　テキストデータの構成を把握するため、各columnのユニークなデータの件数やデータの形等を確認します。読み込んだデータに関して細かくそのデータ数や形式を確認する作業はデータの理解を助けます。
+
+[source,python]
+----
+# key: column, value: 重複を排除したデータ件数のdict型宣言
+n_unique = {}
+for column in articles.columns:
+    # column毎の重複を排除したデータ件数をn_uniqueに追加する。
+    n_unique[column] = len(articles[column].unique())
+
+display_markdown('Number of unique data', raw=True)
+
+# n_uniqueをpd.Series形式に変換する。articles.dtypesよりcolumnごとのdtypeを取得
+# これらをpd.concatによってテーブル形式に変換し、表示
+display(pd.concat([pd.Series(n_unique).rename('n_unique'), articles.dtypes.rename('dtype')], axis=1))
+----
+
+　出力結果は以下の通りです。
+
+image::1_4_unique_data.png[1_4_unique_data, width=40%]
+
+　テキストを解析する際、そのテキストが持つ意味を考慮するためには、テキストを単なる文字列の集合と見なすのではなく、より踏み込んだ前処理が必要となります。そのため、テキストを単なる文字コード（intの離散値）の集合と見做し、これを数値的な特徴量として用いたとしても、テキストの意味的な解析は不可能です。このような場合、文字列長の分布や各漢字の出現頻度といった表層的な解析しかできなくなると推察されます。そのため、本チュートリアルでは、テキスト解析には別途の前処理を実行し、モデリングに適した特徴量を抽出します。（詳細は5.7.6節にて説明）
+
+　各columnを見ると、テキストの単純なid番号を含む`article_id` と時刻情報を含む`publish_datetime` を除けば、データセット内で利用できそうなデータは `headline`, `keywords`, `classifications`, `company_g.stock_code` になりそうです。以下にこれらのデータサンプルを表示します。
+
+[source,python]
+----
+# 表示するcolumnを定義する。
+columns = ['headline', 'keywords', 'classifications', 'company_g.stock_code']
+for column in columns:
+    display_markdown(f'#### {column}', raw=True)
+
+    # 欠損値が含まれることがあるため、どちらかに欠損値が存在するデータを除去する。
+    # 同様のindexを持つ5個のサンプルデータを表示。
+    display(articles[columns].dropna()[column].head(5))
+----
+
+　出力結果は以下のとおりです。
+
+[source,python]
+----
+headline
+10                             ゴーン元会長、周到な不意打ち出国　司法批判の声明
+19                                地銀が変わる、始まったマニュアルなき大競争
+20                                ＪＸＴＧ・国際帝石、ＵＡＥ新取引所に出資へ
+22    元日付のこういうコラムは、ふつうなら来し方行く末に思いをはせ、まずは新年をことほぐものである...
+26             Googleの最新AI、読解力も人間超え　驚異の学習法\n超人間・万能AI（上）
+Name: headline, dtype: object
+
+keywords
+10    カルロス・ゴーン\n日産自動車\nグレッグ・ケリー\n弘中惇一郎\nＭｕｓｉｃＴｅｌｅｖｉｓ...
+19    金融検査マニュアル\nマニュアル\n笹原晶博\n安田光春\n金融機関\n銀行\n地方銀行\n...
+20    国際石油開発帝石\nＩＣＥフューチャーズ・アブダビ\nＪＸＴＧホールディングス\nアラブ首長...
+22                春秋\nカルロス・ゴーン\nコラム\n来し方行く末\n思い\n日付\n新年
+26    中田敦\nストックマーク\nグーグル\nＢＥＲＴ\nＡＩ\nＮＩＩ\nロボット\n言語モデル...
+Name: keywords, dtype: object
+
+classifications
+10    ＄絵写表記事\nＴ７２０１\nＰＤ２７１\nＮ０００１３５１\nＮ００４４３７１\n＃Ｗ５０...
+19    ＄絵写表記事\nＴ８５２４\nＰＤ４７３\nＮ００７００１７\nＮ００７００８７\n＃Ｗ２０...
+20    ＄絵写表記事\nＴ１６０５\nＴ５０２０\nＰＤ３７２\nＰＤ１１１\nＮ００３１２１７\n...
+22    「春秋」\n＊春秋\nＴ７２０１\nＰＤ２７１\nＮ０００１３５１\n＃Ｗ５０３０５\n＃Ｗ...
+26                       ＄絵写表記事\nＴ９４３２\nＰＤ６５１\nＮ００１５００６
+Name: classifications, dtype: object
+
+company_g.stock_code
+10          7201
+19          8524
+20    1605\n5020
+22          7201
+26          9432
+Name: company_g.stock_code, dtype: object
+----
+
+　本チュートリアルでは、ニュースのデータセットを用いて、そのニュースがマーケットに対して持っている潜在表現を特徴量として取得することを目的としています。
+
+　上記で表示したcolumnごとのサンプルを見ると、`headline` のデータはニュースの要約内容であり、この中から潜在表現を抽出できそうです。また、`keywords` もニュースが持つ特性がキーワード化されたものであり、この中からも潜在表現を抽出できそうです。一方で、`classifications` は`keywords` と同様に、ニュースがもつ特性を表していますが、このままの状態では扱いにくく、`keywords` と重複する情報であるため、解析からは省きます。また、ニュースと株式銘柄を紐付ける`company_g.stock_code` は有力そうな情報ではありますが、あくまで数値でありテキスト解析の観点では適していません。よって、`headline` と`keywords` 及びニュースが公開された時刻を表す`publish_datetime` を保持し、他のデータは以下の手順で取り除いておきます。
+
+[source,python]
+----
+articles = articles[['publish_datetime', 'headline', 'keywords']]
+
+# ニュース時刻をindexとしてセット
+articles = articles.set_index('publish_datetime')
+
+# str形式のdatetimeをpd.Timestamp形式に変換
+articles.index = pd.to_datetime(articles.index)
+----
+
+==== 本番提出用のクラスへ組み込み
+
+　ここまでの処理を``load_articles``関数として ``SentimentGenerator`` クラスに追加します。
+
+[source,python]
+----
+# 生データから使用するコラムを設定する
+SentimentGenerator.article_columns = ['publish_datetime', 'headline', 'keywords']
+
+# 上記のコードを用いて、本番提出用のクラスにclassmethodを追加
+@classmethod
+def load_articles(cls, path, start_dt=None, end_dt=None):
+    # csvをロードする
+    # headline、keywordsをcolumnとして使用。publish_datetimeをindexとして使用。
+    articles =  pd.read_csv(path)[cls.article_columns].set_index('publish_datetime')
+
+    # str形式のdatetimeをpd.Timestamp形式に変換
+    articles.index = pd.to_datetime(articles.index)
+
+    # 必要な場合、使用するデータの範囲を指定する
+    return articles[start_dt:end_dt]
+
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.load_articles = load_articles
+
+# SentimentGenerator使用する全体流れを記述
+articles = SentimentGenerator.load_articles(path=CONFIG["article_path"])
+----
+
+=== データセットの前処理
+
+
+　多用な文字、記号が存在する日本語のテキスト解析において、データセットの前処理は非常に重要な処理です。例えば、日本語のテキストは、半角文字と全角文字が混在して使われる場合があります。同じテキスト内であっても、同じ単語が半角文字と全角文字で混在して使われる場合、人はそれらが単語が同じであることを認識できますが、モデルにおいては、異なる別の単語として認識されてしまいます。
+
+　さらに、半角文字と全角文字が混在する単語が、学習時に観察していない単語(未知語, Out-of-Vocabulary等)である場合には、その意味は失われてしまい、結果としてテキスト全体の意味が崩れる可能性もあります。このような問題を防止するため、データセットの前処理として *「テキストデータの正規化」* が用いられます。
+
+　本節では、使用するテキストデータがどのよう文字や記号で構成されていて、どのような期待していない文字や記号などを含んでいるかを確認します。更に、それらの期待していない情報に対して、置換処理や除去処理を実施する正規化方法を説明します。
+
+　また、前処理の一つとして欠損値に対する処理があります。欠損値の確認は、そのデータを理解するための基本的な作業です。連続する数値データにおいて欠損値が存在する場合は補正や補完を行うことも可能ですが、ニュースデータは各々の記事が連続せず、独立した内容を含んでいることから、このような方法は適していません。本チュートリアルではheadline及びkeywords両方の特徴量を同時に用いるため、どちらか片方に欠損値が存在する場合は利用しないデータとみなし除去しています。
+
+==== 欠損値除去
+
+まずは、欠損値があるかを確認します。確認する手順は以下の通りです。
+
+[source,python]
+----
+articles.isnull().any()
+----
+
+出力結果は以下の通りです。
+
+[source,python]
+----
+headline    False
+keywords     True
+dtype: bool
+----
+
+　どちらかに欠損値がある場合、そのデータを除去する処理を行います。
+
+[source,python]
+----
+# 欠損値を取り除く
+articles = articles.dropna()
+articles.isnull().any()
+----
+
+　出力結果は以下の通りです。欠損値が除去されていることがわかります。
+
+[source,python]
+----
+headline    False
+keywords    False
+dtype: bool
+----
+
+==== テキストデータの正規化
+
+　次に、本節で行うテキストデータの正規化についての概略を記載しています。それぞれ以下のとおり neologdn正規化、unicode正規化、マニュアル処理の3つに分けています。
+
+===== neologdn正規化
+
+|===
+|*正規化前*| *正規化後*
+| 全角英字 | 半角英字
+| 全角数字 | 半角数字
+| 全角スペース | 半角スペース
+| 複数回スペース | 単一スペース
+| 正しくないスペース | 除去
+| 半角カナ | 全角カナ
+| 複数回長音記号 | 単一長音記号
+| 一部全角記号 | 半角記号
+| 一部半角記号 | 全角記号
+|===
+
+===== unicode正規化
+
+|===
+|*正規化前*| *正規化後*
+| 丸囲みの数字 | 数字
+| ローマ数字 | アルファベット形式
+| 単位 | アルファベットや日本語形式
+| 省略文字 | 記号及び日本語形式
+|===
+
+===== マニュアル処理
+
+|===
+|*正規化前*| *正規化後*
+| 一部第一水準、第二水準漢字 | JISx0208に存在する漢字(link:https://ja.wikipedia.org/wiki/JIS_X_0208[Wikipedia: JIS X 0208])
+| 一部不必要な記号 | 除去
+| 一部乱用記号 | 置換
+|===
+
+neologdn正規化及び、unicode正規化に関しては、実際のコードでは上記で記入していないパターンに関しても正規化を行っています。それぞれの詳細や関連リンクは後述します。
+
+==== 全角文字の確認
+
+　まずは全角スペース、全角アルファベット、全角数字が含まれているかを確認します。なお、"\u3000"は全角スペース、r"[Ａ-Ｚａ-ｚ]"は全角アルファベットの正規表現、r"[０-９]は全角数字の正規表現を表します。
+
+[source,python]
+----
+for column in articles.columns:
+    for check_target in ["\u3000", r"[Ａ-Ｚａ-ｚ]", r"[０-９]"]:
+        display(f'Coulmn: {column}, Contains {check_target}: {articles[column].str.contains(check_target).any()}')
+----
+　出力結果は以下の通りです。
+
+[source,python]
+----
+'Coulmn: headline, Contains \u3000: True'
+'Coulmn: headline, Contains [Ａ-Ｚａ-ｚ]: True'
+'Coulmn: headline, Contains [０-９]: True'
+'Coulmn: keywords, Contains \u3000: True'
+'Coulmn: keywords, Contains [Ａ-Ｚａ-ｚ]: True'
+'Coulmn: keywords, Contains [０-９]: True'
+----
+
+　全角スペース、全角アルファベット、全角数字全てがテキストデータのコーパス内に含まれていることがわかります。それぞれの文字・記号を含む例を出力してみます。
+
+===== 全角スペースを持つケース
+
+[source,python]
+----
+display(articles['headline'][articles['headline'].str.contains('\u3000')][0])
+display(articles['keywords'][articles['keywords'].str.contains('\u3000')][0])
+----
+　出力結果は以下の通りです。
+
+[source,python]
+----
+'日米貿易協定が発効\u3000TPP土台に自由貿易圏拡大\n日本、RCEPに波及期待'
+'米ツアー\u3000ズームアップ\nアダム・スコット\nグレッグ・ノーマン\nコリン・モリカワ\nコリン・モンゴメリー\nゴルファー\nゴルフジャーナリスト\nジム・マッケイブ\nジャスティン・ローズ\nスティーブ・エルキントン\nスティーブ・ジョーンズ\nスティーブ・ストリッカー\nセルヒオ・ガルシア\nタイガー・ウッズ\nダスティン・ジョンソン\nデービス・ラブ３世\nトム・リーマン\nトム・ワトソン\nニック・ファルド\nバッバ・ワトソン\nビクトル・ホブラン\nビジェイ・シン\nフィル・ミケルソン\nフレッド・カプルス\nブラッド・ファクソン\nベルンハルト・ランガー\nポール・ケーシー\nマシュー・ウォルフ\nマスターズ・トーナメント\nマット・クーチャー\nマーク・オメーラ\nマーク・マクナルティ\n世界トップ\n主流\n尾崎将司'
+----
+
+===== 全角アルファベットを持つケース
+
+[source,python]
+----
+display(articles['headline'][articles['headline'].str.contains(r"[Ａ-Ｚａ-ｚ]")][0])
+display(articles['keywords'][articles['keywords'].str.contains(r"[Ａ-Ｚａ-ｚ]")][0])
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+'ＪＸＴＧ・国際帝石、ＵＡＥ新取引所に出資へ'
+'政府\n米国政府\n東アジア地域包括的経済連携\nＴＰＰ\n安倍晋三\n貿易協定\n自由貿易\n貿易\n関税\n発効\n日米\n撤廃\n波及\n双方'
+----
+
+===== 全角数字を持つケース
+
+[source,python]
+----
+display(articles['headline'][articles['headline'].str.contains(r"[０-９]")][0])
+display(articles['keywords'][articles['keywords'].str.contains(r"[０-９]")][0])
+----
+
+出力結果は以下の通りです。
+
+[source,python]
+----
+'「雇用制度全般の見直しを」中西経団連会長\n経済３団体トップの年頭所感'
+'政府統計\nダウ\n小幅高\nダウ工業株３０種平均\n貿易協議\n株式市場\n米中\n米国株\n進展'
+----
+
+==== neologdnを用いたテキストの正規化の挙動確認
+
+　ここでは、neologdnを用いて、先程確認した全角アルファベットや全角数字、また、その他の半角カタカナや一部の全角記号等に対して正規化を行います。neologdnの正規化規則に関して詳しい情報が必要な場合は link:https://github.com/neologd/mecab-ipadic-neologd/wiki/Regexp.ja[こちら] を参照して下さい。
+
+　neologdnを用いたテキスト正規化の挙動を確認するため、以下のサンプルテキストを用意しています。
+
+[source,python]
+----
+text = '全角アルファベット:Ａ, 全角数字:０, 全角スペース:　, 半角カナ:ｱ'
+
+# 正規化前のテキストを確認
+display(text)
+----
+
+　正規化前の出力結果は以下の通りです。
+
+[source,python]
+----
+'全角アルファベット:Ａ, 全角数字:０, 全角スペース:\u3000, 半角カナ:ｱ'
+----
+
+　neologdn.normalize関数を用いてよりテキストの正規化を行います。
+
+[source,python]
+----
+# 正規化後を確認
+display(neologdn.normalize(text))
+----
+
+出力結果は以下の通りです。全角アルファベットが半角アルファベットに、全角数字が半角数字に、全角スペースが半角スペースに、半角カタカナが全角カタカナになったことが確認できます。
+
+[source,python]
+----
+'全角アルファベット:A,全角数字:0,全角スペース: ,半角カナ:ア'
+----
+
+==== neologdnを用いたテキストの正規化
+
+　neologdnの挙動が確認できましたので、neologdnを用いて本チュートリアルで用いるテキストデータ全体について正規化します。なお、正規化にあたって一つ注意すべきところがあります。今回使用している`keywords` のデータは、名詞で構成されている単語が半角スペースで区切られています。この場合、neologdnの仕様により正規化を行うことで、半角スペースが全て除去されてしまい、各keywordsが一つの大きなkeywordsとなってしまい、MeCabによる正しいトークナイズが不可能となってしまいます。そのため、半角スペースの情報が失われないように、一度半角スペースを全て改行コードに書き換え、正規化した後に当該改行コードを半角スペースに再変換する処理を行うことで、半角スペースの情報を維持するように正規化を行っています。MeCabによるトークナイズの際には、半角スペースが残っている状態であっても、半角スペースの情報は除去されるため問題ありません。
+
+[source,python]
+----
+for column in articles.columns:
+    articles[column] = articles[column].apply(lambda x: '\n'.join(x.split()))
+
+    # neologdnを使って正規化を行う。
+    articles[column] = articles[column].apply(lambda x: neologdn.normalize(x))
+
+    # 改行をスペースに置換する。
+    articles[column] = articles[column].str.replace('\n', ' ')
+
+# 変換後を確認する。
+display(articles.head(5))
+----
+
+==== 本番提出用のクラスへ組み込み
+
+　ここまでの処理を``normalize_articles``関数として ``SentimentGenerator`` クラスに追加します。
+
+[source,python]
+----
+# 上記のコードを用いて、本番提出用のクラスにclassmethodを追加
+@classmethod
+def normalize_articles(cls, articles):
+    articles = articles.copy()
+
+    # 欠損値を取り除く
+    articles = articles.dropna()
+
+    for column in articles.columns:
+        # スペース(全角スペースを含む)はneologdn正規化時に全て除去される。
+        # ここでは、スペースの情報が失われないように、スペースを全て改行に書き換え、正規化後スペースに再変換する。
+        articles[column] = articles[column].apply(lambda x: '\n'.join(x.split()))
+
+        # neologdnを使って正規化を行う。
+        articles[column] = articles[column].apply(lambda x: neologdn.normalize(x))
+
+        # 改行をスペースに置換する。
+        articles[column] = articles[column].str.replace('\n', ' ')
+
+    return articles
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.normalize_articles = normalize_articles
+
+# SentimentGenerator使用する全体流れを記述
+articles = SentimentGenerator.load_articles(path=CONFIG["article_path"])
+articles = SentimentGenerator.normalize_articles(articles)
+----
+
+==== テキスト内の記号情報について
+
+　テキスト内で記号が使われる場合がありますが、希少な記号や正しくない記号の使い方は、モデルがテキストを理解する上でノイズとなります。本節では、コーパス全体に含まれる記号を取得し、それらの記号がどのように使われているかを確認します。また、意味が薄いと思われる希少な記号は取り除きます。
+
+　まず、記号の情報を取得するため、ochasenを用いてテキストから品詞情報を取得してみます。返り値は各々以下を表します。
+
+- 表層形: 単語そのもの
+
+- 発音: 単語の発音
+
+- 原型: 同士であれば変化する前の原形, 他の品詞の場合は表層形と同様
+
+- 形態素の品詞型: 形態素は言語学の用語で意味をもつ表現要素の最小単位であり、その形態素を文法的な働きごとに分けたもの
+
+- 活用形: 単語が活用するときの形
+
+- 活用型: 助動詞の活用をいくつかの型に分類したもの
+
+[source,python]
+----
+def parse_by_ochasen(tagger, text):
+    # Ochasenでmecab-ipadic-neologdの辞書を使ったときの、返り値のデータ順は以下となる。
+    columns = ['表層形', '発音', '原型', '形態素の品詞型', '活用形', '活用型']
+
+    # Ochasenよりコーパスタグ付けを行う。
+    parsed = [item.split('\t') for item in tagger.parse(text).split("\n") if item not in ('EOS', '')]
+    return pd.DataFrame(parsed, columns=columns)
+
+text = 'テストテキストです。「記号を探してみます!」'
+parsed = parse_by_ochasen(tagger=ochasen, text=text)
+display(parsed)
+----
+
+　出力結果は以下の通りとなります。形態素の品詞型における品詞情報を確認すると、記号が記号として正しく認識されていることがわかります。
+
+image::1_5_wordclasses.png[1_5_wordclasses, width=50%]
+
+　次に、品詞情報が記号である全ての記号を取得します。注意すべき点としては、MeCabでは記号の一部を「サ変接続」と認識してしまうことがあります。事例: https://blanktar.jp/blog/2013/06/mecab-misunderstand-symbol[MeCabさんが記号を「サ変接続」と認識してしまう]
+
+　今回の環境において、実際にこれらの挙動は確認できていませんが、念の為「サ変接続」の中で、「漢字、ひらがな、カタカナ、アルファベット」を含まないものを記号として扱うこととします。以下のコードを実行し取得した記号を変数`punctuation` として扱います。
+
+[source,python]
+----
+# 記号として扱う品詞型を定義し、以下のflagに該当する品詞型を持つものだけを取得する。
+flags = ["記号", "サ変接続"]
+
+# ひらがな、カタカナ、漢字、アルファベットを含まない、記号を全て取得。
+punctuation_candidate = parsed['表層形'][parsed['形態素の品詞型'].apply(lambda x: any([flag in x for flag in flags]))]
+
+# r"[一-龯ぁ-んァ-ンA-Za-z々ゝゞヽヾヴヵヶ]は正規表現であり、「漢字、ひらがな、カタカナ、大文字アルファベット、小文字アルファベット、々ゝゞヽヾヴヵヶのいずれか」を表す。
+# これらを含まないものを記号として扱う。
+punctuations = punctuation_candidate[~punctuation_candidate.str.contains(r"[一-龯ぁ-んァ-ンA-Za-z々ゝゞヽヾヴヵヶ]")]
+punctuations = set(punctuations)
+
+display(punctuations)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+{'!」', '。', '「'}
+----
+
+　複合記号から単一記号を抽出し、集合に追加します。
+
+[source,python]
+----
+for punctuation in punctuations:
+    punctuations = punctuations | set(punctuation)
+
+display(set(punctuations))
+----
+
+出力結果は以下の通りです。
+
+[source,python]
+----
+{'!', '!」', '。', '「', '」'}
+----
+
+　最終的に上記のコードをまとめ、コーパス全体から記号を取得する関数を作成し、記号を取得します。
+
+[source,python]
+----
+def build_punctuations(tagger, texts, flags = ["記号", "サ変接続"]):
+    gc.collect()
+    # textsがpd.Seriesでない時に、pd.Seriesに変換
+    if isinstance(texts, pd.Series) is False:
+        texts = pd.Series(texts)
+
+    punctuations = set()
+
+    for text in tqdm(texts):
+        # Ochasenより単語の品詞情報を取得
+        parsed = parse_by_ochasen(tagger=tagger, text=text)
+
+        # ひらがな、カタカナ、漢字、アルファベットを含まない、記号を全て取得
+        punctuation_candidate = parsed['表層形'][parsed['形態素の品詞型'].apply(lambda x: any([flag in x.split('-') for flag in flags]))]
+        punctuation_candidate = punctuation_candidate[~punctuation_candidate.str.contains(r"[一-龯ぁ-んァ-ンA-Za-z々ゝゞヽヾヴヵヶ]")]
+        punctuations = punctuations | set(punctuation_candidate.tolist())
+
+    # 複合記号から単一記号を抽出
+    for punctuation in punctuations:
+        punctuations = punctuations | set(punctuation)
+
+    return punctuations
+
+headline_punctuations = build_punctuations(tagger=ochasen, texts=articles['headline'])
+keywords_punctuations = build_punctuations(tagger=ochasen, texts=articles['keywords'])
+----
+
+　記号を含むテキストの例を表示します。
+
+[source,python]
+----
+# headlineから、これら記号を含むテキストを表示
+for punctuation in sorted(headline_punctuations, key=lambda x: len(x)):
+    print(f"punctuation: {punctuation}\n", articles['headline'][articles['headline'].apply(lambda x: punctuation in x)][0], '\n')
+
+# keywordsから、これら記号を含むテキストを表示
+for punctuation in sorted(keywords_punctuations, key=lambda x: len(x)):
+    print(f"punctuation: {punctuation}\n", articles['keywords'][articles['keywords'].apply(lambda x: punctuation in x)][0], '\n')
+----
+
+　記号や漢字の中には、パソコンの種類や環境に依存し、異なる環境で表示させた場合に、文字化けや表示できなくなる可能性のある文字「機種依存文字」が含まれます。これらの機種依存文字の中で記号の多くは、unicode正規化ライブラリを用いることで正規化することができます。また、星や音符などのあまり意味を持たない記号は取り除きます。一部の括弧は、見栄えのため用いられているだけであるため置換します。
+
+　以下では、置換するターゲットと除去するターゲットを定義しています。機種依存文字の第一水準、第二水準漢字に関しては、その数が膨大であることから、名前などに多く使われる一部の漢字を以下で定義し、置換を行います(第一水準漢字・第二水準漢字は、日本語の情報処理を標準化する目的にJISが定めた定義であり、平仮名、片仮名、漢字などの日本語の文字コードを定義したものです)。置換する漢字のリストは、 link:https://qiita.com/mindwood/items/3cc4fbf76caa38aa743c[コチラ] から取得しています。
+
+[source,python]
+----
+# 機種依存文字の第一水準、第二水準漢字に関しては一部の漢字を以下で定義し、置換を行う。
+JISx0208_replace_dict = {
+    '髙': "高",
+    '﨑': "崎",
+    '濵': "浜",
+    '賴': "頼",
+    '瀨': "瀬",
+    '德': "徳",
+    '蓜': "配",
+    '昻': "昂",
+    '桒': "桑",
+    '栁': "柳",
+    '犾': "犹",
+    '琪': "棋",
+    '裵': "裴",
+    '魲': "鱸",
+    '羽': "羽",
+    '焏': "丞",
+    '祥': "祥",
+    '曻': "昇",
+    '敎': "教",
+    '澈': "徹",
+    '曺': "曹",
+    '黑': "黒",
+    '塚': "塚",
+    '閒': "間",
+    '彅': "薙",
+    '匤': "匡",
+    '冝': "宜",
+    '埇': "甬",
+    '鮏': "鮭",
+    '伹': "但",
+    '杦': "杉",
+    '罇': "樽",
+    '柀': "披",
+    '﨤': "返",
+    '寬': "寛",
+    '神': "神",
+    '福': "福",
+    '礼': "礼",
+    '贒': "賢",
+    '逸': "逸",
+    '隆': "隆",
+    '靑': "青",
+    '飯': "飯",
+    '飼': "飼",
+    '緖': "緒",
+    '埈': "峻",
+}
+
+# 取得したpunctuationの観察から、置換すべき記号のdictionaryを作成する。
+punctuation_replace_dict = {
+    **JISx0208_replace_dict,
+    '《': '〈',
+     '》': '〉',
+     '『': '「',
+     '』': '」',
+     '“': '"',
+     '!!': '!',
+     '〔': '[',
+     '〕': ']',
+     'χ': 'x'
+}
+
+# 取得したpunctuationの観察から、あまり意味を持たない記号のリストを作成し、これらを下記のコードで取り除く。
+punctuation_remove_list = ['|', '■', '◆', '●', '★', '☆', '♪', '〃', '△', '○', '□']
+----
+
+　置換するために定義した機種依存文字の第一水準、第二水準漢字がデータの中に含まれている確認します。
+
+[source,python]
+----
+# 観測された漢字をstoreするためのsetを定義
+catched_replace_targets = set()
+for column in articles.columns:
+    display_markdown(f'column: {column}', raw=True)
+
+    # 定義した置換すべき漢字がデータに含まれているかをチェック
+    for key in JISx0208_replace_dict.keys():
+
+        # articles[column]にその漢字が含まれている場合、catched_replace_targetsに追加する。
+        if articles[column].str.contains(key).any():
+            catched_replace_targets.update(key)
+
+    # 観測された漢字のsetを表示する
+    display(catched_replace_targets)
+----
+
+　出力は以下となります。機種依存文字の第一水準、第二水準漢字がデータの中に含まれていることがわかります。
+
+[source,python]
+----
+column: headline
+{'塚', '彅', '曺', '礼', '神', '祥', '福', '羽', '逸', '隆', '飯', '飼'}
+
+column: keywords
+{'塚', '彅', '德', '曺', '礼', '神', '祥', '福', '羽', '逸', '隆', '飯', '飼', '髙', '﨑'}
+----
+
+　機種依存文字の丸囲みの数字、ローマ数字、単位、省略文字などは、unicodedataライブラリを用いたunicode正規化より置換を行います。正規化形式に関してはNFKC(Normalization Form Compatibility Composition)を用いています。
+
+[source,python]
+----
+# unicodedata.normalize関数より、unicode正規化を行う。
+text = '丸囲みの数字:①, ローマ数字:Ⅷ, 単位:㎜㍉, 省略文字:㈱'
+unicodedata.normalize('NFKC', text)
+----
+
+　出力結果は以下の通りとなり、正規化が行われていることがわかります。
+
+[source,python]
+----
+'丸囲みの数字:1, ローマ数字:VIII, 単位:mmミリ, 省略文字:(株)'
+----
+
+　コーパス全体のテキストから記号の置換及び除去を行います。
+
+[source,python]
+----
+for column in articles.columns:
+    # punctuation_remove_listに含まれる記号を除去する
+    articles[column] = articles[column].str.replace(fr"[{''.join(punctuation_remove_list)}]", '')
+
+    # punctuation_replace_dictに含まれる記号を置換する
+    for replace_base, replace_target in punctuation_replace_dict.items():
+        articles[column] = articles[column].str.replace(replace_base, replace_target)
+
+    # unicode正規化を行う
+    articles[column] = articles[column].apply(lambda x: unicodedata.normalize('NFKC', x))
+
+# 精製後確認
+articles.head(10)
+----
+
+==== 本番提出用のクラスへ組み込み
+
+　ここまでの処理を``handle_punctuations_in_articles``関数として ``SentimentGenerator`` クラスに追加します。
+
+[source,python]
+----
+# 作成した記号置換用のdictと記号削除用のリストをhandle_punctuations_in_articles関数内で使用するため、SentimentGeneratorに追加
+SentimentGenerator.punctuation_remove_list = punctuation_remove_list
+SentimentGenerator.punctuation_replace_dict = punctuation_replace_dict
+
+# 上記のコードを用いて、本番提出用のクラスにclassmethodを追加
+@classmethod
+def handle_punctuations_in_articles(cls, articles):
+    articles = articles.copy()
+
+    for column in articles.columns:
+        # punctuation_remove_listに含まれる記号を除去する
+        articles[column] = articles[column].str.replace(fr"[{''.join(cls.punctuation_remove_list)}]", '')
+
+        # punctuation_replace_dictに含まれる記号を置換する
+        for replace_base, replace_target in cls.punctuation_replace_dict.items():
+            articles[column] = articles[column].str.replace(replace_base, replace_target)
+
+        # unicode正規化を行う
+        articles[column] = articles[column].apply(lambda x: unicodedata.normalize('NFKC', x))
+
+    return articles
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.handle_punctuations_in_articles = handle_punctuations_in_articles
+
+# SentimentGenerator使用する全体流れを記述
+articles = SentimentGenerator.load_articles(path=CONFIG["article_path"])
+articles = SentimentGenerator.normalize_articles(articles)
+articles = SentimentGenerator.handle_punctuations_in_articles(articles)
+----
+
+=== テキストデータの可視化
+
+　データセットの解析及び可視化は、データ自体の特性を理解する上で役に立つだけでなく、期待していない情報も含んでいるかどうかを確認する上でも役立ちます。本節では、扱うテキストデータががどのような特性を持っているのかを、品詞情報や単語の頻度により解析及び可視化し確認します。また、その結果に応じた前処理をデータセットに実施していきます。
+
+====  品詞情報取得
+
+　ここからの解析や可視化処理は品詞情報を必要とします。品詞情報の取得処理には時間がかかるため、あらかじめコーパス全体において品詞情報を取得します。
+
+[source,python]
+----
+# コーパス全体をochasenによってparseする。
+# メモリー節約のため、解析で使用する['表層形', '形態素の品詞型']の情報のみを残す。
+parsed_headline_by_ochasen = articles['headline'].apply(lambda x: parse_by_ochasen(tagger=ochasen, text=x)[['表層形', '形態素の品詞型']])
+parsed_keywords_by_ochasen = articles['keywords'].apply(lambda x: parse_by_ochasen(tagger=ochasen, text=x)[['表層形', '形態素の品詞型']])
+
+# parseされたテキストデータを確認します。
+display(parsed_headline_by_ochasen.head())
+display(parsed_keywords_by_ochasen.head())
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+publish_datetime
+2020-01-01 00:00:00+09:00         表層形       形態素の品詞型
+0      日  名詞-固有名詞-地域-国
+...
+2020-01-01 00:00:00+09:00      表層形     形態素の品詞型
+0  人事       名詞-一般
+1   、     ...
+2020-01-01 00:00:00+09:00       表層形     形態素の品詞型
+0   人事       名詞-一般
+1    、  ...
+2020-01-01 00:00:00+09:00         表層形     形態素の品詞型
+0     人事       名詞-一般
+1   ...
+2020-01-01 00:00:00+09:00          表層形       形態素の品詞型
+0       「        記号-括弧...
+Name: headline, dtype: object
+
+publish_datetime
+2020-01-01 00:00:00+09:00                  表層形       形態素の品詞型
+0             ...
+2020-01-01 00:00:00+09:00                   表層形     形態素の品詞型
+0  衆議院  名詞-固有名詞-組織
+2020-01-01 00:00:00+09:00                   表層形     形態素の品詞型
+0  外務省  名詞-固有名詞-組織
+2020-01-01 00:00:00+09:00                 表層形     形態素の品詞型
+0  厚生労働省  名詞-固有名詞-組織
+2020-01-01 00:00:00+09:00              表層形        形態素の品詞型
+0        中西宏明  名詞...
+Name: keywords, dtype: object
+----
+
+==== 品詞情報解析
+
+　まずは、コーパス全体における品詞の分布を解析します。コーパス全体の品詞分布を調べる前に、単一テキストから品詞分布を取得してみましょう。
+
+[source,python]
+----
+text = 'テストテキスト。コーパスの品詞情報を取得します。'
+
+# 品詞情報を取得するため、ochasenを用いる
+parsed = parse_by_ochasen(tagger=ochasen, text=text)
+parsed['形態素の品詞型']
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+0       名詞-サ変接続
+1         名詞-一般
+2         記号-句点
+3         名詞-一般
+4        助詞-連体化
+5         名詞-一般
+6         名詞-一般
+7     助詞-格助詞-一般
+8       名詞-サ変接続
+9         動詞-自立
+10          助動詞
+11        記号-句点
+Name: 形態素の品詞型, dtype: object
+----
+
+　形態素の品詞型は、「名詞 サ変接続」などのように多重のクラスとして成り立っています。全体を掴むため、最上位の品詞型のみ（この場合名詞のみ）を取得するようにします。
+
+[source,python]
+----
+word_classes = parsed['形態素の品詞型'].apply(lambda x: x.split('-')[0])
+word_classes
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+0      名詞
+1      名詞
+2      記号
+3      名詞
+4      助詞
+5      名詞
+6      名詞
+7      助詞
+8      名詞
+9      動詞
+10    助動詞
+11     記号
+Name: 形態素の品詞型, dtype: object
+----
+
+　上で観察された品詞リストから、品詞ごとの数をカウントします。
+
+[source,python]
+----
+word_classes.groupby(word_classes).count().to_dict()
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+{'助動詞': 1, '助詞': 2, '動詞': 1, '名詞': 6, '記号': 2}
+----
+
+　テキストごとに品詞の出現数を累積するため、出現数を品詞ごとにdict型で管理します。
+
+[source,python]
+----
+count_of_word_classes = {}
+# key: 品詞型, value: カウント数
+for key, value in word_classes.groupby(word_classes).count().to_dict().items():
+    # 品詞が存在しない場合、新しく追加する。
+    if key not in count_of_word_classes:
+        count_of_word_classes[key] = value
+
+    # 品詞が存在する場合、既存のカウントに観察されたカウントを足す。
+    else:
+        count_of_word_classes[key] += value
+
+# 確認する
+count_of_word_classes
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+{'助動詞': 1, '助詞': 2, '動詞': 1, '名詞': 6, '記号': 2}
+----
+
+　上記で作成したコードをまとめて、コーパス全体から品詞情報を累積し取得する関数を作成しています。この関数は実行時間短縮のため、すでにochasenよりparseされた情報を入力としています。
+
+[source,python]
+----
+def get_count_of_word_classes(parsed_by_ochasen):
+    gc.collect()
+
+    count_of_word_classes = {}
+
+    for parsed in tqdm(parsed_by_ochasen):
+        # 一番大きいくくりの品詞型だけを取得する。
+        word_classes = parsed['形態素の品詞型'].apply(lambda x: x.split('-')[0])
+
+        # 単一テキストの品詞カウントをdictionaryにアップデート
+        # key: 品詞型, value: カウント数
+        for key, value in word_classes.groupby(word_classes).count().to_dict().items():
+            # dictionaryに品詞が存在しない場合、新しく追加する。
+            if key not in count_of_word_classes:
+                count_of_word_classes[key] = value
+
+            # dictionaryに品詞が存在する場合、既存のカウントに観察されたカウントを足す。
+            else:
+                count_of_word_classes[key] += value
+
+    return pd.Series(count_of_word_classes).sort_values()
+
+# headline, keywords各々のコーパスから品詞情報を取得する。
+headline_count_of_word_classes = get_count_of_word_classes(parsed_by_ochasen=parsed_headline_by_ochasen)
+keywords_count_of_word_classes = get_count_of_word_classes(parsed_by_ochasen=parsed_keywords_by_ochasen)
+----
+
+　それでは、2つのテキストデータ集合（`headline` 及び `keywords` ）について品詞型の分布を比較してみましょう。2つのテキストデータの品詞ごとの累計をpd.concatを用いて重ね、一つのテーブルにしています。
+
+[source,python]
+----
+count_of_word_classes_df = pd.concat([headline_count_of_word_classes.rename('headline'), keywords_count_of_word_classes.rename('keywords')], axis=1, sort=True)
+
+# 確認する
+count_of_word_classes_df
+----
+
+　出力結果は以下の通りです。
+
+image::1_6_wordclass_counts.png[1_6_wordclass_counts, width=30%]
+
+　二つのテキストデータの品詞情報の分布を比較するため、それぞれのテキストデータ全体の単語数で各々を割り、品詞の割合情報を取得します。
+
+[source,python]
+----
+normalized_count_of_word_classes_df = count_of_word_classes_df / count_of_word_classes_df.sum()
+
+# 小数点6桁までで表示します。
+display(normalized_count_of_word_classes_df.applymap('{:,.6f}'.format))
+----
+
+　出力結果は以下の通りです。
+
+image::1_6_wordclass_distributions.png[1_6_wordclass_distributions, width=30%]
+
+　`headline` と `keywords` の品詞情報の分布から、それぞれの特性を理解することができます。まず、keywordsは、名詞の割合が高いことがわかります。keywordsの名前の通り、各ニュースに関連するトピックの名詞情報が含まれていると想定されますが、その他の品詞情報も含まれていることから、少からず文章構造に近いキーワードも入っていることが想定されます。
+
+　また、`headline` は、名詞以外にも助詞、動詞の割合も高く、テキストデータが文章構造を持っていると想定されます。また、正規化した上でも記号がかなり多く含まれているため、必要に応じてさらに記号に対する正規化や除去を行う必要があります。その際は、有意味な情報を持つ記号を除去しないように注意が必要です。
+
+　次に、上で表示したテーブルからさらに細かく品詞分布の違いを理解するため可視化してみます。品詞毎の出現数がかなり不均等であるため、そのような場合に有用なtruncated barplotを用いて可視化しています。
+
+[source,python]
+----
+# 上下切断表示のため、縦二つのaxesを用意する。
+fig, ax = plt.subplots(2, 1, sharex=True, figsize=(12, 5))
+
+# 上下両方のaxesに同様のプロットを行う。
+normalized_count_of_word_classes_df.sort_values('headline').plot(kind='bar', ax=ax[0])
+normalized_count_of_word_classes_df.sort_values('headline').plot(kind='bar', ax=ax[1])
+
+# 上下両方のy軸範囲を設定する。
+ax[0].set_ylim((normalized_count_of_word_classes_df).max().max() - 0.9, 1)
+ax[1].set_ylim(0, 0.03)
+
+# 上のaxesでは、bottom部分表示(ticker, labelなど)、下のaxesでは、top部分表示を除去する。
+ax[0].spines['bottom'].set_visible(False)
+ax[1].spines['top'].set_visible(False)
+
+ax[0].xaxis.tick_top()
+ax[0].tick_params(labeltop=False)
+ax[1].xaxis.tick_bottom()
+
+# プロット切断部に点線表示を行う。
+d = 0.01
+kwargs = dict(transform=ax[0].transAxes, color='k',linestyle=':', lw=1, clip_on=False)
+ax[0].plot((-d, 1+d), (0, 0), **kwargs)
+
+kwargs.update(transform=ax[1].transAxes)
+ax[1].plot((-d, 1+d), (1, 1), **kwargs)
+
+# 上のaxesだけにlegendを表示するため、下のaxesではlegendを除去する。
+ax[1].legend().remove()
+
+plt.tight_layout()
+plt.xticks(rotation=0)
+plt.show()
+----
+
+　出力結果は以下の通りです。`keywords` は、名詞の割合が高いことや、`headline` には助詞と同じ割合で記号が含まれていることがわかります。
+
+image::1_6_wordclass_visualization.png[1_6_wordclass_visualization]
+
+==== wordcloudによる可視化
+
+　単一テキスト、もしくはコーパス全体を可視化する主な手法として、そのコーパスに含まれる単語や形態素の頻度を可視化する方法があります。 ここではその代表的な手法であるwordcloudを用いたコーパス全体における単語の頻度情報の可視化を実施します。
+
+　単語の可視化を行う前に、分析のノイズとなる*stopwords*(どのテキストにおいても多く登場し、特に重要な意味を持たないもの)を取得し、それらを排除します。本解析では、名詞、動詞、形容詞、副詞以外をstopwordsとしています。なお、名詞でも数値の情報を含む場合はstopwordsとしています。
+
+　前節で記号情報を取得するため用いた、build_punctuations関数を少し変更し、stopwordsを取得するコードを作成します。おおよそのコードは同様ですが、大きな違いは、skip_flagsで取得する品詞型を定義するだけでなく、non_skip_flagsにより取得しない品詞型（数値）を定義する処理を追加しています。これは、名詞の品詞型を持つものの中で、数値の品詞型を持つものを取り除くために追加しています。なお、こちらのコードに関しても、実行時間短縮のためにすでにochasenよりparseされた情報を用いています。
+
+[source,python]
+----
+def build_stopwords(parsed_by_ochasen, non_skip_flags=["数"], skip_flags = ["名詞", "動詞", "形容詞", "副詞"]):
+    gc.collect()
+    stopwords = set()
+
+    for parsed in tqdm(parsed_by_ochasen):
+        # non_skip_flagsが入っているものは全てstopwordsとして扱う
+        # それ以外において、skip_flagsをひとつでも含んでいないものをstopwordsとして扱う
+        mask_include_non_skip_flags = parsed['形態素の品詞型'].apply(lambda x: any([non_skip_flag in x.split('-') for non_skip_flag in non_skip_flags]))
+        mask_exclude_skip_flags = parsed['形態素の品詞型'].apply(lambda x: not any([skip_flag in x.split('-') for skip_flag in skip_flags]))
+
+        #日、月、年度のようなユニット情報を含むものは全てstopwordsとして扱う
+        mask_include_unit_info = parsed['表層形'].apply(lambda x: False if re.fullmatch(r'\d+(秒|分|時|日|月|カ月|年|人|ドル|円)', x) is None else True)
+
+        stopword_candidate = parsed['表層形'][mask_include_non_skip_flags | mask_exclude_skip_flags | mask_include_unit_info]
+
+        # stopwordsセットにアップデートする。
+        stopwords = stopwords | set(stopword_candidate.tolist())
+
+    # 追加的に単一アルファベットをstopwordsとして追加する
+    stopwords = stopwords | set(string.ascii_lowercase) | set(string.ascii_uppercase)
+
+    # 追加的に単一数字をstopwordsとして追加する
+    stopwords = stopwords | set([str(idx) for idx in range(10)])
+
+    return stopwords
+
+# headline, keywords各々のコーパスからsubwordsを取得する。
+headline_stopwords = build_stopwords(parsed_by_ochasen=parsed_headline_by_ochasen)
+keywords_stopwords = build_stopwords(parsed_by_ochasen=parsed_keywords_by_ochasen)
+----
+
+　`headline` , `keywords` の各々から取得したstopwordsの集合を組み合わせています。
+
+[source,python]
+----
+stopwords = headline_stopwords | keywords_stopwords
+
+# 表示するためにリストに変換する。
+stopwords_list = sorted(stopwords)
+
+# 異なる特性を持つ色んなstopwordsを表示するためランダムにシャッフルする。
+random.Random(0).shuffle(stopwords_list)
+print(stopwords_list[:50])
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+['9302', '243', '456ドル', 'あれ', '2678', '259人', '182ドル', '3395円', '554', '9985', '1775', '100200', '510円', '2430円', '4918', '1114', '-', '1日', '7038', '向', '963', '9771円', '450ドル', '39日', '7068', '5カ月', '5168', '1001', '11分', '18年', '1931', '123', '1834', '4925円', '8分', '454ドル', '4788', '181人', '3097', '280', '3580円', '259円', '6156', '138ドル', '4347', 'm', '402', '8240', '417', '6600']
+----
+
+　単語の頻度可視化方法の1つとしてwordcloudというものがあります。この方法は、頻度順に字の大きさが異なる等、全体の傾向を直感的に把握しやすい長所がありますが、逆にそれ以上の知見をなかなか得られないという短所もあります。
+
+　wordcouldへの入力は、単語がスペースで区切られているテキストデータです。テキストデータ全体を入力とするには、テキストデータ全体が各々単語にスペースで区切られている必要があります。そのため文と文を区切る改行等を削除しスペースで区切るようにしています。具体的には、owakatiを用いてテキストデータをparseし、単語をスペースで区切り、その後テキスト毎にスペースで繋げています。
+
+[source,python]
+----
+tagger = owakati
+
+words_with_space = articles['headline'].apply(lambda x: tagger.parse(x).strip("\n").rstrip())
+words_with_space = ' '.join(words_with_space)
+
+# 確認する
+print(words_with_space[:200])
+----
+
+　出力結果は以下の通りです。期待通りの結果になっていることがわかります。
+
+[source,python]
+----
+日 米 貿易協定 が 発効 TPP 土台 に 自由貿易 圏 拡大 日本 、 RCEP に 波及 期待 人事 、 衆院 人事 、 外務省 人事 、 厚生労働省 「 雇用 制度 全般 の 見直し を 」 中西 経団連会長 経済3団体 トップ の 年頭 所感 首相 「 全世代 安心 の 社会保障 へ 改革 」 年頭 所感 天皇陛下 の 年頭 所感 全文 「 災害 が ない 1年 に 」 陛下 、 新年
+----
+
+　上記のコードをまとめ、wordcloudを可視化するための関数を定義しています。stopwordsに含まれる単語は表示対象から除外されています。
+
+[source,python]
+----
+def display_wordcloud(tagger, texts, stopwords, collocations):
+    # textsがpd.Seriesでない時に、pd.Seriesに変換
+    if isinstance(texts, pd.Series) is False:
+        texts = pd.Series(texts)
+
+    # テキストは単語別にスペースで区切りされ、テキストごとはスペースでつながっていることが期待値
+    words_with_space = texts.apply(lambda x: tagger.parse(x).strip("\n").rstrip())
+    words_with_space = ' '.join(words_with_space)
+
+    # wordcloudを表示するため、パラメータを渡しインスタンス化する。
+    # collocations=Falseの場合、連語による重複単語が表示されない。
+    wordcloud = WordCloud(
+        background_color="white",
+        font_path=CONFIG['font_path'],
+        stopwords=stopwords,
+        width=2000,
+        height=1000,
+        collocations=collocations,
+        random_state=0,
+    ).generate(words_with_space)
+
+    # 表示サイズを設定し、表示する。
+    fig, ax = plt.subplots(1, 1, figsize=(16, 8))
+    ax.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
+    plt.show()
+----
+
+上記関数を用いて `headline` 及び `keywords` の各々のコーパスの頻度を可視化します。
+
+[source,python]
+----
+# headlineのwordcloud表示
+display_wordcloud(tagger=owakati, texts=articles['headline'], stopwords=stopwords, collocations=False)
+----
+
+　headlineのwordcloudは以下の通りです。
+
+image::1_6_headline_wordcloud.png[1_6_headline_wordcloud]
+
+[source,python]
+----
+# keywordsのwordcloud表示
+display_wordcloud(tagger=owakati, texts=articles['keywords'], stopwords=stopwords, collocations=False)
+----
+
+　keywordsのwordcloudは以下の通りです。
+
+image::1_6_keywords_wordcloud.png[1_6_keywords_wordcloud]
+
+　以上の結果から、以下のことが観察されます。
+
+- headlineに「人事」や「発売」、「コロナ」、「米」という単語が多く含まれていることがわかります。
+
+- keywordsには「新型」や「日」、「発表」という単語が多く含まれていることがわかります。
+
+- 「東証」や「株式市場」などマーケット関連の単語が双方に多く含まれています。
+
+- 「コロナ」や「コロナウィルス」などの新型コロナウィルスに関連する単語が双方に多く含まれています。
+
+　これらの観察結果に注意して、次のscatter textの解析を実施します。
+
+==== scatter textによる可視化
+
+　頻度の可視化方法の一つに、頻度の情報だけでなく、その単語の一般性を表す使用分布も共に可視化できるscatter textというものがあります。
+
+　scatter textをプロットするにあたり、wordcloudと同様に各々の単語がスペースで区切られている必要があります。しかし、こちらはwordcloudとは違い、コーパス全体を一つとして繋げる必要はありません。まず、wordcloudの時と同様にowakatiより、テキストをparseし、単語をスペースより区切ります。
+
+[source,python]
+----
+tokenized = articles['headline'].apply(lambda x: tagger.parse(x).strip("\n").rstrip())
+
+# 確認する
+tokenized.head(3)
+----
+
+続き、whitespace_nlp_with_sentences関数をテキスト毎に適用します。
+
+[source,python]
+----
+parsed = tokenized.apply(st.whitespace_nlp_with_sentences)
+
+# 確認する
+parsed.head(3)
+----
+
+　可視化のため、corpusインスタンスを作る必要があります。get_unigram_corpus関数を用いてbigramsをcorpusから取り除き、remove_terms関数よりstopwordsを取り除いています。また、remove_infrequent_words関数を用いて、出現頻度が100回以下の単語は除去しています。
+
+[source,python]
+----
+corpus = st.CorpusWithoutCategoriesFromParsedDocuments(
+    parsed.rename('parse').to_frame(), parsed_col='parse'
+).build().get_unigram_corpus().remove_terms(stopwords, ignore_absences=True).remove_infrequent_words(minimum_term_count=100)
+----
+
+　Dispersion関数を用いて、単語ごとの頻度情報及び使用分布情報を取得します。
+
+[source,python]
+----
+dispersion = st.Dispersion(corpus)
+dispersion_df = dispersion.get_df()
+
+# ビルドされた頻度情報及び使用分布情報から、どの基準を用いてプロットするかをX, Xpos, Y, Yposのcolumnsにセットする。
+dispersion_df = dispersion_df.assign(
+    X=lambda df: df.Frequency,
+    Xpos=lambda df: st.Scalers.log_scale(df.X),
+    Y=lambda df: df["Rosengren's S"],
+    Ypos=lambda df: st.Scalers.scale(df.Y),
+)
+
+# 確認する
+dispersion_df.head(5)
+----
+
+　出力結果は以下の通りです。
+
+image::1_6_scattertext_prepare.png[1_6_scattertext_prepare]
+
+　これまでと同様に上記で作成したコードをまとめて、scatter text可視化を行う関数を作成しています。
+
+[source,python]
+----
+def display_scatter_text(tagger, texts, stopwords, filename='out'):
+    gc.collect()
+    # textsがpd.Seriesでない時に、pd.Seriesに変換。
+    if isinstance(texts, pd.Series) is False:
+        texts = pd.Series(texts)
+
+    # owakatiより、テキストをparseし、単語をスペースで区切り、whitespace_nlp_with_sentencesを適用。
+    tokenized = texts.apply(lambda x: tagger.parse(x).strip("\n").rstrip())
+    parsed = tokenized.apply(st.whitespace_nlp_with_sentences)
+
+    # bigrams及びstopwordsをcorpusから取り除き、出現頻度が100回以下の単語を除去する。
+    corpus = st.CorpusWithoutCategoriesFromParsedDocuments(
+        parsed.rename('parse').to_frame(), parsed_col='parse'
+    ).build().get_unigram_corpus().remove_terms(stopwords, ignore_absences=True).remove_infrequent_words(minimum_term_count=100)
+
+    # Dispersion関数をより、単語ごとの頻度情報及び使用分布情報を取得。
+    dispersion = st.Dispersion(corpus)
+    dispersion_df = dispersion.get_df()
+    dispersion_df = dispersion_df.assign(
+        X=lambda df: df.Frequency,
+        Xpos=lambda df: st.Scalers.log_scale(df.X),
+        Y=lambda df: df["Rosengren's S"],
+        Ypos=lambda df: st.Scalers.scale(df.Y),
     )
 
-    resjson = json.loads(response.text)
-    return resjson
-----
-このAPIを使うことで新しいidtokenを払い出すことができます。使用例は以下の通りです。
-[source, python]
-----
-refreshtoken = <Your refreshtoken>
-call_refresh_api(refreshtoken)
-----
-以下のようなレスポンスが返ります。なお、idtokenの有効期限は１時間（3600sec）となっております。
+    # dataframe_scattertext関数より、可視化したhtmlをビルドできる。
+    html = st.dataframe_scattertext(
+        corpus,
+        plot_df=dispersion_df,
+        ignore_categories=True,
+        x_label='Log Frequency',
+        y_label="Rosengren's S",
+        y_axis_labels=['More Dispersion', 'Medium', 'Less Dispersion'],
+    )
 
-[source, json]
-----
-{"idToken": "<Your New idtoken>",
-"expiresIn": 3600}
+    # htmlを書き出します。Google Driveの該当箇所に出力されるため、出力されたhtmlファイルをダウンロードし、ブラウザで開いて御覧ください。
+    open(f'{CONFIG["base_path"]}/visualizations/vis_{filename}_scatter.html', 'w').write(html)
 ----
 
+　ここまで準備ができたら、まずは `headline` のテキストデータを用いてscatter text可視化を行います。
 
-=== 共通で使用するメソッド
-ここでは、API共通の関数を用意しております。
-
-サンプルコードは以下の通りです。引数"apitype"に各APIを指定することで呼び出すことができます。
-
-[source, json]
+[source,python]
 ----
-def call_jquants_api(params: dict, idtoken: str, apitype: str, code: str = None):
-    """
-    J-QuantsのAPIを試すメソッド。
+# 以下のコードを実行するとvisualizations配下にhtmlファイルが作成されます。作成されたファイルをブラウザで開いて確認ください。
+display_scatter_text(tagger=owakati, texts=articles['headline'], stopwords=stopwords, filename='headline')
+----
 
-    Parameters
-    ----------
-    params : dict
-        リクエストパラメータ。
-    idtoken : str
-        idTokenはログイン後の画面からご確認いただけます。
-    apitype: str
-        APIの種類。"news", "prices", "lists"などがあります。
-    code: str
-        銘柄を指定するAPIの場合に設定します。
+　出力結果は以下の通りです。
 
-    Returns
-    -------
-    resjson : dict
-        APIレスポンス(json形式)
-    """
-    datefrom = params.get("datefrom", None)
-    dateto = params.get("dateto", None)
-    date = params.get("date", None)
-    includedetails = params.get("includedetails", "false")
-    keyword = params.get("keyword", None)
-    headline = params.get("headline", None)
-    paramcode = params.get("code", None)
-    nexttoken = params.get("nexttoken", None)
-    headers = {"accept": "application/json", "Authorization": idtoken}
-    data = {
-        "from": datefrom,
-        "to": dateto,
-        "includeDetails": includedetails,
-        "nexttoken": nexttoken,
-        "date": date,
-        "keyword": keyword,
-        "headline": headline,
-        "code": paramcode,
-    }
+image:1_6_scattertext_headline.png[1_6_scattertext_headline]
 
-    if code:
-        code = "/" + code
-        r = requests.get(
-            "https://api.jpx-jquants.com/" + apitype + code,
-            params=data,
-            headers=headers,
-        )
+
+　縦軸（y軸）は使用分布(Dispersion)を表します。y軸のDispersionは特定の単語がコーパス内でどれだけ均等に分布しているかを表す数値で、1 (Less Dispersion)に近いほどどのコーパスにも均等に現れる単語であり、0 (More Dispersion) に近いほど特定の分野でのみ現れていることを示しています。横軸（x軸）はコーパス全体における単語の使用頻度の対数スケールで表示しています。カーソルを単語に重ねると各単語の数値が表示されます。
+
+　この図からも「米」、「コロナ」、「株式市場」、「人事」などの単語が多く使用されていることが分かります。これはwordcloudで観察した結果と似ています。さらに注目すべき点は、「人事」は使用頻度が高いにもかかわらず、使用分布が狭く、特定の分野でのみ使用されていることが分かります。この結果から、この単語を含むテキストはコーパス全体と性質が異なると想定できます。この単語が有意味な情報を含むかを判断し、追加的な前処理を実施する必要があるかを後ほど検討します。
+
+　引き続き、 `keywords` のコーパスを用いてscatter text可視化を行います。
+[source,python]
+----
+display_scatter_text(tagger=owakati, texts=articles['keywords'], stopwords=stopwords, filename='keywords')
+----
+
+　出力結果は以下の通りです。
+
+image:1_6_scattertext_keywords.png[1_6_scattertext_keywords]
+
+　`keywords` に関しても、「コロナウイルス」や、「株式市場」などが高頻度単語として観察されています。headlineにおける「人事」のような使用頻度と使用分布に著しい違いがある単語は観測できません。さらに追加的に解析を行いたい場合、品詞ごとにこれらの頻度や使用分布を可視化して解析することができます。品詞毎に、どのような単語が多く使われ、どのように分布しているかを観察し、コーパスの特性をさらに深く理解してみましょう。
+
+==== トピック解析
+
+　コーパス全体の特性を理解するために、そのコーパス全体がどのようなトピックで構成されているかを解析するトピックモデリングの手法があります。潜在ディリクレ配分法(Latent Dirichlet Allocation, LDA)は、その中でもトピックモデリングの代表的アルゴリズムです。
+
+　LDAはコーパスがトピックの混合で成り立っていて、そのトピックが確率分布に従って単語を生成していると仮定し、その生成過程を逆に辿ることより、コーパス全体を構成するトピック情報を推定しています。LDAの学習時には、単語の頻度情報を持つメトリクスが用いられます。単語数が多くなり、メトリクスが大きくなるほど計算リソースが要求されます。ここでは現実的な処理時間で完了させるため、名詞以外の単語は全て取り除き解析しています。
+
+　build_stopwords関数を用いて、品詞情報が名詞以外のものを全てinvalid_tokensとして扱っています。また、名詞の中でも数を品詞型として含む場合も同様にinvalid_tokensとして扱っています。
+
+[source,python]
+----
+def build_invalid_tokens(parsed_by_ochasen, non_skip_flags=['数'], skip_flags = ["名詞"]):
+    return build_stopwords(parsed_by_ochasen=parsed_by_ochasen, non_skip_flags=non_skip_flags, skip_flags=skip_flags)
+----
+
+LDAの学習のために、owakatiを用いてトークナイズし、上記で定義したinvalid_tokensに含まれない名詞のみの単語にしています。
+
+[source,python]
+----
+def tokenize_for_lda(tagger, texts, invalid_tokens):
+    # textsがpd.Seriesでない時に、pd.Seriesに変換
+    if isinstance(texts, pd.Series) is False:
+        texts = pd.Series(texts)
+
+    # owakatiを用いてトークナイズする
+    tokenized = texts.apply(lambda x: tagger.parse(x).split())
+
+    # 上記で定義したinvalid_tokensに含まれないトークンに精製する。
+    tokenized = tokenized.apply(lambda x: [token for token in x if token not in invalid_tokens])
+
+    return tokenized
+----
+
+上記のtokenize_for_lda関数を用いてトークナイズし、その後単語のid、頻度をもつdictionaryを作り、gensim.models.ldamodel.LdaModelを用いてLDAを学習します。
+
+[source,python]
+----
+def build_ldamodel(tagger, texts, invalid_tokens, num_topics=10):
+    tokenized = tokenize_for_lda(tagger=tagger, texts=texts, invalid_tokens=invalid_tokens)
+
+    # 頻度情報をもつ単語辞書を作る
+    dictionary = gensim.corpora.Dictionary(tokenized)
+
+    # 生成されたcorpusは(word_id, word_frequency)の情報を持つ
+    corpus = [dictionary.doc2bow(text) for text in tokenized]
+
+    ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, chunksize=5000, passes=10, random_state=0)
+
+    return ldamodel, corpus
+----
+
+　上記で作成したコードを用いて可視化を行います。以下のトピック解析コードは高い計算リソースが要求され、長い実行時間が必要ですので、そのことに留意し実行しましょう。
+
+ ここでは二つの可視化を行います。まず、LDAモデルより推定されたトピックがどのような単語と関連が深いかを表示します。これにより、コーパス全体をクラスター化でき、それぞれのクラスターがどのような特性や性質を持つか理解することができます。その後、トピック(クラスター)ごとの分布を可視化します。これにより、トピックのコーパスに対する寄与度(周辺確率分布)やトピック間の距離などを確認できます。
+
+[source,python]
+----
+# headline, keywords両方において可視化を行う。
+for column in ['headline', 'keywords']:
+    parsed_by_ochasen = {
+        'headline': parsed_headline_by_ochasen,
+        'keywords': parsed_keywords_by_ochasen,
+    }[column]
+
+    invalid_tokens = build_invalid_tokens(parsed_by_ochasen=parsed_by_ochasen)
+    ldamodel, corpus = build_ldamodel(tagger=owakati, texts=articles[column], invalid_tokens=invalid_tokens)
+
+    display_markdown(f'#### column: {column}', raw=True)
+
+    # 推定されたtopicと関連深い上位5つの単語をプリントする
+    for topic in ldamodel.print_topics(num_words=5):
+        print(topic)
+
+    # トピック可視化
+    # 可視化したトピックのidが0ではなく1から始まることに注意しましょう。
+    # 左方の円は、各々の10個のトピックを表す。
+    # 各円との距離は、それぞれトピックがどれだけ離れているかを表す。
+    vis = pyLDAvis.gensim.prepare(ldamodel, corpus, ldamodel.id2word, sort_topics=False)
+    # htmlを書き出します。出力されたhtmlファイルをダウンロードし、ブラウザで開いて御覧ください。
+    pyLDAvis.save_html(vis, f'{CONFIG["base_path"]}/visualizations/vis_{column}_lda.html')
+----
+
+　`headline` のトピックと関連する上位5つの単語の出力は以下の通りです。「米」と「中国」が同一のトピックに登場しやすいこと、「新型コロナ」、「感染」、「対策」が同一のトピックに登場しやすいことなど、直感に反しない結果が取得できていることがわかります。
+
+[source,python]
+----
+column: headline
+(0, '0.035*"減" + 0.030*"月" + 0.025*"期" + 0.024*"増" + 0.018*"東証"')
+(1, '0.022*"新型コロナ" + 0.019*"感染" + 0.009*"対策" + 0.009*"発行" + 0.008*"知事"')
+(2, '0.014*"政府" + 0.013*"バイデン" + 0.013*"オンライン" + 0.012*"欧州" + 0.011*"米"')
+(3, '0.048*"発売" + 0.011*"用" + 0.011*"型" + 0.007*"発表" + 0.006*"シリーズ"')
+(4, '0.056*"コロナ" + 0.030*"株" + 0.026*"米" + 0.021*"ぶり" + 0.017*"上昇"')
+(5, '0.014*"支援" + 0.013*"開始" + 0.012*"連携" + 0.010*"サービス" + 0.008*"活用"')
+(6, '0.060*"氏" + 0.023*"社長" + 0.016*"中国" + 0.012*"生産" + 0.010*"米"')
+(7, '0.015*"米国" + 0.012*"ロンドン" + 0.011*"発表" + 0.009*"市場" + 0.009*"年末年始"')
+(8, '0.112*"人事" + 0.014*"AI" + 0.014*"開発" + 0.009*"DX" + 0.007*"技術"')
+(9, '0.016*"発表" + 0.013*"調査" + 0.009*"機能" + 0.009*"県" + 0.009*"推進"')
+----
+
+　各単語の前にある数値は、該当するトピックへの寄与度を表しています。コーパスを10個のトピックに分類した時に、それぞれのトピックの特性を寄与する単語から理解することができます。次に、pyLDAvisを用いて `headline` のトピックを可視化しています。
+
+image::1_6_lda_headline.png[1_6_lda_headline]
+
+
+　ここからさらに細かな分析を行うことができます。上の左図の円はそれぞれのトピックを表しています。可視化におけるトピックの番号は1から始まることにご注意ください。各円間の距離は、トピックがそれぞれどれほど異なるかを表し、近いほど似ているトピックであることを表します。
+
+　`keywords` のトピックとそれに関連する上位5つの単語の出力は以下の通りです。こちらもコロナウィルス関連や株式市場関連など、直感に反しない結果となっています。
+
+[source,python]
+----
+column: keywords
+(0, '0.019*"大学" + 0.014*"教授" + 0.010*"検査" + 0.009*"医療" + 0.008*"ポイント"')
+(1, '0.050*"コロナ" + 0.019*"社長" + 0.011*"生産" + 0.011*"工場" + 0.010*"中国"')
+(2, '0.059*"日" + 0.057*"発表" + 0.032*"新製品" + 0.020*"株式会社" + 0.011*"販売"')
+(3, '0.029*"連結決算" + 0.028*"売上高" + 0.025*"純利益" + 0.024*"減益" + 0.024*"決算"')
+(4, '0.025*"政府" + 0.019*"首相" + 0.019*"米国政府" + 0.016*"大統領" + 0.013*"米国"')
+(5, '0.014*"コロナ禍" + 0.011*"オンライン" + 0.008*"イベント" + 0.007*"時代" + 0.006*"サッカー"')
+(6, '0.019*"動向" + 0.017*"民間" + 0.015*"市場" + 0.015*"統計" + 0.013*"政府統計"')
+(7, '0.046*"新型" + 0.042*"ウイルス" + 0.039*"コロナウイルス" + 0.026*"感染" + 0.024*"株式市場"')
+(8, '0.018*"株" + 0.017*"ロンドン" + 0.013*"投資" + 0.013*"外為市場" + 0.012*"ドル"')
+(9, '0.009*"事業" + 0.009*"連携" + 0.008*"AI" + 0.007*"業務提携" + 0.007*"GoTo"')
+----
+
+次に、pyLDAvisを用いた `keywords` のトピックを可視化しています。
+
+image::1_6_lda_keywords.png[1_6_lda_keywords]
+
+==== 解析結果を活用した追加的なデータの前処理
+
+　ここまでの解析によって得られた知見から、追加的なデータの前処理を検討します。テキスト内にノイズとなり得る単語の規則性が確認できた場合や、テキスト自体が無意味であるかノイズとなり得る場合がないかを考察しましょう。
+
+　前章での可視化及び解析を通じて、コーパス全体において、「人事」という単語が非常に高い頻度で観測されていました。しかし、CEO等の交代がプラスの効果を持つか、マイナスの効果を持つかはケースバイケースと思われるため、各社の人事情報をマーケットの予測に役立てる難易度は非常に高いと想定されます。このような仮説を基に、本チュートリアルでは人事の内容を含むニュースを除去しています。
+
+[source,python]
+----
+# owakatiを用いて、'人事'の単語を含む記事を除去する方法もあるが、本番環境でのリソースを軽減させるため、単純に文字列から人事を含む全てのニュースの除去を行う。
+# headlineもしくは、keywordsどちらかで人事を含むニュース記事のindexマスクを作成。
+drop_mask = articles['headline'].str.contains('人事') | articles['keywords'].str.contains('人事')
+
+# '人事'を含む例を表示する
+articles[drop_mask].head()
+----
+
+　出力結果は以下の通りです。
+
+image::1_6_with_jinji.png[1_6_with_jinji, width=50%]
+
+　'人事'という単語を含むニュースを取り除きます。
+
+[source,python]
+----
+articles = articles[~drop_mask]
+
+# '人事'を含むニュースが存在するか確認する。
+(articles['headline'].str.contains('人事') | articles['keywords'].str.contains('人事')).any()
+----
+
+　出力結果は以下の通りです。人事を含むニュースが存在しないことが分かり、正しく取り除くことができています。
+
+[source,python]
+----
+False
+----
+
+==== 本番提出用のクラスへ組み込み
+
+　ここまでの処理を``drop_remove_list_words``関数として ``SentimentGenerator`` クラスに追加します。
+
+[source,python]
+----
+#上記のコードを用いて、本番提出用のクラスにclassmethodを追加
+
+@classmethod
+def drop_remove_list_words(cls, articles, remove_list_words=["人事"]):
+    articles = articles.copy()
+
+    for remove_list_word in remove_list_words:
+        # headlineもしくは、keywordsどちらかでremove_list_wordを含むニュース記事のindexマスクを作成
+        drop_mask = articles["headline"].str.contains(remove_list_word) | articles[
+            "keywords"
+        ].str.contains(remove_list_word)
+
+        # remove_list_wordを含まないニュースだけに精製する。
+        articles = articles[~drop_mask]
+
+    return articles
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.drop_remove_list_words = drop_remove_list_words
+
+# SentimentGeneratorに使用する全体の流れを記述
+articles = SentimentGenerator.load_articles(path=CONFIG["article_path"])
+articles = SentimentGenerator.normalize_articles(articles)
+articles = SentimentGenerator.handle_punctuations_in_articles(articles)
+articles = SentimentGenerator.drop_remove_list_words(articles)
+----
+
+
+=== 特徴量抽出機、前処理機の定義
+
+　ここまでの前処理等を踏まえ、BERTへテキストデータを投入する準備が整いました。ここからはBERTモデルを扱う上で必要な特徴量抽出時に使うデバイス（GPU）の定義、特徴量抽出のためのBERTモデルの定義、BERTモデルに係る前処理の定義等を行っていきます。
+
+==== 本番提出用のクラスへ組み込み
+
+``SentimentGenerator`` クラスに複数の関数を追加していきます。
+
+[source,python]
+----
+@classmethod
+def _set_device(cls):
+    # 使用可能なgpuがある場合、そちらを利用し特徴量抽出を行う
+    if torch.cuda.device_count() >= 1:
+        cls.device = 'cuda'
+        print("[+] Set Device: GPU")
     else:
-        r = requests.get(
-            "https://api.jpx-jquants.com/" + apitype, params=data, headers=headers
+        cls.device = 'cpu'
+        print("[+] Set Device: CPU")
+
+@classmethod
+def _build_feature_extractor(cls):
+    # 特徴量抽出のため事前学習済みBERTモデルを用いる。
+    # ここでは、"cl-tohoku/bert-base-japanese-whole-word-masking"モデルを使用しているが、異なる日本語BERTモデルを用いても良い。
+    cls.feature_extractor = (
+        transformers.BertModel.from_pretrained(
+            "cl-tohoku/bert-base-japanese-whole-word-masking",
+            return_dict=True,
+            output_hidden_states=True,
         )
-    resjson = json.loads(r.text)
-    return resjson
+    )
+
+    # 使用するdeviceを指定
+    cls.feature_extractor = cls.feature_extractor.to(cls.device)
+
+    # 今回は特徴量抽出を行うのみであり、この事前モデル学習は行わないため、評価モードにセットする。
+    cls.feature_extractor.eval()
+
+    print("[+] Built feature extractor")
+
+@classmethod
+def _build_tokenizer(cls):
+    # BERTモデルの入力とするコーパスはそのBERTモデルが学習された時と同様の前処理を行う必要がある。
+    # 今回使用する"cl-tohoku/bert-base-japanese-whole-word-masking"モデルは、mecab-ipadic-NEologdによりトークナイズされ、その後Wordpiece subword encoderよりsubword化している。
+    # Subwordとは形態素に類似な概念として、単語をより小さい意味のある単位に変換したものである。
+    # transformersのBertJapaneseTokenizerを用いることで、その事前学習モデルの学習時と同様の前処理を簡単に使用することができる。
+    # そのため、ここではBertJapaneseTokenizerを利用し、トークナイズ及びsubword化を行う。
+    cls.bert_tokenizer = BertJapaneseTokenizer.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking")
+    print("[+] Built bert tokenizer")
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator._set_device = _set_device
+SentimentGenerator._build_feature_extractor = _build_feature_extractor
+SentimentGenerator._build_tokenizer = _build_tokenizer
+
+# SentimentGenerator使用する全体流れを記述
+articles = SentimentGenerator.load_articles(path=CONFIG["article_path"])
+articles = SentimentGenerator.normalize_articles(articles)
+articles = SentimentGenerator.handle_punctuations_in_articles(articles)
+articles = SentimentGenerator.drop_remove_list_words(articles)
+
+SentimentGenerator._set_device()
+SentimentGenerator._build_feature_extractor()
+SentimentGenerator._build_tokenizer()
 ----
 
-=== Stock Lists API
-銘柄一覧を取得するAPIについて紹介いたします。
+==== BERTモデルを使用するための前処理
 
+　本節では以下の2つの異なるトークナイザを用いてトークナイズした結果を比較し、それぞれの前処理の違いを確認してみます。
 
-このAPIでは、企業名や業種区分などの基本情報を取得することができます。全銘柄の一覧を取得する"/lists"と銘柄コードを指定した"/lists/{code}"が利用できます。
+- SentimentGenerator.bert_tokenizer: mecab-ipadic-NEologd + Wordpiece
+- owakati: mecab-ipadic-NEologd
 
-[source, python]
+[source,python]
 ----
-idtk=<your idtoken>
-# Codeを指定しない場合
-paramdict = {}
-paramdict["includedetails"] = "True"
-call_jquants_api(paramdict, idtk, "lists")
-
-# Codeを指定する場合
-paramdict = {}
-paramdict["includedetails"] = "True"
-call_jquants_api(paramdict, idtk, "lists", "8697")
-----
-レスポンスは以下のようになります。
-[source, json]
-----
-{"list": [{"33 Sector(name)": "Other Financing Business",
-    "Effective Date": "20201230",
-    "prediction_target": "True",
-    "Section/Products": "First Section (Domestic)",
-    "33 Sector(Code)": 7200.0,
-    "Name (English)": "Japan Exchange Group,Inc.",
-    "IssuedShareEquityQuote IssuedShare": 536351448.0,
-    "Local Code": "8697"}]}
+text = '我らは走り出す。'
+display(SentimentGenerator.bert_tokenizer.tokenize(text))
+display(owakati.parse(text).split())
 ----
 
-=== Prices API
-株価情報を取得するPrice APIをご紹介します。
+　出力結果は以下の通りです。Subword化を行うbert_tokenizerの方がより小さい単位でトークン化されていることがわかります。このようなsubwordを用いると、学習時に出現していない単語(Out-of-Vocabulary)に関する問題を緩和させることができます。
 
-
-検索期間や銘柄コードを指定することで、四本値、売買高、前日比変化率などを取得することができます。銘柄コードを指定する場合は"/prices/{code}"でAPIをご利用ください。"includeDetails"をTrueにした場合は、全てのデータ系列を取得します。
-
-[source, python]
+[source,python]
 ----
-idtk=<your idtoken>
-# Codeを指定しない場合
-paramdict = {}
-paramdict["date"] = "2020-12-30"
-paramdict["includedetails"] = "True"
-call_jquants_api(paramdict, idtk, "prices")
-
-# Codeを指定する場合
-paramdict = {}
-paramdict["datefrom"] = "2020-01-17"
-paramdict["dateto"] = "2020-01-31"
-paramdict["includedetails"] = "True"
-call_jquants_api(paramdict, idtk, "prices", "8697")
+['我', '##ら', 'は', '走り', '##出す', '。']
+['我ら', 'は', '走り出す', '。']
 ----
 
-レスポンスのサンプルは以下の通りです。
-[source, json]
+　基本的にどのような言語モデルもトークナイズ後のトークンをそのまま受け取ることはできません。トークンを数字に対応させるためのid化が必要となります。事前学習モデルを用いる場合、各々のトークンはすでにidが付与されているため、モデルに入力するトークンデータをそのidに変換した上で、モデルの入力とする必要があります。BertJapaneseTokenizerのencodeメソッドはこのようなid化を行ってくれます。
+
+[source,python]
 ----
-{"prices": [{"EndOfDayQuote Open": 2005.0,
-    "EndOfDayQuote PreviousClose": 1972.0,
-    "EndOfDayQuote CumulativeAdjustmentFactor": 1.0,
-    "EndOfDayQuote VWAP": 1994.792,
-    "EndOfDayQuote Low": 1989.0,
-    "EndOfDayQuote PreviousExchangeOfficialClose": 1972.0,
-    "EndOfDayQuote High": 2008.0,
-    "EndOfDayQuote Date": "2020/01/20",
-    "EndOfDayQuote Close": 1990.0,
-    "EndOfDayQuote PreviousExchangeOfficialCloseDate": "2020/01/17",
-    "EndOfDayQuote ExchangeOfficialClose": 1990.0,
-    "EndOfDayQuote ChangeFromPreviousClose": 18.0,
-    "EndOfDayQuote PercentChangeFromPreviousClose": 0.913,
-    "EndOfDayQuote PreviousCloseDate": "2020/01/17",
-    "Local Code": "8697",
-    "EndOfDayQuote Volume": 528600.0},
-    {"EndOfDayQuote Open": 1989.0,
-    "EndOfDayQuote PreviousClose": 1990.0,
-    "EndOfDayQuote CumulativeAdjustmentFactor": 1.0,
-    "EndOfDayQuote VWAP": 1976.539,
-    "EndOfDayQuote Low": 1965.0,
-    "EndOfDayQuote PreviousExchangeOfficialClose": 1990.0,
-    "EndOfDayQuote High": 1995.0,
-    "EndOfDayQuote Date": "2020/01/21",
-    "EndOfDayQuote Close": 1977.0,
-    "EndOfDayQuote PreviousExchangeOfficialCloseDate": "2020/01/20",
-    "EndOfDayQuote ExchangeOfficialClose": 1977.0,
-    "EndOfDayQuote ChangeFromPreviousClose": -13.0,
-    "EndOfDayQuote PercentChangeFromPreviousClose": -0.653,
-    "EndOfDayQuote PreviousCloseDate": "2020/01/20",
-    "Local Code": "8697",
-    "EndOfDayQuote Volume": 571000.0},
-    ...]}
+display(SentimentGenerator.bert_tokenizer.encode(text))
 ----
 
-=== Stock Fins API
-各銘柄の財務諸表データを取得するAPIをご紹介します。
+出力結果は以下の通りです。
 
-
-特定の日の全銘柄の情報を取得する"/stockfins"と１銘柄の情報を取得する"/stockfins/{code}"がございます。
-
-[source, python]
+[source,python]
 ----
-idtk=<your idtoken>
-# Codeを指定しない場合
-paramdict = {}
-paramdict["date"] = "2020-12-30"
-paramdict["includedetails"] = "True"
-call_jquants_api(paramdict, idtk, "stockfins")
-
-
-# Codeを指定する場合
-paramdict = {}
-paramdict["datefrom"] = "2020-01-01"
-paramdict["dateto"] = "2020-12-30"
-paramdict["includedetails"] = "True"
-call_jquants_api(paramdict, idtk, "stockfins", "8697")
-----
-レスポンスは以下のようになります。
-[source, json]
-----
-{"stockfin": [{"Result_FinancialStatement TotalAssets": 56671198.0,
-    "base_date": "2020/01/30",
-    "Result_FinancialStatement FiscalPeriodEnd": "2019/12",
-    "Result_FinancialStatement ReportType": "Q3",
-    "Result_FinancialStatement OrdinaryIncome": 48586.0,
-    "Result_FinancialStatement CashFlowsFromOperatingActivities": "",
-    "Local Code": "8697",
-    "Result_FinancialStatement NetSales": 87433.0,
-    "Result_FinancialStatement CashFlowsFromFinancingActivities": "",
-    "Result_FinancialStatement CashFlowsFromInvestingActivities": "",
-    "Result_FinancialStatement AccountingStandard": "ConsolidatedIFRS",
-    "Result_FinancialStatement NetIncome": 33317.0,
-    "Result_FinancialStatement OperatingIncome": 48176.0},
-    {"Result_FinancialStatement TotalAssets": 56671198.0,
-    "base_date": "2020/03/23",
-    "Result_FinancialStatement FiscalPeriodEnd": "2019/12",
-    "Result_FinancialStatement ReportType": "Q3",
-    "Result_FinancialStatement OrdinaryIncome": 48586.0,
-    "Result_FinancialStatement CashFlowsFromOperatingActivities": "",
-    "Local Code": "8697",
-    "Result_FinancialStatement NetSales": 87433.0,
-    "Result_FinancialStatement CashFlowsFromFinancingActivities": "",
-    "Result_FinancialStatement CashFlowsFromInvestingActivities": "",
-    "Result_FinancialStatement AccountingStandard": "ConsolidatedIFRS",
-    "Result_FinancialStatement NetIncome": 33317.0,
-    "Result_FinancialStatement OperatingIncome": 48176.0}]}
+[2, 3706, 28469, 9, 7498, 2813, 8, 3]
 ----
 
-=== Stock Labels API
-基準日から5日、10日、20日の株価の最大上昇率、最大下落率を取得するAPIをご紹介します。
+　以下のコードよりid化したトークンを、再びトークンに変換してみましょう。
 
-
-Stock Labels APIは期間や銘柄コードを指定することで該当する株価騰落率のデータを取得できます。
-[source, python]
+[source,python]
 ----
-# Codeを指定しない場合
-paramdict = {}
-paramdict["date"] = "2018-05-31"
-paramdict["includedetails"] = "true"
-call_jquants_api(paramdict, idtk, "stocklabels")
-
-# Codeを指定する場合
-paramdict = {}
-paramdict["datefrom"] = "2020-02-01"
-paramdict["dateto"] = "2020-02-28"
-paramdict["includedetails"] = "true"
-call_jquants_api(paramdict, idtk, "stocklabels", "1301")
-----
-レスポンスのサンプルは以下の通りです。
-
-[source, json]
-----
-{"labels": [{"label_low_10": -0.01748,
-    "label_low_20": -0.10699,
-    "label_low_5": 0.0021,
-    "label_high_20": 0.02203,
-    "base_date": "2020-02-04",
-    "label_high_10": 0.02203,
-    "label_date_5": "2020-02-12",
-    "label_date_10": "2020-02-19",
-    "label_high_5": 0.02203,
-    "label_date_20": "2020-03-05",
-    "Local Code": "1301"},
-    {"label_low_10": -0.02507,
-    "label_low_20": -0.11072,
-    "label_low_5": -0.00557,
-    "label_high_20": 0.01776,
-    "base_date": "2020-02-05",
-    "label_high_10": 0.01776,
-    "label_date_5": "2020-02-13",
-    "label_date_10": "2020-02-20",
-    "label_high_5": 0.01776,
-    "label_date_20": "2020-03-06",
-    "Local Code": "1301"}],
-    "scrollId": "eyJMb2NhbCBDb2RlIjogIjEzMDEiLCAiYmFzZV9kYXRlIjogIjIwMjAtMDItMDUifQ=="}
+for id in SentimentGenerator.bert_tokenizer.encode(text):
+    print(f'{id}: {SentimentGenerator.bert_tokenizer.decode(id)}')
 ----
 
-=== News API
-日経新聞の記事情報を取得するAPIはまだ公開しておりません。
+出力結果は以下の通りです。
 
-
-レスポンスのサンプルは以下の通りになる予定です。
-
-[source, json]
+[source,python]
 ----
-{"news": [{"article_id": "TDSKDBDGXLASFL21HM9_21022020000000",
-    "publish_datetime": "2020-02-21T16:34:00Z",
-    "media_code": "TNY",
-    "media_name": "日本経済新聞電子版",
-    "men_name": "",
-    "headline": "日本取引所ＣＥＯ、東商取のエネルギー市場「早期に統合したい」",
-    "keywords": "最高経営責任者\n東京商品取引所\n日本取引所グループ\n清田瞭\nエネルギー市場\n大阪取引所\n統合\n定例\n早期",
-    "classifications": "Ｔ８６９７\nＰＤ５２１\nＮ００４０４３１\nＮ００７５１０７\nＮ００４０７７９",
-    "stock_code": "8697"}],
-    "scrollId": "FGluY2x1ZGVfY29u"}
+2: [ C L S ]
+3706: 我
+28469: # # ら
+9: は
+7498: 走 り
+2813: # # 出 す
+8: 。
+3: [ S E P ]
 ----
 
+　idをトークンに再び戻した時、元のデータには存在していなかった[CLS]と[SEP]が現れていることがわかります。この二つは `special tokens `と呼ばれ、[CLS]は全ての文章の先頭に位置し、文章の分類タスクを行う際に用いられるものです。また、[SEP]は複数の文章を区切るために用いられます。BERTへの入力は、必ずこのフォーマットに従う必要があります。
 
-=== TDnet API
-適時開示を取得できるTDnetAPIはまだ公開しておりません。
+　BERTの入力値は上記で生成したtokenのids以外に, `token_type_ids` , `attention_mask` のベクトルを入力として受け取ります。 `token_type_ids` は複数の文章を区切るため用いられ、 `attention mask` は実際にトークンが存在する部分とzero paddingされた部分を区切るため用いられます。SentimentGenerator.bert_tokenizer.encode_plusメソッドによりこれらのベクトルを作ることができます。
 
-
-レスポンスのサンプルは以下の通りになる予定です。
-
-[source, json]
+[source,python]
 ----
-{"tdnet": [{"pdfSumaryFlag": "1",
-    "modifiedHistory": "1",
-    "name": "ＪＰＸ",
-    "disclosureItems": ["11384"],
-    "code": "86970",
-    "disclosedDate": "2020-01-30",
-    "datetime": "2020-01-30:12:00:00",
-    "handlingType": None,
-    "disclosedTime": "12:00:00",
-    "pdfGeneralFlag": "1",
-    "disclosureNumber": "20200129453073",
-    "xbrlFlag": "1",
-    "title": "2020年３月期 第３四半期決算短信〔ＩＦＲＳ〕（連結） "},
-    {"pdfSumaryFlag": "0",
-    "modifiedHistory": "1",
-    "name": "ＪＰＸ",
-    "disclosureItems": ["11804"],
-    "code": "86970",
-    "disclosedDate": "2020-01-30",
-    "datetime": "2020-01-30:12:00:00",
-    "handlingType": None,
-    "disclosedTime": "12:00:00",
-    "pdfGeneralFlag": "1",
-    "disclosureNumber": "20200129453074",
-    "xbrlFlag": "0",
-    "title": "Consolidated financial results for the nine months ended December 31, 2019"},
-    ...]}
+encoded = SentimentGenerator.bert_tokenizer.encode_plus(
+    text,
+    None,
+    add_special_tokens=True,
+    return_token_type_ids=True,
+    truncation=True,
+)
+
+# 確認する
+encoded
 ----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+{'input_ids': [2, 3706, 28469, 9, 7498, 2813, 8, 3], 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0], 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1]}
+----
+
+　これらはtorchモデルに入力するためにtensor形式に変換し、deviceを指定する必要があります。
+
+[source,python]
+----
+input_ids = torch.tensor([encoded['input_ids']], dtype=torch.long).to(SentimentGenerator.device)
+token_type_ids = torch.tensor([encoded['token_type_ids']], dtype=torch.long).to(SentimentGenerator.device)
+attention_mask = torch.tensor([encoded['attention_mask']], dtype=torch.long).to(SentimentGenerator.device)
+
+# 確認する
+display(input_ids)
+display(token_type_ids)
+display(attention_mask)
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+tensor([[    2,  3706, 28469,     9,  7498,  2813,     8,     3]])
+tensor([[0, 0, 0, 0, 0, 0, 0, 0]])
+tensor([[1, 1, 1, 1, 1, 1, 1, 1]])
+----
+
+==== 特徴量抽出
+
+　前処理の最後で取得した三つのベクトル[input_ids, token_type_ids, attention_mask]をBERTモデルへ入力し、そのoutputを取得します。
+
+[source,python]
+----
+output = SentimentGenerator.feature_extractor(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+
+# outputをdictionary形式に変換し、その中からどのようなkeyが存在するかをみてみる。
+output.__dict__.keys()
+----
+
+　存在しているkeyは以下の通りです。
+
+[source,python]
+----
+dict_keys(['last_hidden_state', 'pooler_output', 'hidden_states', 'past_key_values', 'attentions', 'cross_attentions'])
+----
+
+　各keyから取得できる情報は以下の通りです。
+
+- `last_hidden_state` にはモデルの最終層のhidden stateが格納されています。
+- `pooler_output` にはモデル最終層出力の最初のトークンのhidden stateが格納されています。
+- `hidden_states` にはモデル各層の出力全てのhidden stateが格納されています。
+- `attentions` はattention softmax以降のattentions weightsが格納されています。
+- `cross_attentions` はdecoderのcross-attention層における、attention softmax以降のattentions weightsが格納されています。
+
+　一般的にBERTの特徴量とは、最終層の一つ前のhidden stateを指します。本チュートリアルでも、最終層の一つ前のhidden stateを抽出し、特徴量として用いています。
+
+　hidden stateについて、最終層ではなく最終層の手前の情報を利用する理由は、最終層は個々の学習タスクに強く関連情報を持つことから、特徴量抽出には一般的により豊富な情報を持つ最終層の手前を使用します。この内容に関してより詳しく知りたい場合はlink:https://bert-as-service.readthedocs.io/en/latest/section/faq.html#why-not-the-last-hidden-layer-why-second-to-last[こちら]をご参照下さい。
+
+　以下のコードより特徴量を取得します。
+
+[source,python]
+----
+features = output['hidden_states'][-2]
+
+# 確認する。
+display(features)
+display(features.size())
+----
+
+　出力結果は以下の通りです。
+
+[source,python]
+----
+tensor([[[-0.4128, -0.1108, -0.6859,  ...,  0.5316,  0.3867,  0.4347],
+         [ 0.7700,  0.0892,  0.7817,  ..., -1.0288,  0.4230, -0.8906],
+         [ 1.2572,  0.3211, -0.6861,  ...,  0.0815,  0.7084, -1.0055],
+         ...,
+         [ 1.0648, -1.3369, -0.2810,  ...,  0.5657,  0.7713, -0.6337],
+         [-0.3294, -0.3912,  0.2754,  ..., -0.0620,  1.1760, -0.9139],
+         [ 0.0639,  0.2225,  0.0474,  ...,  0.1486,  0.0587,  0.0557]]],
+       grad_fn=<NativeLayerNormBackward>)
+
+torch.Size([1, 8, 768])
+----
+
+　`features` の次元を見ると、[1, 8, 768]の次元を持つことがわかります。これらは各々順番に[データ数、シーケンスサイズ、hidden stateのサイズ]を表しています。一つ注意すべきところは、長さの異なるsequenceを入力すると、以下のようにベクトルのサイズが変わってくることです。
+
+[source,python]
+----
+text = 'こちらでは、より長い文章を用いて特徴量を抽出してみましょう。'
+encoded = SentimentGenerator.bert_tokenizer.encode_plus(
+    text,
+    None,
+    add_special_tokens=True,
+    return_token_type_ids=True,
+    truncation=True,
+)
+
+input_ids = torch.tensor([encoded['input_ids']], dtype=torch.long).to(SentimentGenerator.device)
+token_type_ids = torch.tensor([encoded['token_type_ids']], dtype=torch.long).to(SentimentGenerator.device)
+attention_mask = torch.tensor([encoded['attention_mask']], dtype=torch.long).to(SentimentGenerator.device)
+
+output = SentimentGenerator.feature_extractor(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+features = output['hidden_states'][-2]
+
+# 確認する
+features.size()
+----
+
+　出力結果は以下の通りです。dimension1のシーケンスサイズの箇所の次元が変わっていることがわかります。
+
+[source,python]
+----
+torch.Size([1, 22, 768])
+----
+
+　本チュートリアルではdimension1の次元を平均化し特徴量として扱うため、シークエンスの違いはそれほど問題とはなりませんが、並列化する上では問題となります。シーケンスの異なるベクトルを重ねることができないからです。このような問題を扱うため、subwordsのシーケンスのmax_lengthを決め、それより短い場合はmax_lengthの長さとなるように、ベクトルの末端を0で埋めるzero paddingがよく使われます。前処理を行う際にmax_lengthのパラメータを渡し、padding='max_legnth'を指定すると、max_lengthの長さがなるようにzero paddingすることができます。
+
+[source,python]
+----
+text = 'こちらでは、より長い文章を用いて特徴量を抽出してみましょう。'
+encoded = SentimentGenerator.bert_tokenizer.encode_plus(
+    text,
+    None,
+    max_length=512,
+    padding='max_length',
+    add_special_tokens=True,
+    return_token_type_ids=True,
+    truncation=True,
+)
+
+# 確認する
+encoded
+----
+
+　出力結果は以下の通りです。zero paddingされていることがわかります。
+
+[source,python]
+----
+{'input_ids': [2, 4871, 12, 9, 6, 221, 2894, 7204, 11, 585, 16, 1427, 1073, 11, 11674, 15, 16, 546, 17015, 205, 8, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+----
+
+　それでは、異なる長さを持つ複数の文章を用いて、paddingされたinputをモデルに同時に入力し並列に処理されるか確認してみましょう。
+
+[source,python]
+----
+texts = ['短いテキスト', '少し長いテキストです', '長い長い長い長いテキストです']
+
+input_ids = []
+token_type_ids = []
+attention_mask = []
+for text in texts:
+    encoded = SentimentGenerator.bert_tokenizer.encode_plus(
+        text,
+        None,
+        add_special_tokens=True,
+        max_length=512,
+        padding="max_length",
+        return_token_type_ids=True,
+        truncation=True,
+    )
+
+    input_ids.append(encoded['input_ids'])
+    token_type_ids.append(encoded['token_type_ids'])
+    attention_mask.append(encoded['attention_mask'])
+
+input_ids = torch.tensor(input_ids, dtype=torch.long).to(SentimentGenerator.device)
+token_type_ids = torch.tensor(token_type_ids, dtype=torch.long).to(SentimentGenerator.device)
+attention_mask = torch.tensor(attention_mask, dtype=torch.long).to(SentimentGenerator.device)
+
+output = SentimentGenerator.feature_extractor(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+features = output['hidden_states'][-2]
+
+# 確認する
+features.size()
+----
+
+　出力結果は以下の通りです。[3つの文章、シーケンスの長さ、hidden state]の次元の特徴量を取得でき、dimention1は指定したmax_lengthである512に一致していることがわかリます。
+
+[source,python]
+----
+torch.Size([3, 512, 768])
+----
+
+　本チュートリアルでは最終的に、dimension1を平均化して、各テキストごとに768次元のベクトルを特徴量として抽出します。
+
+[source,python]
+----
+features = features.mean(dim=1)
+
+# 確認する
+features.size()
+----
+
+出力結果は以下の通りです。
+
+[source,python]
+----
+torch.Size([3, 768])
+----
+
+==== 本番提出用のクラスへ組み込み
+
+上記のコードを纏め、テキストから前処理を行い、モデル入力に必要な各々のベクトルを返す関数を ``SentimentGenerator`` クラスに追加します。
+
+[source,python]
+----
+@classmethod
+def build_inputs(cls, texts, max_length=512):
+    input_ids = []
+    token_type_ids = []
+    attention_mask = []
+    for text in texts:
+        encoded = cls.bert_tokenizer.encode_plus(
+            text,
+            None,
+            add_special_tokens=True,
+            max_length=max_length,
+            padding="max_length",
+            return_token_type_ids=True,
+            truncation=True,
+        )
+
+        input_ids.append(encoded['input_ids'])
+        token_type_ids.append(encoded['token_type_ids'])
+        attention_mask.append(encoded['attention_mask'])
+
+    # torchモデルに入力するためにはtensor形式に変え、deviceを指定する必要がある。
+    input_ids = torch.tensor(input_ids, dtype=torch.long).to(cls.device)
+    token_type_ids = torch.tensor(token_type_ids, dtype=torch.long).to(cls.device)
+    attention_mask = torch.tensor(attention_mask, dtype=torch.long).to(cls.device)
+
+    return input_ids, token_type_ids, attention_mask
+
+# 上記のコードでビルドしたベクトルをモデルに入力し、特徴量を抽出するコードを作成
+@classmethod
+def generate_features(cls, input_ids, token_type_ids, attention_mask):
+    output = cls.feature_extractor(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+    features = output['hidden_states'][-2].mean(dim=1).cpu().detach().numpy()
+
+    return features
+
+
+# コーパス全体から特徴量を抽出するため、コーパス全体を同時にモデルへ入力することはメモリーの上限を遥かに超えてしまうので不可能に近い。
+# 入力するコーパスを数回に分割し、上記で作成したコードbuild_inputsとgenerate_featuresを用いて並列化処理を行うため、以下のコードを作成する。
+@classmethod
+def generate_features_by_texts(cls, texts, batch_size=2, max_length=512):
+    n_batch = math.ceil(len(texts) / batch_size)
+
+    features = []
+    for idx in tqdm(range(n_batch)):
+        input_ids, token_type_ids, attention_mask = cls.build_inputs(texts=texts[batch_size*idx:batch_size*(idx+1)], max_length=max_length)
+
+        features.append(cls.generate_features(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask))
+
+    features = np.concatenate(features, axis=0)
+
+    # 抽出した特徴量はnp.ndarray形式となっており、これらは、日付の情報を失っているため、pd.DataFrame形式に変換する。
+    return pd.DataFrame(features, index=texts.index)
+
+# SentimentGeneratorに定義したclassmethodを追加する
+SentimentGenerator.build_inputs = build_inputs
+SentimentGenerator.generate_features = generate_features
+SentimentGenerator.generate_features_by_texts = generate_features_by_texts
+
+# SentimentGenerator使用する全体流れを記述
+articles = SentimentGenerator.load_articles(path=CONFIG["article_path"])
+articles = SentimentGenerator.normalize_articles(articles)
+articles = SentimentGenerator.handle_punctuations_in_articles(articles)
+articles = SentimentGenerator.drop_remove_list_words(articles)
+
+SentimentGenerator._set_device()
+SentimentGenerator._build_feature_extractor()
+SentimentGenerator._build_tokenizer()
+
+# 以下のコードでコーパス全体の特徴量を抽出できる。しかし、抽出には長い時間が要求されるため、注意。
+headline_features = SentimentGenerator.generate_features_by_texts(texts=articles['headline'])
+keywords_features = SentimentGenerator.generate_features_by_texts(texts=articles['keywords'])
+----
+
+　それでは上記のコードを実行し特徴量を抽出してみましょう。この処理は非常に時間がかかる(GPUがある環境で数時間、GPUがないと数十時間必要)ため、実行結果はPKLファイルで別途提供致します。詳細は<<anchor-5.2, 5.2. 実行環境>>をご参照ください。もし、ご自分の環境で特徴量抽出を実行した場合は、その結果を以下のようにPKLファイルで保存しておくことをおすすめします。
+
+[source,python]
+----
+# pklファイルとして保存しておく。
+headline_features.to_pickle(f'{CONFIG["base_path"]}/headline_features/headline_features.pkl')
+keywords_features.to_pickle(f'{CONFIG["base_path"]}/keywords_features/keywords_features.pkl')
+----
+
+==== PCAによるスコア化
+
+　BERTで作成した特徴量は高次元の特徴量であり、機械学習モデルで利用する場合には、なんらかの単一のスコアに変換する必要があります。
+
+　データの次元圧縮テクニックの一つとして主成分分析(PCA:principal component analysis)があります。主成分分析とは、多変量解析手法のうち次元削減手法としてよく用いられる手法の一種で、相関のある多変数から、相関のない少数で全体のばらつきを最もよく表す変数を合成するものです。(引用:link:https://qiita.com/maskot1977/items/082557fcda78c4cdb41f[Qiita:主成分分析を Python で理解する])。PCAには通常のPCAとカーネルPCAがあり、２つの挙動はそれぞれ異なるので、用途などを考慮して使うものを決めます。 ( 引用: link:https://qiita.com/NoriakiOshita/items/138c10eada03938fcd79[カーネル主成分分析とは] )。
+
+　例えば、以下のようなコードでPCAを用いて次元圧縮をすることで、BERTで作成した特徴量は単一のスコアになり、機械学習モデルの特徴量として扱いやすくなります。
+
+[source,python]
+----
+# 次元圧縮関数(PCA/KPCA)の定義
+def _build_compressor(compress_method):
+    assert compress_method in ('pca', 'kpca')
+    if compress_method == 'pca':
+        return PCA(n_components=1)
+
+    if compress_method == 'kpca':
+        return KernelPCA(kernel='rbf', n_components=1)
+
+# 次元圧縮処理を実施する関数
+def compress_feature_n_samples(features, compress_method, max_samples=500):
+    feature_compressor = _build_compressor(compress_method=compress_method)
+    compressed_features = pd.Series(feature_compressor.fit_transform(features).reshape(-1), index=features.index)
+
+    sample_compressor = _build_compressor(compress_method=compress_method)
+
+    weekly_group = pd.Series(zip(compressed_features.index.year, compressed_features.index.week), index=compressed_features.index)
+    grouped_compressed_features = compressed_features.groupby(weekly_group).apply(lambda x: x[-max_samples:].reset_index(drop=True)).unstack()
+
+    return pd.Series(sample_compressor.fit_transform(grouped_compressed_features).reshape(-1), index=grouped_compressed_features.index)
+
+# 上記関数を用いてスコアを生成しPKLファイルに保存しています。モデルやバックテストに利用可能です。
+for features, feature_type in [(headline_features, 'headline_features'), (keywords_features, 'keywords_features')]:
+    for compress_method in ['pca']:
+        compress_feature_n_samples(features=features, compress_method=compress_method).to_pickle(f'{feature_type}_{compress_method}.pkl')
+----
+
+　ここで取得したPCAのスコアは、何か目的をもって学習させたものではないため、単体でポートフォリオに利用するのは難しいと思われますが、機械学習モデルの特徴量として、例えばrandom forestのモデルなどにはそのままPCAスコアを投入することが可能です。よりシンプルな利用方法として、例えばPCAのスコアと連動しやすい銘柄について相関係数などを利用して解析し、PCAスコアに合わせて次週の取引対象銘柄を限定するようなアプローチも考えられます。
+
+　本章ではBERTを用いてニュースデータから特徴量抽出を行ってきました。本章の最後に紹介したPCAによる次元圧縮では、圧縮時に目的関数を設定することはできないために、特定の目的のためのスコアとは言えません。そこで次章では、リカレントニューラルネットワークであるLSTMを用いて、週毎の可変な特徴量を統合し単一のスコアにする手法を紹介し、このスコアを活用する方法を紹介していきます。

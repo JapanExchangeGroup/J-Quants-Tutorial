@@ -7,7 +7,7 @@ include::./attribute.adoc[]
 
 ====
 
-本チュートリアルに関してのご質問は、SIGNATEにて開催中のコンペティションサイト( https://signate.jp/competitions/423 )のフォーラムにおきまして、チュートリアル質問用のスレッドに投稿いただくか、タイトル冒頭に `[tutorial]` とご記載の上、ご質問していただけますと幸いです。
+本チュートリアルに関してのご質問は、SIGNATEにて開催中のコンペティションサイト( https://signate.jp/competitions/443 )のフォーラムにおきまして、チュートリアル質問用のスレッドに投稿いただくか、タイトル冒頭に `[tutorial]` とご記載の上、ご質問していただけますと幸いです。
 
 また、本チュートリアルに関してのご要望があれば、Githubリポジトリ( https://github.com/JapanExchangeGroup/J-Quants-Tutorial )の `Issues` からご意見をいただけますと幸いです。 (なお、投稿の際には、過去に同じご要望がないかご確認ください。)
 

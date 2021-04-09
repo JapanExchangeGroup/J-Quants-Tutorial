@@ -211,8 +211,18 @@ class Backtest(object):
                             )
                             # 指定された金額での購入数量算出
                             buying_qty = int(
-                                buying_budget // df_p.iloc[0]["EndOfDayQuote Open"]
+                                buying_budget
+                                // (
+                                    df_p.iloc[0]["EndOfDayQuote Open"]
+                                    * df_p.iloc[0][
+                                        "EndOfDayQuote CumulativeAdjustmentFactor"
+                                    ]
+                                )
                             )
+                        # 累積調整係数を使用して購入数量を調整後数量に変更する
+                        buying_qty *= df_p.iloc[0][
+                            "EndOfDayQuote CumulativeAdjustmentFactor"
+                        ]
                         # 購入金額算出
                         buying_amount = df_p.iloc[0]["EndOfDayQuote Open"] * buying_qty
                         # 終値基準価格算出
@@ -343,13 +353,22 @@ class Backtest(object):
         for s in tqdm(uniq_dates):
             # 対象日付データに絞り込み
             df_t = df_submit.loc[df_submit.index == s]
+            # 銘柄コードを取得
+            stock_codes = sorted(df_t[cls.CODE].unique())
+            # 金曜日日付を取得
+            friday = s + pd.Timedelta("4D")
+            # 金曜日基準の株価を取得
+            df_price_on_friday = Backtest.adjust_price(
+                stock_codes,
+                df_price.loc[(df_price.index >= s) & (df_price.index <= friday)],
+            )
 
             # バックテスト実行
             (
                 d_sum,
                 buff_holiday,
                 df_t,
-            ) = Backtest.calc_trades(df_t, df_price)
+            ) = Backtest.calc_trades(df_t, df_price_on_friday)
 
             # 現金を計算
             cash = cls.BOUGHT_MAX - d_sum["bought_sum"]
@@ -411,3 +430,43 @@ class Backtest(object):
         df_return = pd.DataFrame(buff_return, index=range(len(buff_return)))
         df_stocks = pd.concat(buff_stocks)
         return df_return, df_stocks
+
+    @classmethod
+    def adjust_price(cls, stock_codes: list, df_price: pd.DataFrame) -> pd.DataFrame:
+        adjust_target_columns_multiply = [
+            "EndOfDayQuote Open",
+            # "EndOfDayQuote High",
+            # "EndOfDayQuote Low",
+            # "EndOfDayQuote Close",
+            "EndOfDayQuote ExchangeOfficialClose",
+            # "EndOfDayQuote PreviousClose",
+            # "EndOfDayQuote PreviousExchangeOfficialClose",
+            # "EndOfDayQuote ChangeFromPreviousClose",
+            # "EndOfDayQuote VWAP",
+        ]
+        adjust_target_columns_divide = [
+            # "EndOfDayQuote Volume",
+            "EndOfDayQuote CumulativeAdjustmentFactor",
+        ]
+
+        df_price = df_price.sort_values(["Local Code", "EndOfDayQuote Date"])
+
+        for stock_code in stock_codes:
+            filter_stock = df_price["Local Code"] == stock_code
+
+            # get latest adjustment factor
+            latest_adjustment_factor = df_price.loc[filter_stock].iloc[-1][
+                "EndOfDayQuote CumulativeAdjustmentFactor"
+            ]
+
+            # adjust values
+            for col in adjust_target_columns_multiply:
+                df_price.loc[filter_stock, col] = (
+                    df_price.loc[filter_stock, col] * latest_adjustment_factor
+                )
+            for col in adjust_target_columns_divide:
+                df_price.loc[filter_stock, col] = (
+                    df_price.loc[filter_stock, col] / latest_adjustment_factor
+                )
+
+        return df_price

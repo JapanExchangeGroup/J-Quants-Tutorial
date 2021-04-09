@@ -13,6 +13,7 @@
 <meta property="og:image" content="https://jquants-tutorial.s3-ap-northeast-1.amazonaws.com/J-Quants-ogp.png" />
 <meta name="author" content="本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。">
 <title>株式分析チュートリアル | 日本取引所グループ</title>
+
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
 /* Uncomment @import statement below to use as custom stylesheet */
@@ -653,7 +654,7 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
-<p>本チュートリアルに関してのご質問は、SIGNATEにて開催中のコンペティションサイト( <a href="https://signate.jp/competitions/443" class="bare">https://signate.jp/competitions/443</a> )のフォーラムにおきまして、チュートリアル質問用のスレッドに投稿いただくか、タイトル冒頭に <code>[tutorial]</code> とご記載の上、ご質問していただけますと幸いです。</p>
+<p>本​チュー​ト​リ​ア​ル​に​関​し​て​の​ご​質​問​は、​SIGNATE​に​て​開​催​中​の​コ​ン​ペ​ティ​ショ​ン​サ​イ​ト​( <a href="https://signate.jp/competitions/443" class="bare">https://signate.jp/competitions/443</a> )​の​フォー​ラ​ム​に​お​き​ま​し​て、新規のスレッド（ディスカッション）にて​ご​質​問​し​て​い​た​だ​け​ま​す​と​幸​い​で​す。</p>
 </div>
 <div class="paragraph">
 <p>また、本チュートリアルに関してのご要望があれば、Githubリポジトリ( <a href="https://github.com/JapanExchangeGroup/J-Quants-Tutorial" class="bare">https://github.com/JapanExchangeGroup/J-Quants-Tutorial</a> )の <code>Issues</code> からご意見をいただけますと幸いです。 (なお、投稿の際には、過去に同じご要望がないかご確認ください。)</p>
@@ -675,7 +676,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 2021-02-19: predictor.pyの修正、stocklabelsAPIの修正
 2021-02-26: 予測対象のエッジケースにおいて追記
 2021-03-19: 問題２のチュートリアルを追加
-2021-03-29: 問題２のチュートリアルを一部修正</pre>
+2021-03-29: 問題２のチュートリアルを一部修正
+2021-04-09: backtest.pyの修正（株式分割の対応）</pre>
 </div>
 </div>
 </div>
@@ -15819,7 +15821,7 @@ call_tdfiles_api(paramdict, idtk, outputdir)</code></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-最終更新 2021-03-29 20:55:22 +0900
+最終更新 2021-04-09 18:28:23 +0900
 </div>
 </div>
 <script type="text/x-mathjax-config">

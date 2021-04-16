@@ -361,6 +361,15 @@ class ScoringService(object):
         if labels is None:
             labels = cls.TARGET_LABELS
 
+        if "purchase_date" in inputs.keys():
+            # ランタイム環境では指定された投資対象日付を使用します
+            # purchase_dateを読み込み
+            df_purchase_date = pd.read_csv(inputs["purchase_date"])
+            # purchase_dateの最も古い日付を設定
+            start_dt = pd.Timestamp(
+                df_purchase_date.sort_values("Purchase Date").iloc[0, 0]
+            )
+
         # 予測対象日を調整
         # start_dtにはポートフォリオの購入日を指定しているため、
         # 予測に使用する前週の金曜日を指定します。

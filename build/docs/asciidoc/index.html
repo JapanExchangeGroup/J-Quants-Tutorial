@@ -10,10 +10,8 @@
 <meta property="og:title" content="J-Quants-Tutorial" />
 <meta property="og:description" content="（JPX）株式分析チュートリアル" />
 <meta property="og:site_name" content="J-Quants-Tutorial" />
-<meta property="og:image" content="https://jquants-tutorial.s3-ap-northeast-1.amazonaws.com/J-Quants-ogp.png" />
 <meta name="author" content="本資料は、(株)日本取引所グループがデータサイエンスに興味のある個人向けに提供する、ITやデータ分析を活用した取引の学習を目的とした、ハンズオン形式のチュートリアルです。">
 <title>株式分析チュートリアル | 日本取引所グループ</title>
-
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
 /* Uncomment @import statement below to use as custom stylesheet */
@@ -677,7 +675,8 @@ table.CodeRay td.code{padding:0 0 0 .75em}
 2021-02-26: 予測対象のエッジケースにおいて追記
 2021-03-19: 問題２のチュートリアルを追加
 2021-03-29: 問題２のチュートリアルを一部修正
-2021-04-09: backtest.pyの修正（株式分割の対応）</pre>
+2021-04-09: backtest.pyの修正（株式分割の対応）
+2021-04-16: ３章の加筆</pre>
 </div>
 </div>
 </div>
@@ -5136,6 +5135,260 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </tr>
 </tbody>
 </table>
+<div class="sect4">
+<h5 id="_日経電子版見出しメタデータの確認">日経電子版見出し・メタデータの確認</h5>
+<div class="paragraph">
+<p>ここでは「日経電子版見出し・メタデータ」を把握するために、データを確認していきます。データの確認に使用したnotebookは「handson/Chapter03/20210415_chapter03_news_data_visualization.ipynb」に配置しています。必要に応じてご参照ください。</p>
+</div>
+<div class="paragraph">
+<p>データを読み込みます。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 入力パラメーターを設定します。ランタイム環境での実行時と同一フォーマットにします</span>
+inputs = {
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_list</span><span class="delimiter">&quot;</span></span>: f<span class="string"><span class="delimiter">&quot;</span><span class="content">{dataset_dir}/stock_list.csv.gz</span><span class="delimiter">&quot;</span></span>,
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">nikkei_article</span><span class="delimiter">&quot;</span></span>: f<span class="string"><span class="delimiter">&quot;</span><span class="content">{dataset_dir}/nikkei_article.csv.gz</span><span class="delimiter">&quot;</span></span>,
+}
+<span class="comment"># 銘柄リストを取得</span>
+df_stock_list = pd.read_csv(inputs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_list</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># 投資対象銘柄を取得</span>
+stock_codes = df_stock_list.loc[df_stock_list.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">universe_comp2</span><span class="delimiter">&quot;</span></span>] == <span class="predefined-constant">True</span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>]
+<span class="comment"># 日経電子版見出し・メタデータ読み込み</span>
+df_nikkei_article = pd.read_csv(inputs[<span class="string"><span class="delimiter">&quot;</span><span class="content">nikkei_article</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># インデックスを記事の掲載日に設定</span>
+df_nikkei_article.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">publish_datetime</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+<span class="comment"># インデックスを日付型に変換</span>
+df_nikkei_article.index = pd.to_datetime(df_nikkei_article.index)
+<span class="comment"># インデックスで安定ソート</span>
+df_nikkei_article.sort_index(kind=<span class="string"><span class="delimiter">&quot;</span><span class="content">mergesort</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>データの件数を確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 件数を確認</span>
+df_nikkei_article.info()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>出力</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code>&lt;class 'pandas.core.frame.DataFrame'&gt;
+DatetimeIndex: 178393 entries, 2020-01-01 00:00:00+09:00 to 2020-12-31 23:26:35+09:00
+Data columns (total 12 columns):
+ #   Column                Non-Null Count   Dtype
+---  ------                --------------   -----
+ 0   article_id            178393 non-null  object
+ 1   media_code            178393 non-null  object
+ 2   media_name            178393 non-null  object
+ 3   men_name              0 non-null       float64
+ 4   page_from             0 non-null       float64
+ 5   picture_flag          75294 non-null   object
+ 6   paragraph_cnt         178393 non-null  int64
+ 7   char_length           178393 non-null  int64
+ 8   headline              178393 non-null  object
+ 9   keywords              177894 non-null  object
+ 10  classifications       173346 non-null  object
+ 11  company_g.stock_code  68369 non-null   object
+dtypes: float64(2), int64(2), object(8)
+memory usage: 17.7+ MB</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>上記からデータの件数とデータの範囲がわかったので、より具体的な値を把握するために先頭の1レコードを出力します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># データの開始日と内容を確認</span>
+df_nikkei_article.head(<span class="integer">1</span>).T</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article01.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>データの最終行を表示します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># データの最終日を確認</span>
+df_nikkei_article.tail(<span class="integer">1</span>).T</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article02.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>記事の見出しである headline 列の文字数の分布をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 見出しの文字数の分布をプロット</span>
+df_nikkei_article.headline.str.len().hist(figsize=(<span class="integer">10</span>,<span class="integer">10</span>), bins=<span class="integer">50</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article03.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>記事の見出しは25文字がピークであることを確認できます。</p>
+</div>
+<div class="paragraph">
+<p>company_g.stock_code 列にはニュースに関連する銘柄コードが含まれています。銘柄コードが含まれているデータを確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 銘柄コードが含まれているデータを確認</span>
+df_nikkei_article.loc[~df_nikkei_article.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">company_g.stock_code</span><span class="delimiter">&quot;</span></span>].isnull()].head().T</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article04.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>一つのニュース記事について「\n」を区切り文字として複数の銘柄コードが格納されていることがわかります。</p>
+</div>
+<div class="paragraph">
+<p>1週間毎のニュースの記事件数と銘柄コードが含まれている記事の件数をプロットするためのデータを作成します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 月曜日を開始日として、週次の記事件数と銘柄コードを含む記事件数を取得</span>
+df_weekly_count = df_nikkei_article.resample(<span class="string"><span class="delimiter">&quot;</span><span class="content">W-MON</span><span class="delimiter">&quot;</span></span>, label=<span class="string"><span class="delimiter">&quot;</span><span class="content">left</span><span class="delimiter">&quot;</span></span>, closed=<span class="string"><span class="delimiter">&quot;</span><span class="content">left</span><span class="delimiter">&quot;</span></span>)[[<span class="string"><span class="delimiter">&quot;</span><span class="content">article_id</span><span class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">company_g.stock_code</span><span class="delimiter">&quot;</span></span>]].count()
+<span class="comment"># 集計内容を確認</span>
+df_weekly_count.head(<span class="integer">3</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article05.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>1週間毎の記事件数の統計量を確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 週次件数の統計量を確認</span>
+df_weekly_count.describe()</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article06.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>1週間毎の記事件数の平均は3,300件超、銘柄コードが含まれている記事件数の平均は1,200件超であることがわかります。</p>
+</div>
+<div class="paragraph">
+<p>次に、1週間毎の記事件数の分布を確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment">#  週次件数の分布を確認</span>
+df_weekly_count.hist(figsize=(<span class="integer">20</span>, <span class="integer">10</span>), alpha=<span class="float">0.5</span>, bins=<span class="integer">25</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article07.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>1週間毎の記事件数の推移をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># プロット</span>
+ax = df_weekly_count.plot(figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment"># グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article08.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>データの始点・終点では月曜日を起点としているため曜日の数が十分でないこと、5,7,8,9月は祝日が影響して記事件数が少なくなっているようです。</p>
+</div>
+<div class="paragraph">
+<p>ここからは記事に紐付けられている銘柄コードについて確認します。
+記事データから抽出した銘柄コード毎に記事件数をプロットします。ここでは対象とする銘柄コードを投資対象銘柄に限定して確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 記事に記載されている銘柄コードを取得</span>
+s_stocks = df_nikkei_article.loc[~df_nikkei_article.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">company_g.stock_code</span><span class="delimiter">&quot;</span></span>].isnull(), <span class="string"><span class="delimiter">&quot;</span><span class="content">company_g.stock_code</span><span class="delimiter">&quot;</span></span>].str.split(<span class="string"><span class="delimiter">&quot;</span><span class="char">\n</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 銘柄コード別の件数を取得し、記事件数の多い順にソート</span>
+s_stock_counts = pd.Series(Counter(chain.from_iterable(s_stocks))).sort_values(ascending=<span class="predefined-constant">False</span>)
+<span class="comment"># 投資対象銘柄に絞り込み</span>
+s_stock_counts = s_stock_counts.loc[s_stock_counts.index.astype(<span class="predefined">int</span>).isin(stock_codes)]
+<span class="comment"># データフレームに変換して、インデックスをリセット</span>
+df_stock_counts = s_stock_counts.to_frame().reset_index(drop=<span class="predefined-constant">True</span>)
+<span class="comment"># カラム名を設定</span>
+df_stock_counts.rename(columns={<span class="integer">0</span>: <span class="string"><span class="delimiter">&quot;</span><span class="content">article_count</span><span class="delimiter">&quot;</span></span>}, inplace=<span class="predefined-constant">True</span>)
+<span class="comment"># 投資対象銘柄全体におけるdisclosureItems別の件数の割合を算出</span>
+df_stock_counts.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">percentage</span><span class="delimiter">&quot;</span></span>] = (df_stock_counts[<span class="string"><span class="delimiter">&quot;</span><span class="content">article_count</span><span class="delimiter">&quot;</span></span>] / df_stock_counts[<span class="string"><span class="delimiter">&quot;</span><span class="content">article_count</span><span class="delimiter">&quot;</span></span>].sum()) * <span class="integer">100</span>
+<span class="comment"># 件数割合の累積を計算</span>
+df_stock_counts.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">cumulative_percentage</span><span class="delimiter">&quot;</span></span>] = df_stock_counts[<span class="string"><span class="delimiter">&quot;</span><span class="content">percentage</span><span class="delimiter">&quot;</span></span>].cumsum()
+<span class="comment"># 投資対象銘柄コード別の件数をプロット (全銘柄)</span>
+ax = df_stock_counts[[<span class="string"><span class="delimiter">&quot;</span><span class="content">article_count</span><span class="delimiter">&quot;</span></span>]].plot(figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment">#  グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)
+<span class="comment"># 凡例を左上に表示</span>
+ax.legend(loc=<span class="string"><span class="delimiter">&quot;</span><span class="content">upper left</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 2つ目のy軸を作成</span>
+ax2 = ax.twinx()
+<span class="comment"># 開示件数割合の累積をプロット</span>
+df_stock_counts[[<span class="string"><span class="delimiter">&quot;</span><span class="content">cumulative_percentage</span><span class="delimiter">&quot;</span></span>]].reset_index(drop=<span class="predefined-constant">True</span>).plot(ax=ax2, color=<span class="string"><span class="delimiter">&quot;</span><span class="content">orange</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 凡例を右上に表示</span>
+ax2.legend(loc=<span class="string"><span class="delimiter">&quot;</span><span class="content">upper right</span><span class="delimiter">&quot;</span></span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article09.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>x軸は銘柄の数を示しています。青色線は左側のy軸に対応しており記事件数を表しています、黄色線は右側のy軸に対応しており記事件数全体における累積割合を示しています。一部の銘柄に記事件数が集中しており、約1750銘柄中250銘柄で記事件数全体の70%程度を占めていることがわかります。</p>
+</div>
+<div class="paragraph">
+<p>記事件数の多い順に上位50銘柄をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄コード別の記事件数 (件数上位50銘柄)</span>
+ax = s_stock_counts.head(<span class="integer">50</span>).plot.bar(figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment">#  グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/nikkei_article/nikkei_article10.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p><code>7203</code> のトヨタ自動車、および <code>9984</code> のソフトバンクグループに関する記事件数が突出しており、以後記事件数が減少していることがわかります。ニュースの件数は銘柄ごとにかなり偏っていることがわかります。</p>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_日経電子版見出しメタデータの分類語_記事種別_article">3.4.3. 日経電子版見出し・メタデータの分類語 記事種別: article</h4>
@@ -5442,6 +5695,286 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 </tr>
 </tbody>
 </table>
+<div class="sect4">
+<h5 id="_適時開示資料のメタデータの確認">適時開示資料のメタデータの確認</h5>
+<div class="paragraph">
+<p>ここでは「適時開示資料のメタデータ」を把握するために、データを確認していきます。データの確認に使用したnotebookは「handson/Chapter03/20210415_chapter03_news_data_visualization.ipynb」に配置しています。必要に応じてご参照ください。</p>
+</div>
+<div class="paragraph">
+<p>データを読み込みます。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 入力パラメーターを設定します。ランタイム環境での実行時と同一フォーマットにします</span>
+inputs = {
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_list</span><span class="delimiter">&quot;</span></span>: f<span class="string"><span class="delimiter">&quot;</span><span class="content">{dataset_dir}/stock_list.csv.gz</span><span class="delimiter">&quot;</span></span>,
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">nikkei_article</span><span class="delimiter">&quot;</span></span>: f<span class="string"><span class="delimiter">&quot;</span><span class="content">{dataset_dir}/nikkei_article.csv.gz</span><span class="delimiter">&quot;</span></span>,
+    <span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems</span><span class="delimiter">&quot;</span></span>: f<span class="string"><span class="delimiter">&quot;</span><span class="content">{dataset_dir}/disclosureItems.csv.gz</span><span class="delimiter">&quot;</span></span>,
+}
+<span class="comment"># 銘柄リストを取得</span>
+df_stock_list = pd.read_csv(inputs[<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_list</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># 投資対象銘柄を取得</span>
+stock_codes = df_stock_list.loc[df_stock_list.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">universe_comp2</span><span class="delimiter">&quot;</span></span>] == <span class="predefined-constant">True</span>, <span class="string"><span class="delimiter">&quot;</span><span class="content">Local Code</span><span class="delimiter">&quot;</span></span>]
+<span class="comment"># 適時開示資料のメタデータ読み込み</span>
+df_tdnet = pd.read_csv(inputs[<span class="string"><span class="delimiter">&quot;</span><span class="content">tdnet</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># インデックスを開示日時に設定</span>
+df_tdnet.index = pd.to_datetime(df_tdnet[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosedDate</span><span class="delimiter">&quot;</span></span>].astype(<span class="predefined">str</span>) + <span class="string"><span class="delimiter">&quot;</span><span class="content"> </span><span class="delimiter">&quot;</span></span> + df_tdnet[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosedTime</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># インデックスで安定ソート</span>
+df_tdnet.sort_index(kind=<span class="string"><span class="delimiter">&quot;</span><span class="content">mergesort</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+<span class="comment"># 公開項目コード一覧を読み込み</span>
+df_disclosureitems = pd.read_csv(inputs[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems</span><span class="delimiter">&quot;</span></span>])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>データの件数を確認します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 件数を確認</span>
+df_tdnet.info()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>出力</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code>&lt;class 'pandas.core.frame.DataFrame'&gt;
+DatetimeIndex: 510962 entries, 2016-01-12 08:00:00 to 2020-12-30 21:00:00
+Data columns (total 13 columns):
+ #   Column            Non-Null Count   Dtype
+---  ------            --------------   -----
+ 0   datetime          510962 non-null  object
+ 1   disclosedDate     510962 non-null  object
+ 2   disclosedTime     510962 non-null  object
+ 3   disclosureNumber  510962 non-null  int64
+ 4   code              510962 non-null  int64
+ 5   name              510962 non-null  object
+ 6   disclosureItems   510962 non-null  object
+ 7   title             510962 non-null  object
+ 8   handlingType      1694 non-null    object
+ 9   pdfGeneralFlag    510962 non-null  int64
+ 10  modifiedHistory   510962 non-null  int64
+ 11  pdfSumaryFlag     510962 non-null  int64
+ 12  xbrlFlag          510962 non-null  int64
+dtypes: int64(6), object(7)
+memory usage: 54.6+ MB</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>上記からデータの件数とデータの範囲がわかったので、より具体的な値を把握するために先頭の1レコードを出力します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># データの開始日と内容を確認</span>
+df_tdnet.head(<span class="integer">1</span>).T</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet01.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>データの最終行を表示します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># データの最終日を確認</span>
+df_tdnet.tail(<span class="integer">1</span>).T</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet02.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>データを加工して解析しやすくします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 銘柄コードを4桁に変更</span>
+df_tdnet.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_code</span><span class="delimiter">&quot;</span></span>] = df_tdnet.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">code</span><span class="delimiter">&quot;</span></span>].astype(<span class="predefined">str</span>).str[:<span class="integer">4</span>].astype(<span class="predefined">int</span>)
+<span class="comment"># 投資対象銘柄に絞り込み</span>
+filter_universe = df_tdnet.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">stock_code</span><span class="delimiter">&quot;</span></span>].isin(stock_codes)
+<span class="comment"># 月曜日を開始日として、投資対象銘柄の週次の件数を取得</span>
+df_tdnet_weekly_count = df_tdnet.loc[filter_universe].resample(<span class="string"><span class="delimiter">&quot;</span><span class="content">W-MON</span><span class="delimiter">&quot;</span></span>, label=<span class="string"><span class="delimiter">&quot;</span><span class="content">left</span><span class="delimiter">&quot;</span></span>, closed=<span class="string"><span class="delimiter">&quot;</span><span class="content">left</span><span class="delimiter">&quot;</span></span>)[[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>]].count()
+<span class="comment"># 集計内容を確認</span>
+df_tdnet_weekly_count.head(<span class="integer">3</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet03.png" alt="処理結果" width="30%">
+</div>
+</div>
+<div class="paragraph">
+<p>週毎の開示件数をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># プロット</span>
+ax = df_tdnet_weekly_count.plot(figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment"># グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet04.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>開示件数には波があることがわかります。</p>
+</div>
+<div class="paragraph">
+<p>週毎の開示件数の分布をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment">#  資対象銘柄の週次件数の分布を確認</span>
+df_tdnet_weekly_count.hist(figsize=(<span class="integer">10</span>, <span class="integer">10</span>))</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet05.png" alt="処理結果" width="50%">
+</div>
+</div>
+<div class="paragraph">
+<p>開示情報の公開項目コードについて確認していきます。</p>
+</div>
+<div class="paragraph">
+<p>まずは、公開項目コードをリストとして取得します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄のdisclosureItemsをリスト形式のシリーズとして取得</span>
+s_disclosureItems = df_tdnet.loc[filter_universe, <span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems</span><span class="delimiter">&quot;</span></span>].apply(literal_eval)
+<span class="comment"># データを確認</span>
+s_disclosureItems[:<span class="integer">10</span>]</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet06.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>次に、公開項目毎の件数を集計したあとに、公開項目コードと日本語名を結合します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄のdisclosureItems別の件数を取得</span>
+s_disclosureitems_count = pd.Series(Counter(chain.from_iterable(s_disclosureItems)))
+<span class="comment"># カラム名を設定</span>
+s_disclosureitems_count.name = <span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>
+<span class="comment"># 公開項目コードをint型に変更</span>
+s_disclosureitems_count.index = s_disclosureitems_count.index.astype(<span class="predefined">int</span>)
+<span class="comment"># 項目の日本語名を表示するために適時開示資料の公開項目コードと結合</span>
+df_disclosureitems_with_label = pd.merge(s_disclosureitems_count, df_disclosureitems, left_index=<span class="predefined-constant">True</span>, right_on=[<span class="string"><span class="delimiter">&quot;</span><span class="content">公開項目コード</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># indexを設定</span>
+df_disclosureitems_with_label.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">コード値定義</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)
+<span class="comment"># 項目の日本語名を表示するために適時開示資料の公開項目コードと結合</span>
+df_disclosureitems_with_label = pd.merge(s_disclosureitems_count, df_disclosureitems, left_index=<span class="predefined-constant">True</span>, right_on=[<span class="string"><span class="delimiter">&quot;</span><span class="content">公開項目コード</span><span class="delimiter">&quot;</span></span>])
+<span class="comment"># indexを設定</span>
+df_disclosureitems_with_label.set_index(<span class="string"><span class="delimiter">&quot;</span><span class="content">コード値定義</span><span class="delimiter">&quot;</span></span>, inplace=<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>公開項目コード毎の開示情報件数をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄のdisclosureItems別の件数を多い順に並び替え</span>
+df_count_by_disclosureitems_with_label = df_disclosureitems_with_label.loc[:, [<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>]].sort_values(<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>, ascending=<span class="predefined-constant">False</span>).reset_index(drop=<span class="predefined-constant">True</span>)
+<span class="comment"># 投資対象銘柄全体におけるdisclosureItems別の件数の割合を算出</span>
+df_count_by_disclosureitems_with_label.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">percentage</span><span class="delimiter">&quot;</span></span>] = (df_count_by_disclosureitems_with_label[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>] / df_count_by_disclosureitems_with_label[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>].sum()) * <span class="integer">100</span>
+<span class="comment"># 件数割合の累積を計算</span>
+df_count_by_disclosureitems_with_label.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">cumulative_percentage</span><span class="delimiter">&quot;</span></span>] = df_count_by_disclosureitems_with_label[<span class="string"><span class="delimiter">&quot;</span><span class="content">percentage</span><span class="delimiter">&quot;</span></span>].cumsum()
+<span class="comment"># プロット (全て)</span>
+ax = df_count_by_disclosureitems_with_label[[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>]].plot(figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment">#  グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)
+<span class="comment"># 凡例を左上に表示</span>
+ax.legend(loc=<span class="string"><span class="delimiter">&quot;</span><span class="content">upper left</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 2つ目のy軸を作成</span>
+ax2 = ax.twinx()
+<span class="comment"># 開示件数割合の累積をプロット</span>
+df_count_by_disclosureitems_with_label[[<span class="string"><span class="delimiter">&quot;</span><span class="content">cumulative_percentage</span><span class="delimiter">&quot;</span></span>]].reset_index(drop=<span class="predefined-constant">True</span>).plot(ax=ax2, color=<span class="string"><span class="delimiter">&quot;</span><span class="content">orange</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 凡例を右上に表示</span>
+ax2.legend(loc=<span class="string"><span class="delimiter">&quot;</span><span class="content">upper right</span><span class="delimiter">&quot;</span></span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet07.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>件数の多い上位50項目を公開項目名をX軸にしてプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄のdisclosureItems別に件数を多い順にプロット (上位50項目)</span>
+ax = df_disclosureitems_with_label.loc[:, [<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>]].sort_values(<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureItems_count</span><span class="delimiter">&quot;</span></span>, ascending=<span class="predefined-constant">False</span>).head(<span class="integer">50</span>).plot(kind=<span class="string"><span class="delimiter">&quot;</span><span class="content">bar</span><span class="delimiter">&quot;</span></span>, figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment">#  グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet08.png" alt="処理結果" width="100%">
+</div>
+</div>
+<div class="paragraph">
+<p>銘柄毎に開示情報の件数をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄別に開示件数を集計して、開示件数の多い順に並び替え</span>
+df_tdnet_count_by_stock_code = df_tdnet.loc[filter_universe].groupby(<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_code</span><span class="delimiter">&quot;</span></span>)[[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>]].count().sort_values(<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>, ascending=<span class="predefined-constant">False</span>)
+<span class="comment"># 投資対象銘柄全体における開示件数の割合を集計</span>
+df_tdnet_count_by_stock_code.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">percentage</span><span class="delimiter">&quot;</span></span>] = (df_tdnet_count_by_stock_code[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>] / df_tdnet_count_by_stock_code[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>].sum()) * <span class="integer">100</span>
+<span class="comment"># 開示件数割合の累積を計算</span>
+df_tdnet_count_by_stock_code.loc[:, <span class="string"><span class="delimiter">&quot;</span><span class="content">cumulative_percentage</span><span class="delimiter">&quot;</span></span>] = df_tdnet_count_by_stock_code[<span class="string"><span class="delimiter">&quot;</span><span class="content">percentage</span><span class="delimiter">&quot;</span></span>].cumsum()
+<span class="comment"># 投資対象銘柄別に開示件数を多い順にプロット</span>
+ax = df_tdnet_count_by_stock_code[[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>]].reset_index(drop=<span class="predefined-constant">True</span>).plot(figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment"># グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)
+<span class="comment"># 凡例を左上に表示</span>
+ax.legend(loc=<span class="string"><span class="delimiter">&quot;</span><span class="content">upper left</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 2つ目のy軸を作成</span>
+ax2 = ax.twinx()
+<span class="comment"># 開示件数割合の累積をプロット</span>
+df_tdnet_count_by_stock_code[[<span class="string"><span class="delimiter">&quot;</span><span class="content">cumulative_percentage</span><span class="delimiter">&quot;</span></span>]].reset_index(drop=<span class="predefined-constant">True</span>).plot(ax=ax2, color=<span class="string"><span class="delimiter">&quot;</span><span class="content">orange</span><span class="delimiter">&quot;</span></span>)
+<span class="comment"># 凡例を右上に表示</span>
+ax2.legend(loc=<span class="string"><span class="delimiter">&quot;</span><span class="content">upper right</span><span class="delimiter">&quot;</span></span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet09.png" alt="処理結果" width="70%">
+</div>
+</div>
+<div class="paragraph">
+<p>開示件数の多い上位50銘柄をプロットします。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="python"><span class="comment"># 投資対象銘柄別に開示件数を多い順にプロット (上位50銘柄)</span>
+ax = df_tdnet.loc[filter_universe].groupby(<span class="string"><span class="delimiter">&quot;</span><span class="content">stock_code</span><span class="delimiter">&quot;</span></span>)[[<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>]].count().sort_values(<span class="string"><span class="delimiter">&quot;</span><span class="content">disclosureNumber</span><span class="delimiter">&quot;</span></span>, ascending=<span class="predefined-constant">False</span>).head(<span class="integer">50</span>).plot(kind=<span class="string"><span class="delimiter">&quot;</span><span class="content">bar</span><span class="delimiter">&quot;</span></span>, figsize=(<span class="integer">20</span>, <span class="integer">8</span>))
+<span class="comment"># 　グリッド設定</span>
+ax.grid(<span class="predefined-constant">True</span>)</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="Chapter03/images/tdnet/tdnet10.png" alt="処理結果" width="70%">
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_適時開示資料の公開項目コード_disclosureitems">3.4.9. 適時開示資料の公開項目コード: disclosureItems</h4>
@@ -5518,7 +6051,7 @@ total bytes=37635058, compressed=10080035 -&gt; 73% savings</pre>
 <div class="sect3">
 <h4 id="_日付指定ファイル_purchase_date_csv">3.4.14. 日付指定ファイル: purchase_date.csv</h4>
 <div class="paragraph">
-<p>　評価対象週について、初日の日付を指定するファイルです。</p>
+<p>　評価対象週について、初日の日付を指定するファイルです。ランタイム環境ではこのファイルから日付を取得してポートフォリオを作成します。その際に株価データなどは指定された日付のデータを含んでいない点に注意が必要です。例えば、purchase_dateに <code>2021/02/01</code> が指定されている場合、stock_priceデータの最も日付の新しいデータは <code>2021/01/29</code> になります。そのため、本チュートリアルでは主に金曜日の日付を使用して予測を出力した後、予測からポートフォリオを組成する際に対象日付が翌週の月曜日となるように調整しています。</p>
 </div>
 <table class="tableblock frame-all grid-all stripes-even stretch">
 <colgroup>
@@ -7669,7 +8202,7 @@ pd.options.display.width = <span class="integer">120</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>　本コンペティションのランタイム環境におけるデータセットへのアクセスは、 <code>ScoringService.predict()</code> メソッドに渡されるinputsパラメーターを通して行う必要があります。そのため、以下のように本notebook環境でもランタイム環境と共通の方法でデータセットにアクセスすることで、コードが複雑になったり投稿用にコードを編集したりしなくても済むようにしています。</p>
+<p>　本コンペティションのランタイム環境におけるデータセットへのアクセスは、 <code>ScoringService.predict()</code> メソッドに渡されるinputsパラメーターを通して行う必要があります。そのため、以下のように本notebook環境でもランタイム環境と共通の方法でデータセットにアクセスすることで、コードが複雑になったり投稿用にコードを編集したりしなくても済むようにしています。なお、ランタイム環境では <code>purchase_date.csv</code> に評価対象週の初日の日付が指定されます。以下ではランタイム環境でも適切に動作するように <code>purchase_date.csv</code> の日付をポートフォリオの組成対象とするコードを記載します。</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8040,7 +8573,7 @@ inputs = {
 <div class="sect3">
 <h4 id="_predictの変更_銘柄選択出力を変更">4.4.6. predictの変更 (銘柄選択、出力を変更)</h4>
 <div class="paragraph">
-<p>以下では、 <code>predictor.py</code> の <code>predict</code> メソッド出力についてポートフォリオを出力するように変更し、予測出力から銘柄を選択するロジックを追加しています。</p>
+<p>以下では、 <code>predictor.py</code> の <code>predict</code> メソッド出力についてポートフォリオを出力するように変更し、予測出力から銘柄を選択するロジックを追加しています。ランタイム環境では <code>purchase_date</code> で指定された日付のポートフォリオを作成するように変更しています。</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -8104,6 +8637,15 @@ inputs = {
             codes = cls.codes
         <span class="keyword">if</span> labels <span class="keyword">is</span> <span class="predefined-constant">None</span>:
             labels = cls.TARGET_LABELS
+
+        <span class="keyword">if</span> <span class="string"><span class="delimiter">&quot;</span><span class="content">purchase_date</span><span class="delimiter">&quot;</span></span> <span class="keyword">in</span> inputs.keys():
+            <span class="comment"># ランタイム環境では指定された投資対象日付を使用します</span>
+            <span class="comment"># purchase_dateを読み込み</span>
+            df_purchase_date = pd.read_csv(inputs[<span class="string"><span class="delimiter">&quot;</span><span class="content">purchase_date</span><span class="delimiter">&quot;</span></span>])
+            <span class="comment"># purchase_dateの最も古い日付を設定</span>
+            start_dt = pd.Timestamp(
+                df_purchase_date.sort_values(<span class="string"><span class="delimiter">&quot;</span><span class="content">Purchase Date</span><span class="delimiter">&quot;</span></span>).iloc[<span class="integer">0</span>, <span class="integer">0</span>]
+            )
 
         <span class="comment"># 予測対象日を調整</span>
         <span class="comment"># start_dtにはポートフォリオの購入日を指定しているため、</span>

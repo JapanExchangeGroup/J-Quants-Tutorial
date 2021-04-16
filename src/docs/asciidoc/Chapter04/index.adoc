@@ -116,7 +116,7 @@ else:
     dataset_dir = "/notebook/data_dir_comp2"
 ----
 
-　本コンペティションのランタイム環境におけるデータセットへのアクセスは、 `ScoringService.predict()` メソッドに渡されるinputsパラメーターを通して行う必要があります。そのため、以下のように本notebook環境でもランタイム環境と共通の方法でデータセットにアクセスすることで、コードが複雑になったり投稿用にコードを編集したりしなくても済むようにしています。
+　本コンペティションのランタイム環境におけるデータセットへのアクセスは、 `ScoringService.predict()` メソッドに渡されるinputsパラメーターを通して行う必要があります。そのため、以下のように本notebook環境でもランタイム環境と共通の方法でデータセットにアクセスすることで、コードが複雑になったり投稿用にコードを編集したりしなくても済むようにしています。なお、ランタイム環境では `purchase_date.csv` に評価対象週の初日の日付が指定されます。以下ではランタイム環境でも適切に動作するように `purchase_date.csv` の日付をポートフォリオの組成対象とするコードを記載します。
 
 [source,python]
 ----
@@ -437,7 +437,7 @@ else:
 
 ==== predictの変更 (銘柄選択、出力を変更)
 
-以下では、 `predictor.py` の `predict` メソッド出力についてポートフォリオを出力するように変更し、予測出力から銘柄を選択するロジックを追加しています。
+以下では、 `predictor.py` の `predict` メソッド出力についてポートフォリオを出力するように変更し、予測出力から銘柄を選択するロジックを追加しています。ランタイム環境では `purchase_date` で指定された日付のポートフォリオを作成するように変更しています。
 
 [source,python]
 ----
@@ -501,6 +501,15 @@ else:
             codes = cls.codes
         if labels is None:
             labels = cls.TARGET_LABELS
+
+        if "purchase_date" in inputs.keys():
+            # ランタイム環境では指定された投資対象日付を使用します
+            # purchase_dateを読み込み
+            df_purchase_date = pd.read_csv(inputs["purchase_date"])
+            # purchase_dateの最も古い日付を設定
+            start_dt = pd.Timestamp(
+                df_purchase_date.sort_values("Purchase Date").iloc[0, 0]
+            )
 
         # 予測対象日を調整
         # start_dtにはポートフォリオの購入日を指定しているため、

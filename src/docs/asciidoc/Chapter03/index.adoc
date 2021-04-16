@@ -335,6 +335,211 @@ link:https://signate.jp/competitions/443/data[SIGNATEのコンペティション
 |company_g.stock_code | 株式コード | object | 8697
 |===
 
+===== 日経電子版見出し・メタデータの確認
+
+ここでは「日経電子版見出し・メタデータ」を把握するために、データを確認していきます。データの確認に使用したnotebookは「handson/Chapter03/20210415_chapter03_news_data_visualization.ipynb」に配置しています。必要に応じてご参照ください。
+
+データを読み込みます。
+
+[source,python]
+----
+# 入力パラメーターを設定します。ランタイム環境での実行時と同一フォーマットにします
+inputs = {
+    "stock_list": f"{dataset_dir}/stock_list.csv.gz",
+    "nikkei_article": f"{dataset_dir}/nikkei_article.csv.gz",
+}
+# 銘柄リストを取得
+df_stock_list = pd.read_csv(inputs["stock_list"])
+# 投資対象銘柄を取得
+stock_codes = df_stock_list.loc[df_stock_list.loc[:, "universe_comp2"] == True, "Local Code"]
+# 日経電子版見出し・メタデータ読み込み
+df_nikkei_article = pd.read_csv(inputs["nikkei_article"])
+# インデックスを記事の掲載日に設定
+df_nikkei_article.set_index("publish_datetime", inplace=True)
+# インデックスを日付型に変換
+df_nikkei_article.index = pd.to_datetime(df_nikkei_article.index)
+# インデックスで安定ソート
+df_nikkei_article.sort_index(kind="mergesort", inplace=True)
+----
+
+データの件数を確認します。
+
+[source,python]
+----
+# 件数を確認
+df_nikkei_article.info()
+----
+
+出力
+[source]
+----
+<class 'pandas.core.frame.DataFrame'>
+DatetimeIndex: 178393 entries, 2020-01-01 00:00:00+09:00 to 2020-12-31 23:26:35+09:00
+Data columns (total 12 columns):
+ #   Column                Non-Null Count   Dtype
+---  ------                --------------   -----
+ 0   article_id            178393 non-null  object
+ 1   media_code            178393 non-null  object
+ 2   media_name            178393 non-null  object
+ 3   men_name              0 non-null       float64
+ 4   page_from             0 non-null       float64
+ 5   picture_flag          75294 non-null   object
+ 6   paragraph_cnt         178393 non-null  int64
+ 7   char_length           178393 non-null  int64
+ 8   headline              178393 non-null  object
+ 9   keywords              177894 non-null  object
+ 10  classifications       173346 non-null  object
+ 11  company_g.stock_code  68369 non-null   object
+dtypes: float64(2), int64(2), object(8)
+memory usage: 17.7+ MB
+----
+
+上記からデータの件数とデータの範囲がわかったので、より具体的な値を把握するために先頭の1レコードを出力します。
+
+[source,python]
+----
+# データの開始日と内容を確認
+df_nikkei_article.head(1).T
+----
+
+image::nikkei_article/nikkei_article01.png[処理結果, width="70%"]
+
+データの最終行を表示します。
+
+[source,python]
+----
+# データの最終日を確認
+df_nikkei_article.tail(1).T
+----
+
+image::nikkei_article/nikkei_article02.png[処理結果, width="70%"]
+
+記事の見出しである headline 列の文字数の分布をプロットします。
+
+[source,python]
+----
+# 見出しの文字数の分布をプロット
+df_nikkei_article.headline.str.len().hist(figsize=(10,10), bins=50)
+----
+
+image::nikkei_article/nikkei_article03.png[処理結果, width="70%"]
+
+記事の見出しは25文字がピークであることを確認できます。
+
+
+company_g.stock_code 列にはニュースに関連する銘柄コードが含まれています。銘柄コードが含まれているデータを確認します。
+
+[source,python]
+----
+# 銘柄コードが含まれているデータを確認
+df_nikkei_article.loc[~df_nikkei_article.loc[:, "company_g.stock_code"].isnull()].head().T
+----
+
+image::nikkei_article/nikkei_article04.png[処理結果, width="70%"]
+
+一つのニュース記事について「\n」を区切り文字として複数の銘柄コードが格納されていることがわかります。
+
+1週間毎のニュースの記事件数と銘柄コードが含まれている記事の件数をプロットするためのデータを作成します。
+
+[source,python]
+----
+# 月曜日を開始日として、週次の記事件数と銘柄コードを含む記事件数を取得
+df_weekly_count = df_nikkei_article.resample("W-MON", label="left", closed="left")[["article_id", "company_g.stock_code"]].count()
+# 集計内容を確認
+df_weekly_count.head(3)
+----
+
+image::nikkei_article/nikkei_article05.png[処理結果, width="70%"]
+
+1週間毎の記事件数の統計量を確認します。
+
+[source,python]
+----
+# 週次件数の統計量を確認
+df_weekly_count.describe()
+----
+
+image::nikkei_article/nikkei_article06.png[処理結果, width="70%"]
+
+1週間毎の記事件数の平均は3,300件超、銘柄コードが含まれている記事件数の平均は1,200件超であることがわかります。
+
+次に、1週間毎の記事件数の分布を確認します。
+
+[source,python]
+----
+#  週次件数の分布を確認
+df_weekly_count.hist(figsize=(20, 10), alpha=0.5, bins=25)
+----
+
+image::nikkei_article/nikkei_article07.png[処理結果, width="70%"]
+
+1週間毎の記事件数の推移をプロットします。
+
+[source,python]
+----
+# プロット
+ax = df_weekly_count.plot(figsize=(20, 8))
+# グリッド設定
+ax.grid(True)
+----
+
+image::nikkei_article/nikkei_article08.png[処理結果, width="70%"]
+
+データの始点・終点では月曜日を起点としているため曜日の数が十分でないこと、5,7,8,9月は祝日が影響して記事件数が少なくなっているようです。
+
+
+ここからは記事に紐付けられている銘柄コードについて確認します。
+記事データから抽出した銘柄コード毎に記事件数をプロットします。ここでは対象とする銘柄コードを投資対象銘柄に限定して確認します。
+
+[source,python]
+----
+# 記事に記載されている銘柄コードを取得
+s_stocks = df_nikkei_article.loc[~df_nikkei_article.loc[:, "company_g.stock_code"].isnull(), "company_g.stock_code"].str.split("\n")
+# 銘柄コード別の件数を取得し、記事件数の多い順にソート
+s_stock_counts = pd.Series(Counter(chain.from_iterable(s_stocks))).sort_values(ascending=False)
+# 投資対象銘柄に絞り込み
+s_stock_counts = s_stock_counts.loc[s_stock_counts.index.astype(int).isin(stock_codes)]
+# データフレームに変換して、インデックスをリセット
+df_stock_counts = s_stock_counts.to_frame().reset_index(drop=True)
+# カラム名を設定
+df_stock_counts.rename(columns={0: "article_count"}, inplace=True)
+# 投資対象銘柄全体におけるdisclosureItems別の件数の割合を算出
+df_stock_counts.loc[:, "percentage"] = (df_stock_counts["article_count"] / df_stock_counts["article_count"].sum()) * 100
+# 件数割合の累積を計算
+df_stock_counts.loc[:, "cumulative_percentage"] = df_stock_counts["percentage"].cumsum()
+# 投資対象銘柄コード別の件数をプロット (全銘柄)
+ax = df_stock_counts[["article_count"]].plot(figsize=(20, 8))
+#  グリッド設定
+ax.grid(True)
+# 凡例を左上に表示
+ax.legend(loc="upper left")
+# 2つ目のy軸を作成
+ax2 = ax.twinx()
+# 開示件数割合の累積をプロット
+df_stock_counts[["cumulative_percentage"]].reset_index(drop=True).plot(ax=ax2, color="orange")
+# 凡例を右上に表示
+ax2.legend(loc="upper right")
+----
+
+image::nikkei_article/nikkei_article09.png[処理結果, width="70%"]
+
+x軸は銘柄の数を示しています。青色線は左側のy軸に対応しており記事件数を表しています、黄色線は右側のy軸に対応しており記事件数全体における累積割合を示しています。一部の銘柄に記事件数が集中しており、約1750銘柄中250銘柄で記事件数全体の70%程度を占めていることがわかります。
+
+記事件数の多い順に上位50銘柄をプロットします。
+
+[source,python]
+----
+# 投資対象銘柄コード別の記事件数 (件数上位50銘柄)
+ax = s_stock_counts.head(50).plot.bar(figsize=(20, 8))
+#  グリッド設定
+ax.grid(True)
+----
+
+image::nikkei_article/nikkei_article10.png[処理結果, width="70%"]
+
+`7203` のトヨタ自動車、および `9984` のソフトバンクグループに関する記事件数が突出しており、以後記事件数が減少していることがわかります。ニュースの件数は銘柄ごとにかなり偏っていることがわかります。
+
+
 ==== 日経電子版見出し・メタデータの分類語 記事種別: article
 
 　articleでは、日経電子版見出し・メタデータの分類情報(classifications)に記載の記事種類の項目一覧を提供しています。
@@ -416,6 +621,239 @@ link:https://signate.jp/competitions/443/data[SIGNATEのコンペティション
 |xbrlFlag | XBRL関連ファイル存在フラグ | int64 | 1
 |===
 
+===== 適時開示資料のメタデータの確認
+
+ここでは「適時開示資料のメタデータ」を把握するために、データを確認していきます。データの確認に使用したnotebookは「handson/Chapter03/20210415_chapter03_news_data_visualization.ipynb」に配置しています。必要に応じてご参照ください。
+
+データを読み込みます。
+
+[source,python]
+----
+# 入力パラメーターを設定します。ランタイム環境での実行時と同一フォーマットにします
+inputs = {
+    "stock_list": f"{dataset_dir}/stock_list.csv.gz",
+    "nikkei_article": f"{dataset_dir}/nikkei_article.csv.gz",
+    "disclosureItems": f"{dataset_dir}/disclosureItems.csv.gz",
+}
+# 銘柄リストを取得
+df_stock_list = pd.read_csv(inputs["stock_list"])
+# 投資対象銘柄を取得
+stock_codes = df_stock_list.loc[df_stock_list.loc[:, "universe_comp2"] == True, "Local Code"]
+# 適時開示資料のメタデータ読み込み
+df_tdnet = pd.read_csv(inputs["tdnet"])
+# インデックスを開示日時に設定
+df_tdnet.index = pd.to_datetime(df_tdnet["disclosedDate"].astype(str) + " " + df_tdnet["disclosedTime"])
+# インデックスで安定ソート
+df_tdnet.sort_index(kind="mergesort", inplace=True)
+# 公開項目コード一覧を読み込み
+df_disclosureitems = pd.read_csv(inputs["disclosureItems"])
+----
+
+データの件数を確認します。
+
+[source,python]
+----
+# 件数を確認
+df_tdnet.info()
+----
+
+出力
+[source]
+----
+<class 'pandas.core.frame.DataFrame'>
+DatetimeIndex: 510962 entries, 2016-01-12 08:00:00 to 2020-12-30 21:00:00
+Data columns (total 13 columns):
+ #   Column            Non-Null Count   Dtype
+---  ------            --------------   -----
+ 0   datetime          510962 non-null  object
+ 1   disclosedDate     510962 non-null  object
+ 2   disclosedTime     510962 non-null  object
+ 3   disclosureNumber  510962 non-null  int64
+ 4   code              510962 non-null  int64
+ 5   name              510962 non-null  object
+ 6   disclosureItems   510962 non-null  object
+ 7   title             510962 non-null  object
+ 8   handlingType      1694 non-null    object
+ 9   pdfGeneralFlag    510962 non-null  int64
+ 10  modifiedHistory   510962 non-null  int64
+ 11  pdfSumaryFlag     510962 non-null  int64
+ 12  xbrlFlag          510962 non-null  int64
+dtypes: int64(6), object(7)
+memory usage: 54.6+ MB
+----
+
+上記からデータの件数とデータの範囲がわかったので、より具体的な値を把握するために先頭の1レコードを出力します。
+
+[source,python]
+----
+# データの開始日と内容を確認
+df_tdnet.head(1).T
+----
+
+image::tdnet/tdnet01.png[処理結果, width="70%"]
+
+データの最終行を表示します。
+
+[source,python]
+----
+# データの最終日を確認
+df_tdnet.tail(1).T
+----
+
+image::tdnet/tdnet02.png[処理結果, width="70%"]
+
+データを加工して解析しやすくします。
+
+[source,python]
+----
+# 銘柄コードを4桁に変更
+df_tdnet.loc[:, "stock_code"] = df_tdnet.loc[:, "code"].astype(str).str[:4].astype(int)
+# 投資対象銘柄に絞り込み
+filter_universe = df_tdnet.loc[:, "stock_code"].isin(stock_codes)
+# 月曜日を開始日として、投資対象銘柄の週次の件数を取得
+df_tdnet_weekly_count = df_tdnet.loc[filter_universe].resample("W-MON", label="left", closed="left")[["disclosureNumber"]].count()
+# 集計内容を確認
+df_tdnet_weekly_count.head(3)
+----
+
+image::tdnet/tdnet03.png[処理結果, width="30%"]
+
+
+週毎の開示件数をプロットします。
+
+[source,python]
+----
+# プロット
+ax = df_tdnet_weekly_count.plot(figsize=(20, 8))
+# グリッド設定
+ax.grid(True)
+----
+
+image::tdnet/tdnet04.png[処理結果, width="70%"]
+
+開示件数には波があることがわかります。
+
+週毎の開示件数の分布をプロットします。
+
+[source,python]
+----
+#  資対象銘柄の週次件数の分布を確認
+df_tdnet_weekly_count.hist(figsize=(10, 10))
+----
+
+image::tdnet/tdnet05.png[処理結果, width="50%"]
+
+開示情報の公開項目コードについて確認していきます。
+
+まずは、公開項目コードをリストとして取得します。
+
+[source,python]
+----
+# 投資対象銘柄のdisclosureItemsをリスト形式のシリーズとして取得
+s_disclosureItems = df_tdnet.loc[filter_universe, "disclosureItems"].apply(literal_eval)
+# データを確認
+s_disclosureItems[:10]
+----
+
+image::tdnet/tdnet06.png[処理結果, width="70%"]
+
+次に、公開項目毎の件数を集計したあとに、公開項目コードと日本語名を結合します。
+
+[source,python]
+----
+# 投資対象銘柄のdisclosureItems別の件数を取得
+s_disclosureitems_count = pd.Series(Counter(chain.from_iterable(s_disclosureItems)))
+# カラム名を設定
+s_disclosureitems_count.name = "disclosureItems_count"
+# 公開項目コードをint型に変更
+s_disclosureitems_count.index = s_disclosureitems_count.index.astype(int)
+# 項目の日本語名を表示するために適時開示資料の公開項目コードと結合
+df_disclosureitems_with_label = pd.merge(s_disclosureitems_count, df_disclosureitems, left_index=True, right_on=["公開項目コード"])
+# indexを設定
+df_disclosureitems_with_label.set_index("コード値定義", inplace=True)
+# 項目の日本語名を表示するために適時開示資料の公開項目コードと結合
+df_disclosureitems_with_label = pd.merge(s_disclosureitems_count, df_disclosureitems, left_index=True, right_on=["公開項目コード"])
+# indexを設定
+df_disclosureitems_with_label.set_index("コード値定義", inplace=True)
+----
+
+公開項目コード毎の開示情報件数をプロットします。
+
+[source,python]
+----
+# 投資対象銘柄のdisclosureItems別の件数を多い順に並び替え
+df_count_by_disclosureitems_with_label = df_disclosureitems_with_label.loc[:, ["disclosureItems_count"]].sort_values("disclosureItems_count", ascending=False).reset_index(drop=True)
+# 投資対象銘柄全体におけるdisclosureItems別の件数の割合を算出
+df_count_by_disclosureitems_with_label.loc[:, "percentage"] = (df_count_by_disclosureitems_with_label["disclosureItems_count"] / df_count_by_disclosureitems_with_label["disclosureItems_count"].sum()) * 100
+# 件数割合の累積を計算
+df_count_by_disclosureitems_with_label.loc[:, "cumulative_percentage"] = df_count_by_disclosureitems_with_label["percentage"].cumsum()
+# プロット (全て)
+ax = df_count_by_disclosureitems_with_label[["disclosureItems_count"]].plot(figsize=(20, 8))
+#  グリッド設定
+ax.grid(True)
+# 凡例を左上に表示
+ax.legend(loc="upper left")
+# 2つ目のy軸を作成
+ax2 = ax.twinx()
+# 開示件数割合の累積をプロット
+df_count_by_disclosureitems_with_label[["cumulative_percentage"]].reset_index(drop=True).plot(ax=ax2, color="orange")
+# 凡例を右上に表示
+ax2.legend(loc="upper right")
+----
+
+image::tdnet/tdnet07.png[処理結果, width="70%"]
+
+件数の多い上位50項目を公開項目名をX軸にしてプロットします。
+
+[source,python]
+----
+# 投資対象銘柄のdisclosureItems別に件数を多い順にプロット (上位50項目)
+ax = df_disclosureitems_with_label.loc[:, ["disclosureItems_count"]].sort_values("disclosureItems_count", ascending=False).head(50).plot(kind="bar", figsize=(20, 8))
+#  グリッド設定
+ax.grid(True)
+----
+
+image::tdnet/tdnet08.png[処理結果, width="100%"]
+
+銘柄毎に開示情報の件数をプロットします。
+
+[source,python]
+----
+# 投資対象銘柄別に開示件数を集計して、開示件数の多い順に並び替え
+df_tdnet_count_by_stock_code = df_tdnet.loc[filter_universe].groupby("stock_code")[["disclosureNumber"]].count().sort_values("disclosureNumber", ascending=False)
+# 投資対象銘柄全体における開示件数の割合を集計
+df_tdnet_count_by_stock_code.loc[:, "percentage"] = (df_tdnet_count_by_stock_code["disclosureNumber"] / df_tdnet_count_by_stock_code["disclosureNumber"].sum()) * 100
+# 開示件数割合の累積を計算
+df_tdnet_count_by_stock_code.loc[:, "cumulative_percentage"] = df_tdnet_count_by_stock_code["percentage"].cumsum()
+# 投資対象銘柄別に開示件数を多い順にプロット
+ax = df_tdnet_count_by_stock_code[["disclosureNumber"]].reset_index(drop=True).plot(figsize=(20, 8))
+# グリッド設定
+ax.grid(True)
+# 凡例を左上に表示
+ax.legend(loc="upper left")
+# 2つ目のy軸を作成
+ax2 = ax.twinx()
+# 開示件数割合の累積をプロット
+df_tdnet_count_by_stock_code[["cumulative_percentage"]].reset_index(drop=True).plot(ax=ax2, color="orange")
+# 凡例を右上に表示
+ax2.legend(loc="upper right")
+----
+
+image::tdnet/tdnet09.png[処理結果, width="70%"]
+
+開示件数の多い上位50銘柄をプロットします。
+
+[source,python]
+----
+# 投資対象銘柄別に開示件数を多い順にプロット (上位50銘柄)
+ax = df_tdnet.loc[filter_universe].groupby("stock_code")[["disclosureNumber"]].count().sort_values("disclosureNumber", ascending=False).head(50).plot(kind="bar", figsize=(20, 8))
+# 　グリッド設定
+ax.grid(True)
+----
+
+image::tdnet/tdnet10.png[処理結果, width="70%"]
+
+
 ==== 適時開示資料の公開項目コード: disclosureItems
 
 　disclosureItemsは、適時開示資料の公開項目が含まれています。例えば、一般に「自己株式の取得」はポジティブなイベント、「災害に起因する損害又は業務遂行の過程で生じた損害」はネガティブなイベントとして認識されます。
@@ -446,7 +884,7 @@ link:https://signate.jp/competitions/443/data[SIGNATEのコンペティション
 　keywords_features.zipは、本チュートリアルの6章で作成したキーワードの特徴量及びsentiment scoreをpkl化したファイルです。詳細は本チュートリアルの6.2.9. 特徴量合成モデルの学習及び特徴量合成をご参照ください。
 
 ==== 日付指定ファイル: purchase_date.csv
-　評価対象週について、初日の日付を指定するファイルです。
+　評価対象週について、初日の日付を指定するファイルです。ランタイム環境ではこのファイルから日付を取得してポートフォリオを作成します。その際に株価データなどは指定された日付のデータを含んでいない点に注意が必要です。例えば、purchase_dateに `2021/02/01` が指定されている場合、stock_priceデータの最も日付の新しいデータは `2021/01/29` になります。そのため、本チュートリアルでは主に金曜日の日付を使用して予測を出力した後、予測からポートフォリオを組成する際に対象日付が翌週の月曜日となるように調整しています。
 
 [cols="2,3,1,1", options="header"]
 |===

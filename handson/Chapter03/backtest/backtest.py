@@ -454,6 +454,10 @@ class Backtest(object):
         for stock_code in stock_codes:
             filter_stock = df_price["Local Code"] == stock_code
 
+            # skip to avoid an error if there is no record in df_price
+            if df_price.loc[filter_stock].shape[0] == 0:
+                continue
+
             # get latest adjustment factor
             latest_adjustment_factor = df_price.loc[filter_stock].iloc[-1][
                 "EndOfDayQuote CumulativeAdjustmentFactor"
